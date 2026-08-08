@@ -3,6 +3,44 @@
 Bugs and gotchas from building Marmor, kept around so we don't relearn them
 the hard way a second time.
 
+## The board rendered as a blank strip for one real-world visitor
+
+**Symptom:** a friend testing the live site on "latest Chrome on a MacBook"
+saw the board render with no visible grid at all — just the handful of
+spawned marbles bunched in a line, with the rest of the 9×9 board a flat
+blank rectangle — and the King's and Pretender's pedestals rendered at
+nearly identical (short) heights, when the King's is meant to always be
+tall. Clicking "New game" didn't fix it. Nobody else, on any browser we had
+access to, could reproduce it, and there were no errors in the console.
+
+**What we could confirm:** the deployed site itself was fine — every asset
+request (HTML, JS, CSS, fonts, cursor, favicon) returned `200`, and the page
+rendered correctly from multiple browsers/sessions on our end. So this
+wasn't a bad deploy; it was something specific to that one visitor's
+browser/environment that we never fully identified (a stale cache, an
+extension rewriting the page, or some other local condition).
+
+**The fix (defensive, not a confirmed root-cause fix):** `.board` and
+`.cell` sized themselves from a single CSS custom property,
+`var(--cell-size)`, with no fallback. If that property ever fails to
+resolve for any reason, `repeat(9, var(--cell-size))` becomes invalid, the
+grid definition collapses, and cells lose their explicit width/height —
+which matches the symptom exactly. Every usage now has a literal pixel
+fallback: `var(--cell-size, 54px)`. The friend confirmed this fixed it for
+him. We still don't know *why* the property failed to resolve on his
+machine in the first place — the fallback made the failure mode harmless
+without requiring us to reproduce or fully explain the trigger.
+
+**Lesson:** when a bug can't be reproduced locally but a plausible failure
+mode is identifiable in the code (here: a single point of failure with no
+graceful degradation), it's worth shipping a cheap, harmless defensive fix
+even without confirmed root cause — rather than blocking on reproducing an
+environment we don't have access to. Pair this with asking the affected
+user for concrete diagnostics (exact browser version, console errors,
+whether Incognito/hard-refresh changes anything, DevTools computed-style
+values) so if the defensive fix *doesn't* fully resolve it, there's already
+a paper trail instead of starting the investigation from zero.
+
 ## The marble-glide animation was slow — and it wasn't the code we suspected
 
 **Symptom:** the marble animating between cells felt laggy — it seemed to
