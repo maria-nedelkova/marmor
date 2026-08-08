@@ -224,8 +224,8 @@ body {
 .board {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(9, var(--cell-size));
-  grid-template-rows: repeat(9, var(--cell-size));
+  grid-template-columns: repeat(9, var(--cell-size, 54px));
+  grid-template-rows: repeat(9, var(--cell-size, 54px));
   gap: 3px;
   background: var(--grid-line);
   padding: 10px;
@@ -243,8 +243,8 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  width: var(--cell-size);
-  height: var(--cell-size);
+  width: var(--cell-size, 54px);
+  height: var(--cell-size, 54px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -255,8 +255,8 @@ body {
 }
 
 .cell {
-  width: var(--cell-size);
-  height: var(--cell-size);
+  width: var(--cell-size, 54px);
+  height: var(--cell-size, 54px);
   background: var(--table);
   position: relative;
   display: flex;
