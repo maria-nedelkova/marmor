@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Marmor — a marble-lines puzzle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/style.css" />
+</head>
+<body>
+  <div class="table">
+    <header class="titlebar">
+      <h1 class="titlebar__title">MARMOR</h1>
+      <p class="titlebar__sub">line up five or more to clear the table</p>
+    </header>
+
+    <main class="layout">
+      <section class="board-wrap">
+        <div id="board" class="board" role="grid" aria-label="Game board"></div>
+        <div id="gameover" class="gameover hidden">
+          <div class="gameover__card">
+            <h2>Table's full</h2>
+            <p id="gameover-score"></p>
+            <button id="restart-btn" class="btn btn--primary">New game</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel__block">
+          <span class="panel__label">Score</span>
+          <span id="score" class="panel__value">0</span>
+        </div>
+        <div class="panel__block">
+          <span class="panel__label">Best</span>
+          <span id="best" class="panel__value">0</span>
+        </div>
+        <div class="panel__block">
+          <span class="panel__label">Next up</span>
+          <div id="next-preview" class="next-preview"></div>
+        </div>
+        <button id="new-game-btn" class="btn">New game</button>
+        <p class="panel__hint">Click a marble, then an empty cell. A clear path is required — marbles can't jump.</p>
+      </aside>
+    </main>
+  </div>
+
+  <script src="src/main.js"></script>
+</body>
+</html>
