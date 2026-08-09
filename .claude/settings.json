@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Users/maria/.bun/bin/bun --bun x tsc --noEmit)",
+      "Bash(/Users/maria/.bun/bin/bun test*)",
+      "Bash(PATH=\"/Users/maria/.bun/bin:$PATH\" bun run build*)"
+    ]
+  }
+}

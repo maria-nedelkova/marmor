@@ -105,6 +105,13 @@ body {
   flex-wrap: nowrap;
 }
 
+/* Only ever shown in the mobile layout (see the max-width breakpoint below)
+ * — on desktop the two pedestals' relative height already communicates the
+ * score race, so a second indicator would be redundant. */
+.duel-progress {
+  display: none;
+}
+
 .duel-mascot {
   display: flex;
   flex-direction: column;
@@ -226,6 +233,16 @@ body {
   display: grid;
   grid-template-columns: repeat(9, var(--cell-size, 54px));
   grid-template-rows: repeat(9, var(--cell-size, 54px));
+  /* A block-level grid container's `width: auto` fills its containing
+   * block rather than sizing to its own tracks — harmless everywhere the
+   * wrapper is unconstrained, but the mobile layout gives .board-wrap an
+   * explicit (smaller, pre-scale-down) size, which would otherwise squash
+   * .board's own box to that width while its 9 fixed-size columns still
+   * demand the full 486px, so the grid lines/border only covered the
+   * squashed portion and the rest visibly overflowed with no background.
+   * max-content forces .board to size from its own tracks always. */
+  width: max-content;
+  height: max-content;
   gap: 3px;
   background: var(--grid-line);
   padding: 10px;
@@ -399,6 +416,12 @@ body {
   color: var(--muted);
 }
 
+/* Hidden only in the compact mobile topbar (see the max-width: 640px
+ * block) — on desktop the New game/Sound buttons keep their text. */
+.topbar__label {
+  display: inline;
+}
+
 .next-preview {
   display: flex;
   gap: 8px;
@@ -441,5 +464,201 @@ body {
 .gameover-dialog [data-slot="dialog-footer"],
 .win-dialog [data-slot="dialog-footer"] {
   justify-content: center !important;
+}
+
+/* Mobile layout: the board can't sit between two flanking mascots on a
+ * narrow screen, so it moves to the top with King/progress/Pretender in a
+ * compact row underneath. The board itself keeps its normal 54px-cell
+ * layout (see the note on .board and Board.tsx) and is only ever shrunk
+ * visually via transform: scale() here — its unscaled footprint is a fixed,
+ * known 536px (9 cells + 8 gaps + padding + border), so scaling it costs
+ * nothing in the glide-positioning math, which keeps computing in the
+ * original 54px coordinate space regardless of what this renders it at.
+ * The mascots' sprite/pedestal sizing, by contrast, is a real (non-scaled)
+ * size change via DuelMascot's `compact` prop — their score badge has real
+ * text in it, and shrinking that via transform would make it illegible
+ * rather than just smaller. */
+@media (max-width: 640px) {
+  .table {
+    width: 100%;
+    max-width: 420px;
+    padding: 10px 6px;
+    display: flex;
+    flex-direction: column;
+    /* Fills the viewport so the layout can distribute space top-to-bottom
+     * (see .topbar's margin-top: auto below) instead of the whole group
+     * being vertically centered by body with dead space on both ends.
+     * 100vh first as a fallback for anything that doesn't know dvh. */
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* Reordered so the King/progress/Pretender row and the board read as one
+   * connected "game" area, with the New game/Next up/Sound controls
+   * (secondary, glanced-at-less-often) pushed below it rather than
+   * competing for attention above the fold. Pure CSS order — the DOM
+   * order (and desktop's visual order, which is unaffected since order
+   * only applies inside this media query) stays the same. */
+  /* Always pinned to the very top — only the mascots/board/hint group
+   * below it (see .layout's margin-top: auto) centers in the leftover
+   * space, not the title itself. */
+  .titlebar {
+    order: 1;
+    margin-bottom: 24px;
+  }
+
+  .titlebar__title {
+    font-size: 16px;
+    letter-spacing: 2px;
+    margin-bottom: 24px; /* matches .titlebar's own margin-bottom below */
+  }
+
+  .titlebar__sub {
+    font-size: 9px;
+    line-height: 1.4;
+  }
+
+  /* Lighter, borderless topbar with icon-only buttons, pushed below the
+   * board/mascot area — the full-text, bordered version reads as too
+   * heavy/boxy at phone width, and controls matter less than the game
+   * itself once the board is the thing you're looking at. */
+  .topbar {
+    order: 4;
+    max-width: none;
+    /* auto pushes it (the last flex child) all the way to .table's bottom
+     * edge, instead of sitting right under the board with dead space
+     * below it — see .table's min-height above. */
+    margin: auto 0 0;
+    padding: 10px 4px;
+    background: none;
+    border: none;
+    box-shadow: none;
+    gap: 10px;
+  }
+
+  .topbar__label {
+    display: none;
+  }
+
+  .topbar__next {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .next-preview .marble {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* The King/progress/Pretender row now comes first, board second — see
+   * the .titlebar/.layout/.topbar `order` above for why. */
+  .layout {
+    order: 2;
+    /* Paired with .topbar's margin-top: auto below — two auto margins in
+     * the same flex column split the leftover vertical space between
+     * them, centering this group (and the hint after it) in the space
+     * between the fixed title and the bottom-pinned controls. */
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "king progress pretender"
+      "board board board";
+    row-gap: 10px;
+    column-gap: 8px;
+    justify-items: center;
+    align-items: center;
+  }
+
+  .duel-progress {
+    display: block;
+    grid-area: progress;
+    width: 100%;
+    align-self: center;
+  }
+
+  .board-wrap {
+    grid-area: board;
+    width: 354px; /* 536px unscaled footprint * 0.66 */
+    height: 354px;
+  }
+
+  .board {
+    transform: scale(0.66);
+    transform-origin: top left;
+  }
+
+  .duel-mascot--left {
+    grid-area: king;
+  }
+
+  .duel-mascot--right {
+    grid-area: pretender;
+  }
+
+  .duel-mascot--compact {
+    width: 74px;
+    gap: 4px;
+  }
+
+  /* No pedestal at all on mobile — DuelProgress already carries the
+   * "who's winning" signal there, so the height-scaling pedestal would
+   * just be extra visual weight in an already-tight layout. The figure
+   * sits directly on the ground instead of floating at its usual
+   * pedestal-relative height. */
+  .duel-mascot--compact .pedestal {
+    display: none;
+  }
+
+  .duel-mascot--compact .duel-mascot__figure {
+    bottom: 0 !important;
+  }
+
+  .duel-mascot--compact .duel-mascot__stage {
+    /* head-only sprite (10 rows at pixelSize 4 = 40px) + figure gap +
+     * compact badge, no pedestal — see DuelMascot's HEAD_ROWS crop. */
+    height: 68px;
+  }
+
+  .duel-mascot--compact .duel-mascot__score {
+    font-size: 10px !important;
+    padding: 2px 8px !important;
+  }
+
+  /* The King/Pretender name labels are redundant once the mascots are
+   * just a head plus a score badge in a compact row — nothing else in
+   * that row could be mistaken for something else. */
+  .duel-mascot--compact .duel-mascot__name {
+    display: none;
+  }
+
+  /* Moved into the gap between the board and the (bottom-pinned) controls
+   * — there's usually free space there now that the board got bigger and
+   * the header/mascots got more compact, so the instructions get to stay
+   * without competing with the game for room. */
+  .hint {
+    order: 3;
+    max-width: none;
+    margin: 16px 0 0;
+    font-size: 8px;
+    padding: 0 12px;
+  }
+}
+
+/* Below 640px's own breakpoint (not overlapping it) — 375px-wide phones
+ * (iPhone SE and similar, one of the most common widths) previously fell
+ * into this SECOND query too since 375 <= 400, and being declared later it
+ * silently won over the bigger 640px-tier sizing above. 370px keeps this
+ * tier for genuinely narrower phones only. */
+@media (max-width: 370px) {
+  .board-wrap {
+    width: 300px; /* 536px unscaled footprint * 0.56 */
+    height: 300px;
+  }
+
+  .board {
+    transform: scale(0.56);
+  }
 }
 

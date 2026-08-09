@@ -3,6 +3,7 @@ import { setMuted } from "./audio/sound";
 import { Board } from "./components/Board";
 import type { BoardHandle } from "./components/Board";
 import { DuelMascot } from "./components/DuelMascot";
+import { DuelProgress } from "./components/DuelProgress";
 import { GameOverOverlay } from "./components/GameOverOverlay";
 import { MarmorTitle } from "./components/MarmorTitle";
 import { TopBar } from "./components/TopBar";
@@ -11,12 +12,14 @@ import { KING_SCORE } from "./game/constants";
 import { KING_PALETTE, KING_ROWS } from "./game/sprites/king";
 import { PRETENDER_PALETTE, PRETENDER_ROWS } from "./game/sprites/pretender";
 import { useGame } from "./hooks/useGame";
+import { useIsMobile } from "./hooks/useIsMobile";
 
 export function App() {
   const boardRef = useRef<BoardHandle>(null);
   const game = useGame(boardRef);
   const [muted, setMutedState] = useState(false);
   const boardWrapRef = useRef<HTMLElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (game.shakeToken === 0) return;
@@ -59,6 +62,7 @@ export function App() {
           side="left"
           heightRatio={1}
           falling={game.won}
+          compact={isMobile}
         />
 
         <section className="board-wrap" ref={boardWrapRef}>
@@ -75,6 +79,8 @@ export function App() {
           <WinOverlay visible={game.won} score={game.score} onRestart={game.newGame} />
         </section>
 
+        <DuelProgress score={game.score} kingScore={KING_SCORE} />
+
         <DuelMascot
           name="Pretender"
           rows={PRETENDER_ROWS}
@@ -84,6 +90,7 @@ export function App() {
           side="right"
           heightRatio={game.score / KING_SCORE}
           falling={game.gameOver}
+          compact={isMobile}
         />
       </main>
 
