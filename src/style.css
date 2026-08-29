@@ -38,7 +38,7 @@ body button:not(:disabled) {
 }
 
 html {
-  height: 100%;
+  min-height: 100%;
   margin: 0;
   background: var(--bg);
 }
@@ -46,8 +46,17 @@ html {
 /* The gradient lives on body only — applying the same gradient to both html
  * and body rendered it twice as two independently-positioned boxes, which
  * showed up as faint seam lines where they didn't quite overlap. */
+/* min-height, not height: with a fixed height, content taller than one
+ * viewport (e.g. mobile, once the browser's address bar eats vertical
+ * space) made body itself the scroll container — but its background only
+ * paints within its own (viewport-capped) box, so scrolling past that
+ * revealed flat, gradient-less background underneath. min-height lets
+ * body's real box grow to the content's actual height, so the gradient
+ * covers all of it and the page scrolls natively instead of scrolling
+ * inside body. */
 body {
-  height: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
   margin: 0;
   background:
     radial-gradient(ellipse 900px 500px at 15% -10%, rgba(41, 241, 255, 0.16) 0%, transparent 60%),
@@ -58,7 +67,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: auto;
 }
 
 .table {
@@ -486,21 +494,24 @@ body {
     display: flex;
     flex-direction: column;
     /* Fills the viewport so the layout can distribute space top-to-bottom
-     * (see .topbar's margin-top: auto below) instead of the whole group
-     * being vertically centered by body with dead space on both ends.
-     * 100vh first as a fallback for anything that doesn't know dvh. */
+     * (see .layout's and .hint's margin-top: auto below) instead of the
+     * whole group being vertically centered by body with dead space on
+     * both ends. 100vh first as a fallback for anything that doesn't know
+     * dvh. */
     min-height: 100vh;
     min-height: 100dvh;
   }
 
   /* Reordered so the King/progress/Pretender row and the board read as one
-   * connected "game" area, with the New game/Next up/Sound controls
-   * (secondary, glanced-at-less-often) pushed below it rather than
-   * competing for attention above the fold. Pure CSS order — the DOM
-   * order (and desktop's visual order, which is unaffected since order
-   * only applies inside this media query) stays the same. */
-  /* Always pinned to the very top — only the mascots/board/hint group
-   * below it (see .layout's margin-top: auto) centers in the leftover
+   * connected "game" area, immediately followed by the New game/Next
+   * up/Sound controls — both stay above the fold on a phone even once the
+   * browser's own address bar eats into the viewport. The instructional
+   * hint text goes last: it's read once and skimmed rarely after, so it's
+   * the one thing that's fine to require a scroll for. Pure CSS order —
+   * the DOM order (and desktop's visual order, which is unaffected since
+   * order only applies inside this media query) stays the same. */
+  /* Always pinned to the very top — only the mascots/board group below it
+   * (see .layout's margin-top: auto) is pushed down into the leftover
    * space, not the title itself. */
   .titlebar {
     order: 1;
@@ -518,17 +529,14 @@ body {
     line-height: 1.4;
   }
 
-  /* Lighter, borderless topbar with icon-only buttons, pushed below the
+  /* Lighter, borderless topbar with icon-only buttons, right under the
    * board/mascot area — the full-text, bordered version reads as too
-   * heavy/boxy at phone width, and controls matter less than the game
-   * itself once the board is the thing you're looking at. */
+   * heavy/boxy at phone width. Sits third (before the hint) specifically
+   * so Next up/New game/Sound are visible without scrolling. */
   .topbar {
-    order: 4;
+    order: 3;
     max-width: none;
-    /* auto pushes it (the last flex child) all the way to .table's bottom
-     * edge, instead of sitting right under the board with dead space
-     * below it — see .table's min-height above. */
-    margin: auto 0 0;
+    margin: 16px 0 0;
     padding: 10px 4px;
     background: none;
     border: none;
@@ -555,10 +563,10 @@ body {
    * the .titlebar/.layout/.topbar `order` above for why. */
   .layout {
     order: 2;
-    /* Paired with .topbar's margin-top: auto below — two auto margins in
-     * the same flex column split the leftover vertical space between
-     * them, centering this group (and the hint after it) in the space
-     * between the fixed title and the bottom-pinned controls. */
+    /* Pushes this group down away from the pinned title, using up
+     * whatever vertical space isn't needed by the fixed-height items below
+     * it (topbar, hint) — see .hint's own margin-top: auto, which does the
+     * equivalent job of pinning the trailing hint to .table's bottom edge. */
     margin-top: auto;
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -633,14 +641,16 @@ body {
     display: none;
   }
 
-  /* Moved into the gap between the board and the (bottom-pinned) controls
-   * — there's usually free space there now that the board got bigger and
-   * the header/mascots got more compact, so the instructions get to stay
-   * without competing with the game for room. */
+  /* Last, after the controls — the least important thing on the screen,
+   * so it's the one that trails off the bottom (and needs a scroll to
+   * read) on a short viewport, never Next up/New game/Sound above it.
+   * margin-top: auto pins it to .table's bottom edge the same way
+   * .topbar used to before this reorder — see .layout's own
+   * margin-top: auto above, which splits the leftover space with this one. */
   .hint {
-    order: 3;
+    order: 4;
     max-width: none;
-    margin: 16px 0 0;
+    margin: auto 0 0;
     font-size: 8px;
     padding: 0 12px;
   }
