@@ -185,23 +185,52 @@ didn't hold — it just canceled out for cells that started at the *same*
 moment (the initial selection, all created in one React commit), which is
 exactly what the smaller-set test above could never violate.
 
-**Fix:** `-(performance.now() % 1100)` instead of `-(Date.now() % 1100)` —
-same one-line CSS-variable approach, just the clock the delay is computed
-from now actually matches the clock the animation timeline uses, so the
-self-canceling math the original fix was relying on actually holds. No JS
-timer, no per-cell inline styles, no forced animation restarts needed.
+**Fix attempt that was real but still incomplete:** switched to
+`-(performance.now() % 1100)`, on the reasoning above (right idea, wrong
+clock). Shipped, tested by hand, looked fixed. It wasn't — a user reported
+the same desync days later. Driving a headless Chrome instance directly via
+its DevTools protocol (`Runtime.evaluate`, clicking real cells, then reading
+`document.getAnimations()`) to actually measure phases instead of eyeballing
+video frames turned up the real mechanism: `animation-delay: var(--blink-delay)`
+is a **live** binding, not a snapshot. `Animation#effect.getTiming().delay`
+re-resolves the *current* value of `--blink-delay` even for an animation
+that's been running since three selections ago — but that instance's
+`startTime`/`currentTime` stay anchored to whenever it actually began. So a
+cell that survives several selections without React ever toggling its
+`.reachable` class keeps reading a fresh delay against a stale time
+baseline, drifting a little further every time *any* new selection changes
+`--blink-delay` — not just when that specific cell's own animation restarts.
+The `performance.now()` correction didn't fix this; it only happened to
+pass every by-hand test because those tests never chained enough selections
+for a persisting cell's drift to become visible in one sitting.
 
-**Lesson:** CSS custom properties inherit down the DOM tree. If many
-sibling elements need to agree on one value (a start time, a phase, a
-delay), set it once on a shared ancestor instead of duplicating it onto
-every element — cheaper, and there's no per-element state to fall out of
-sync in the first place. But when that value is a clock reading meant to
-line up with a *browser-internal* timeline (animations, `requestAnimationFrame`,
-the Web Animations API), reach for `performance.now()`, not `Date.now()` —
-mixing an epoch clock into a computation meant to sync with a
-navigation-relative one reintroduces exactly the kind of drift the fix was
-supposed to eliminate, and a test that only exercises removals from the
-synced set (never new arrivals) won't catch it.
+**Actual fix:** stopped trying to make a shared delay value work at all.
+`Board.tsx` now force-restarts every *currently*-reachable cell's animation
+together on each new selection — remove the `.reachable` class, force a
+reflow (`grid.offsetWidth`), re-add it — the same remove/reflow/re-add
+trick `App.tsx` already used for `.shake`. Once every visible dot's
+animation restarts in the same synchronous pass, they all get an
+(essentially) identical `startTime`, so they're in sync with each other by
+construction — no shared delay value, no clock-matching, nothing left to
+drift. Verified by driving a real Chrome instance through 14 rapid,
+varying-size selections and checking `getAnimations()` phases after each:
+0ms spread every time, versus the `performance.now()` version's ~50-930ms
+spread on 2 of the same 14.
+
+**Lesson:** CSS custom properties inherit down the DOM tree, but *live*
+custom properties (`var()`) keep re-resolving for animations that are
+already running — they are not a "start value," they're read continuously.
+Relying on one to coordinate several independently-started animations only
+works if every one of them restarts every time the shared value changes;
+if any of them can persist unchanged across an update (exactly what class
+continuity across React re-renders does), the discrepancy between a live
+"used value" and a frozen `startTime` baseline reappears indefinitely, once
+per update that a given instance survives — and this is exactly the kind of
+intermittent, compounding drift that a single manual test (or even several)
+can pass while still shipping broken, because it only shows up after enough
+selections accumulate. When two things need to move in lockstep, actually
+restarting both together beats trying to compute a value that keeps them
+apart to look aligned.
 
 ## Doubled background gradient → visible seam lines
 

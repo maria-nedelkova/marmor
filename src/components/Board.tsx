@@ -1,5 +1,4 @@
-import { forwardRef, useImperativeHandle, useMemo, useRef } from "react";
-import type { CSSProperties } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { BOARD_PADDING_PX, CELL_GAP_PX, CELL_SIZE_PX, SIZE } from "../game/constants";
 import type { Board as BoardType, Cell as CellType, ColorIndex } from "../game/types";
 import { Cell } from "./Cell";
@@ -30,6 +29,7 @@ export const Board = forwardRef<BoardHandle, BoardProps>(function Board(
   { board, selected, reachable, poppingKeys, spawningKeys, onCellClick },
   ref,
 ) {
+  const gridRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const overlayMarbleRef = useRef<HTMLDivElement>(null);
 
@@ -56,26 +56,30 @@ export const Board = forwardRef<BoardHandle, BoardProps>(function Board(
     },
   }));
 
-  // A fresh sync point computed once per new reachable set (not a recurring
-  // timer) — every currently-reachable dot reads this same delay via CSS
-  // inheritance (set once here on the board, not per-cell), so they always
-  // start a new selection's blink in phase with each other.
-  //
-  // performance.now(), not Date.now(): CSS animations are scheduled against
-  // the page's animation timeline, which runs on time-since-navigation
-  // (the same clock as performance.now()), not wall-clock epoch time. A
-  // negative animation-delay of -(now % 1100) is meant to snap ANY fresh
-  // animation start onto the same absolute 1100ms grid regardless of when
-  // it began — but that only cancels out if "now" is measured on the same
-  // clock the animation engine itself uses. With Date.now() the two clocks
-  // differ by a large, non-1100-aligned constant (performance.timeOrigin),
-  // so cells whose dot animation actually restarts (newly reachable) end up
-  // on a different phase than cells that stayed reachable and never
-  // restarted (still running on whatever phase they started with,
-  // unaffected by this variable changing again later) — exactly the
-  // "switch to a marble with *more* options" desync.
-  const blinkDelay = useMemo(() => -(performance.now() % 1100), [reachable]);
-  const boardStyle = useMemo(() => ({ "--blink-delay": `${blinkDelay}ms` }) as CSSProperties, [blinkDelay]);
+  // Force every currently-reachable dot's pulse animation to restart
+  // together on each new selection, rather than relying on a shared
+  // animation-delay custom property to keep them in phase. A CSS custom
+  // property referenced via var() is re-resolved live for an
+  // ALREADY-RUNNING animation too (confirmed: Animation#effect.getTiming()
+  // reflects the current variable value even for an instance that started
+  // selections ago) — but that instance's startTime/currentTime stay
+  // anchored to whenever it actually began. So a cell that survives several
+  // selections without React ever toggling its `reachable` class keeps
+  // reading a fresh delay value against a stale time baseline, drifting a
+  // little further out of sync with every later selection. Explicitly
+  // removing and re-adding the class (with a forced reflow in between, so
+  // the browser actually drops the old animation instance first) is the
+  // same trick App.tsx uses to restart `.shake` — a one-time DOM operation
+  // per selection, not a recurring timer, so it doesn't reintroduce the
+  // setInterval performance cost from the very first attempt at this bug.
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    const dots = grid.querySelectorAll<HTMLElement>(".cell.reachable");
+    dots.forEach((el) => el.classList.remove("reachable"));
+    void grid.offsetWidth;
+    dots.forEach((el) => el.classList.add("reachable"));
+  }, [reachable]);
 
   const cells = [];
   for (let r = 0; r < SIZE; r++) {
@@ -98,7 +102,7 @@ export const Board = forwardRef<BoardHandle, BoardProps>(function Board(
   }
 
   return (
-    <div className="board" role="grid" aria-label="Game board" style={boardStyle}>
+    <div ref={gridRef} className="board" role="grid" aria-label="Game board">
       {cells}
       <div ref={overlayRef} className="glide-overlay" style={{ display: "none", transform: "translate(0, 0)" }}>
         <div ref={overlayMarbleRef} className="marble moving" />

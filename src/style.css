@@ -300,13 +300,17 @@ body {
   width: 8px;
   height: 8px;
   background: var(--accent);
+  /* No animation-delay here on purpose — Board.tsx force-restarts every
+   * currently-reachable dot's animation together on each new selection (see
+   * the comment there), so they all get a fresh, identical startTime and
+   * need no delay coordination at all. A shared animation-delay driven by a
+   * CSS custom property looked like it should keep them in sync without
+   * that restart, but it doesn't: var() is re-resolved live even for an
+   * already-running animation, while that instance's own startTime stays
+   * fixed at whenever it first began — so a cell that survives several
+   * selections without its class ever toggling drifts a little further out
+   * of phase on every later selection. */
   animation: pulse-dot 1.1s steps(2, jump-none) infinite;
-  /* --blink-delay is recomputed once per new selection (see Board.tsx) so
-   * every dot in the current reachable set starts in the same phase —
-   * fixes dots drifting out of sync without needing an ongoing JS timer
-   * (a setInterval-driven version re-rendered the whole board every tick
-   * and measurably slowed the marble glide down). */
-  animation-delay: var(--blink-delay, 0ms);
 }
 
 @keyframes pulse-dot {
