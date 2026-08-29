@@ -60,7 +60,21 @@ export const Board = forwardRef<BoardHandle, BoardProps>(function Board(
   // timer) — every currently-reachable dot reads this same delay via CSS
   // inheritance (set once here on the board, not per-cell), so they always
   // start a new selection's blink in phase with each other.
-  const blinkDelay = useMemo(() => -(Date.now() % 1100), [reachable]);
+  //
+  // performance.now(), not Date.now(): CSS animations are scheduled against
+  // the page's animation timeline, which runs on time-since-navigation
+  // (the same clock as performance.now()), not wall-clock epoch time. A
+  // negative animation-delay of -(now % 1100) is meant to snap ANY fresh
+  // animation start onto the same absolute 1100ms grid regardless of when
+  // it began — but that only cancels out if "now" is measured on the same
+  // clock the animation engine itself uses. With Date.now() the two clocks
+  // differ by a large, non-1100-aligned constant (performance.timeOrigin),
+  // so cells whose dot animation actually restarts (newly reachable) end up
+  // on a different phase than cells that stayed reachable and never
+  // restarted (still running on whatever phase they started with,
+  // unaffected by this variable changing again later) — exactly the
+  // "switch to a marble with *more* options" desync.
+  const blinkDelay = useMemo(() => -(performance.now() % 1100), [reachable]);
   const boardStyle = useMemo(() => ({ "--blink-delay": `${blinkDelay}ms` }) as CSSProperties, [blinkDelay]);
 
   const cells = [];

@@ -156,19 +156,52 @@ groups of cells ended up on different timelines, drifting apart.
 - Gating that interval to only run while `reachable.size > 0` — better, but
   didn't address the real performance cost, and still a needless recurring
   timer.
+- A `useMemo` computed once per new selection, `-(Date.now() % 1100)`,
+  exposed as a single CSS custom property (`--blink-delay`) set once on the
+  `.board` container and inherited by every reachable cell's `::after` via
+  `animation-delay: var(--blink-delay, 0ms)`. This looked like it worked —
+  it passed the "select a different, more-blocked marble" test above,
+  since a smaller reachable set only *removes* cells, never adds any, so no
+  new animation instances ever start during that test and there's nothing
+  to reveal a mismatch. It reappeared the moment someone selected a marble
+  with *more* reachable cells than the previous one: cells that were
+  already reachable never have `.reachable` toggled off and on (React just
+  keeps rendering the class), so their animation never restarts and keeps
+  running on whatever phase it started with; newly-reachable cells get a
+  fresh animation that reads the *current* `--blink-delay` — two groups on
+  two timelines again, just now revealed by the newly-added cells instead
+  of by cells returning after having left.
 
-**Actual fix:** replaced the timer entirely with a `useMemo` computed once
-per new selection: `-(Date.now() % 1100)`, exposed as a single CSS custom
-property (`--blink-delay`) set **once on the `.board` container**, not on
-every cell. Every reachable cell's `::after` pseudo-element inherits it via
-`animation-delay: var(--blink-delay, 0ms)`. No JS timer, no per-cell inline
-styles, no re-renders after the initial selection.
+**Actual root cause of the `Date.now()` version:** the idea (a negative
+`animation-delay` of `-(now % 1100)` snaps *any* fresh animation start onto
+the same absolute 1100ms grid, so it never matters when a given cell's
+animation actually began) is sound — but only if "now" is measured on the
+same clock the browser's animation engine schedules against. CSS animations
+run on the page's animation timeline, which tracks time-since-navigation
+(`performance.now()`'s clock), not wall-clock epoch time (`Date.now()`).
+The two differ by a large constant (`performance.timeOrigin`) that isn't a
+multiple of 1100, so the "any start time cancels out" property silently
+didn't hold — it just canceled out for cells that started at the *same*
+moment (the initial selection, all created in one React commit), which is
+exactly what the smaller-set test above could never violate.
+
+**Fix:** `-(performance.now() % 1100)` instead of `-(Date.now() % 1100)` —
+same one-line CSS-variable approach, just the clock the delay is computed
+from now actually matches the clock the animation timeline uses, so the
+self-canceling math the original fix was relying on actually holds. No JS
+timer, no per-cell inline styles, no forced animation restarts needed.
 
 **Lesson:** CSS custom properties inherit down the DOM tree. If many
 sibling elements need to agree on one value (a start time, a phase, a
 delay), set it once on a shared ancestor instead of duplicating it onto
 every element — cheaper, and there's no per-element state to fall out of
-sync in the first place.
+sync in the first place. But when that value is a clock reading meant to
+line up with a *browser-internal* timeline (animations, `requestAnimationFrame`,
+the Web Animations API), reach for `performance.now()`, not `Date.now()` —
+mixing an epoch clock into a computation meant to sync with a
+navigation-relative one reintroduces exactly the kind of drift the fix was
+supposed to eliminate, and a test that only exercises removals from the
+synced set (never new arrivals) won't catch it.
 
 ## Doubled background gradient → visible seam lines
 
