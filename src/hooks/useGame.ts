@@ -25,6 +25,7 @@ import {
   weightedRandomColor,
   weightedRandomColors,
 } from "../game/engine";
+import { rng } from "../game/rng";
 import type { Board, Cell, ColorIndex } from "../game/types";
 
 const cellKey = (r: number, c: number) => `${r},${c}`;
@@ -93,7 +94,7 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       // Cells aren't picked uniformly at random — each turn has a flat chance
       // of the board looking for the player's near-complete lines and
       // dropping a mismatched color right on top of one, instead of anywhere empty.
-      const canBlock = !isInitial && Math.random() < BLOCK_PROBABILITY;
+      const canBlock = !isInitial && rng.random() < BLOCK_PROBABILITY;
       const { cells: placedCells } = assignSpawnCells(boardRef.current, colors, BLOCK_MIN_RUN_LENGTH, canBlock);
 
       placedCells.forEach((cell, i) => {

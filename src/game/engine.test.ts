@@ -12,6 +12,7 @@ import {
   scoreForClear,
   weightedRandomColor,
 } from "./engine";
+import { rng } from "./rng";
 import type { Board } from "./types";
 
 function place(board: Board, cells: [number, number][], color: number) {
@@ -262,8 +263,8 @@ describe("assignSpawnCells", () => {
     // would finish the line for the player, so it must fall back to a
     // non-targeted cell instead. Force the fallback's random pick to be
     // deterministic so this is a real assertion, not a 2-in-77 coin flip.
-    const originalRandom = Math.random;
-    Math.random = () => 0;
+    const originalRandom = rng.random;
+    rng.random = () => 0;
     try {
       const { cells, blocked } = assignSpawnCells(board, [1]);
       expect(blocked).toBe(false);
@@ -271,7 +272,7 @@ describe("assignSpawnCells", () => {
       const { r, c } = cells[0]!;
       if (r === 4) expect([1, 6]).not.toContain(c);
     } finally {
-      Math.random = originalRandom;
+      rng.random = originalRandom;
     }
   });
 
