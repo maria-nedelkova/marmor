@@ -3,6 +3,43 @@
 Bugs and gotchas from building Marmor, kept around so we don't relearn them
 the hard way a second time.
 
+## The King's pedestal recurred short, on a device with a broken `Math.random`
+
+**Symptom:** on first load, the King's pedestal rendered at the same short
+height as the Pretender's (whose height reflects live score, starting at
+its shortest), with the King's sprite still positioned as if standing on a
+full-height pedestal — a visible gap between sprite and pedestal top.
+"New game" didn't fix it. Same visitor also hit a row-major ball-spawn bug traced to `Math.random()`
+returning degenerate values on their device, fixed by switching the engine
+to its own seeded generator (`src/game/rng.ts`) — worth noting since it
+points at the same kind of environment (an extension or hardened browser
+config interfering with the page), not a coincidence of two unrelated bugs.
+
+**Why New Game couldn't have fixed it:** the King's `heightRatio` prop is a
+hardcoded `1` (`App.tsx`), not derived from any state — it renders
+identically on every render, "New game" included. A bug that survives a
+full re-render with unchanged, correct props isn't a React logic bug; it's
+the browser failing to paint what the DOM/CSS actually describe.
+
+**What we did without being able to reproduce it:** the pedestal's total
+height (cap + shaft + base) previously only existed implicitly, as the sum
+of three flex children stacking in a column. It's now also set explicitly
+as the container's own `height` style in `Pedestal.tsx`, using the same
+number `DuelMascot` already uses to position the King/Pretender sprite
+above it (`bottom: pedestalHeight`) — so the two can't independently drift
+out of sync, whatever the underlying cause turns out to be. This is the
+same "cheap, harmless defensive fix without a confirmed root cause" move as
+the `--cell-size` fallback below — it doesn't explain *why* a device would
+fail to size the shaft correctly, but it removes one more way the
+container's box and the figure's position could disagree.
+
+**Lesson:** when the same visitor hits two independent-looking rendering
+bugs in one session, look for a shared environmental cause (a privacy
+extension, a hardened browser config) before treating them as two separate
+code bugs — and when you can't reproduce either, a redundant/explicit value
+that closes a plausible gap is worth shipping even without proof it's *the*
+fix.
+
 ## The board rendered as a blank strip for one real-world visitor
 
 **Symptom:** a friend testing the live site on "latest Chrome on a MacBook"
