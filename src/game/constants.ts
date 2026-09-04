@@ -1,7 +1,16 @@
 export const SIZE = 9;
-export const COLORS = 7;
+/** Palette size — the number of marble colors the CSS defines (.c0–.c7 in
+ * style.css). How many of these are actually in play is per-level
+ * (`colors` in `levels.ts`); this is the ceiling, not the game setting.
+ * The classic game (and round 1) uses the first seven; c7 exists only for
+ * the later rounds. */
+export const COLORS = 8;
 export const LINE_MIN = 5;
-export const SPAWN_COUNT = 3;
+
+/** The King's score, in every round. Deliberately a constant rather than a
+ * per-level field: the target never varies, so the ladder gets harder by
+ * making 100 points harder to reach, not by moving the finish line. */
+export const KING_SCORE = 100;
 
 // Must match the .board rule in style.css (--cell-size, gap, padding) — used
 // to position the imperative glide overlay without reading layout back from
@@ -9,14 +18,3 @@ export const SPAWN_COUNT = 3;
 export const CELL_SIZE_PX = 54;
 export const CELL_GAP_PX = 3;
 export const BOARD_PADDING_PX = 10;
-
-/** The King's fixed score — the Pretender wins by reaching or beating it. */
-export const KING_SCORE = 100;
-
-/** A spawn only blocks the player's most advanced line once it's at least this long. */
-export const BLOCK_MIN_RUN_LENGTH = 3;
-
-/** Chance, per non-initial spawn, that blocking is even considered this turn.
- * A flat probability rather than a fixed cooldown so it doesn't fall into an
- * obvious every-Nth-turn pattern. */
-export const BLOCK_PROBABILITY = 0.35;

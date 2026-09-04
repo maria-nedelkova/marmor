@@ -13,20 +13,27 @@ export function cloneBoard(board: Board): Board {
   return board.map((row) => row.slice());
 }
 
-export function randomColor(): ColorIndex {
-  return Math.floor(Math.random() * COLORS);
+// `colorCount` is how many colors are in play this level (see levels.ts);
+// it defaults to the full palette so the engine is still usable — and
+// testable — without a level in hand.
+
+export function randomColor(colorCount = COLORS): ColorIndex {
+  return Math.floor(Math.random() * colorCount);
 }
 
-export function randomColors(n: number): ColorIndex[] {
-  return Array.from({ length: n }, randomColor);
+export function randomColors(n: number, colorCount = COLORS): ColorIndex[] {
+  return Array.from({ length: n }, () => randomColor(colorCount));
 }
 
 /** Count of each color currently on the board, indexed by color. */
-export function colorCounts(board: Board): number[] {
-  const counts = Array<number>(COLORS).fill(0);
+export function colorCounts(board: Board, colorCount = COLORS): number[] {
+  const counts = Array<number>(colorCount).fill(0);
   for (const row of board) {
     for (const cell of row) {
-      if (cell !== null) counts[cell]!++;
+      // A color outside the current level's range can only appear if a
+      // board outlived a level change; ignoring it beats writing past the
+      // end of the counts array.
+      if (cell !== null && cell < colorCount) counts[cell]!++;
     }
   }
   return counts;
@@ -35,9 +42,14 @@ export function colorCounts(board: Board): number[] {
 /** Picks a color weighted toward colors already present on the board — the
  * more of a color already on the table, the likelier it spawns again, which
  * makes lines easier to complete (and to run into by accident). A +1
- * smoothing weight keeps every color reachable even when absent. */
-export function weightedRandomColor(board: Board): ColorIndex {
-  const weights = colorCounts(board).map((count) => count + 1);
+ * smoothing weight keeps every color reachable even when absent.
+ *
+ * `affinity` scales how much that already-on-the-board bias counts: 1 is
+ * the classic helpful clustering, 0 flattens it to uniform random. Late
+ * levels turn it down to make runs stall without changing anything the
+ * player can see. */
+export function weightedRandomColor(board: Board, colorCount = COLORS, affinity = 1): ColorIndex {
+  const weights = colorCounts(board, colorCount).map((count) => count * affinity + 1);
   const total = weights.reduce((sum, w) => sum + w, 0);
   let roll = Math.random() * total;
   for (let i = 0; i < weights.length; i++) {
@@ -47,8 +59,8 @@ export function weightedRandomColor(board: Board): ColorIndex {
   return weights.length - 1;
 }
 
-export function weightedRandomColors(board: Board, n: number): ColorIndex[] {
-  return Array.from({ length: n }, () => weightedRandomColor(board));
+export function weightedRandomColors(board: Board, n: number, colorCount = COLORS, affinity = 1): ColorIndex[] {
+  return Array.from({ length: n }, () => weightedRandomColor(board, colorCount, affinity));
 }
 
 export function inBounds(r: number, c: number): boolean {
@@ -228,12 +240,12 @@ export interface CellThreat {
  * with a given color, would extend an existing run to at least `minLength`.
  * Sorted most urgent (longest resulting run) first. This is what the spawner
  * uses to find the player's in-progress lines worth blocking. */
-export function findTopThreats(board: Board, minLength = 3): CellThreat[] {
+export function findTopThreats(board: Board, minLength = 3, colorCount = COLORS): CellThreat[] {
   const threats: CellThreat[] = [];
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
       if (board[r]![c] !== null) continue;
-      for (let color = 0; color < COLORS; color++) {
+      for (let color = 0; color < colorCount; color++) {
         const length = longestRunThrough(board, { r, c }, color);
         if (length >= minLength) threats.push({ cell: { r, c }, color, length });
       }
@@ -248,24 +260,30 @@ export interface SpawnAssignment {
   blocked: boolean;
 }
 
+export interface SpawnOptions {
+  /** How long an existing run must be before blocking it is worthwhile. */
+  minBlockLength?: number;
+  /** Whether blocking is permitted at all on this particular spawn. */
+  enableBlocking?: boolean;
+  /** Colors in play this level — bounds the threat scan. */
+  colorCount?: number;
+}
+
 /** Assigns each of `colors` (already decided, e.g. from the next-up queue) to
  * an empty cell. When `enableBlocking` is on, it prefers the board's most
  * urgent near-complete lines, placing a *different* color there to block it,
  * falling back to a random empty cell when no block is available or useful
  * for that color. This is the "AI" behind the difficulty: it doesn't change
  * what colors spawn, only where they land. The caller decides *when*
- * blocking is allowed (e.g. only some turns) via `enableBlocking`. */
-export function assignSpawnCells(
-  board: Board,
-  colors: ColorIndex[],
-  minBlockLength = 3,
-  enableBlocking = true,
-): SpawnAssignment {
+ * blocking is allowed (each level has its own per-turn chance) via
+ * `enableBlocking`. */
+export function assignSpawnCells(board: Board, colors: ColorIndex[], opts: SpawnOptions = {}): SpawnAssignment {
+  const { minBlockLength = 3, enableBlocking = true, colorCount = COLORS } = opts;
   const remainingFree = emptyCells(board);
   const toPlace = Math.min(colors.length, remainingFree.length);
   if (toPlace === 0) return { cells: [], blocked: false };
 
-  const threats = enableBlocking ? findTopThreats(board, minBlockLength) : [];
+  const threats = enableBlocking ? findTopThreats(board, minBlockLength, colorCount) : [];
   const usedKeys = new Set<string>();
   const assigned: Cell[] = [];
   let blocked = false;

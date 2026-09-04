@@ -5,18 +5,22 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 interface WinOverlayProps {
   visible: boolean;
   score: number;
+  /** Points across every round of the run — the number worth bragging about
+   * once the whole ladder is behind you. */
+  runScore: number;
+  rounds: number;
   onRestart: () => void;
 }
 
 const QUIPS: { title: string; body: string }[] = [
-  { title: "The King has fallen!", body: "You dethroned the King with {score} points." },
+  { title: "The King has fallen!", body: "You dethroned the King for good with {score} points." },
   { title: "Long live the Pretender!", body: "{score} points and a crown that fits a little too well." },
   { title: "Off with the old throne!", body: "{score} points of pure marble-lining regicide." },
-  { title: "A star is dethroned!", body: "The King rolls off his pedestal, {score} points behind." },
+  { title: "A star is dethroned!", body: "The King rolls off his pedestal for the last time, {score} points behind." },
   { title: "New management!", body: "{score} points later, the kingdom has a new tyrant. That's you." },
 ];
 
-export function WinOverlay({ visible, score, onRestart }: WinOverlayProps) {
+export function WinOverlay({ visible, score, runScore, rounds, onRestart }: WinOverlayProps) {
   const quip = useMemo(() => QUIPS[Math.floor(Math.random() * QUIPS.length)]!, [visible]);
 
   return (
@@ -26,6 +30,9 @@ export function WinOverlay({ visible, score, onRestart }: WinOverlayProps) {
           <DialogTitle className="win-dialog__title">{quip.title}</DialogTitle>
           <DialogDescription>{quip.body.replace("{score}", String(score))}</DialogDescription>
         </DialogHeader>
+        <p className="win-dialog__run">
+          All {rounds} rounds cleared &middot; {runScore} points on the run
+        </p>
         <DialogFooter>
           <Button font="retro" onClick={onRestart}>
             New game

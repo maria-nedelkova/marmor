@@ -4,11 +4,15 @@ import { Board } from "./components/Board";
 import type { BoardHandle } from "./components/Board";
 import { DuelMascot } from "./components/DuelMascot";
 import { DuelProgress } from "./components/DuelProgress";
+import { DevPanel, isDevMode } from "./components/DevPanel";
 import { GameOverOverlay } from "./components/GameOverOverlay";
+import { LevelBanner } from "./components/LevelBanner";
+import { LevelClearedOverlay } from "./components/LevelClearedOverlay";
 import { MarmorTitle } from "./components/MarmorTitle";
 import { TopBar } from "./components/TopBar";
 import { WinOverlay } from "./components/WinOverlay";
 import { KING_SCORE } from "./game/constants";
+import { getLevel } from "./game/levels";
 import { KING_PALETTE, KING_ROWS } from "./game/sprites/king";
 import { PRETENDER_PALETTE, PRETENDER_ROWS } from "./game/sprites/pretender";
 import { useGame } from "./hooks/useGame";
@@ -38,17 +42,24 @@ export function App() {
     });
   };
 
+  // The final round's clear is the run's actual victory; every earlier one
+  // hands off to the next King instead.
+  const roundCleared = game.cleared && !game.isFinal;
+  const won = game.cleared && game.isFinal;
+
   return (
     <div className="table">
       <header className="titlebar">
         <MarmorTitle />
-        <p className="titlebar__sub">Dethrone the King. Line up five or more to climb the score.</p>
+        <LevelBanner level={game.level} index={game.levelIndex} count={game.levelCount} />
       </header>
 
       <TopBar
         nextQueue={game.nextQueue}
         muted={muted}
+        roundNumber={game.levelIndex + 1}
         onToggleMute={toggleMute}
+        onRestartRound={game.retryLevel}
         onNewGame={game.newGame}
       />
 
@@ -61,7 +72,7 @@ export function App() {
           accent="#e8c14a"
           side="left"
           heightRatio={1}
-          falling={game.won}
+          falling={game.cleared}
           compact={isMobile}
         />
 
@@ -75,8 +86,30 @@ export function App() {
             spawningKeys={game.spawningKeys}
             onCellClick={game.handleCellClick}
           />
-          <GameOverOverlay visible={game.gameOver} score={game.score} onRestart={game.newGame} />
-          <WinOverlay visible={game.won} score={game.score} onRestart={game.newGame} />
+          <GameOverOverlay
+            visible={game.gameOver}
+            score={game.score}
+            levelName={game.level.name}
+            roundNumber={game.levelIndex + 1}
+            onRetry={game.retryLevel}
+            onRestart={game.newGame}
+          />
+          <LevelClearedOverlay
+            visible={roundCleared}
+            score={game.score}
+            runScore={game.runScore}
+            level={game.level}
+            nextLevel={getLevel(game.levelIndex + 1)}
+            nextRoundNumber={game.levelIndex + 2}
+            onNext={game.advanceLevel}
+          />
+          <WinOverlay
+            visible={won}
+            score={game.score}
+            runScore={game.runScore}
+            rounds={game.levelCount}
+            onRestart={game.newGame}
+          />
         </section>
 
         <DuelProgress score={game.score} kingScore={KING_SCORE} />
@@ -95,6 +128,15 @@ export function App() {
       </main>
 
       <p className="hint">Click a marble, then an empty cell. A clear path is required — marbles can&rsquo;t jump.</p>
+
+      {isDevMode() && (
+        <DevPanel
+          levelIndex={game.levelIndex}
+          onJump={game.devJumpToLevel}
+          onWinRound={game.devWinRound}
+          onFillBoard={game.devFillBoard}
+        />
+      )}
     </div>
   );
 }

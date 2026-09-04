@@ -17,6 +17,20 @@
   --c4: #2e8bff; /* blue */
   --c5: #b34bff; /* violet */
   --c6: #ff4fd8; /* pink */
+  /* The 8th color, introduced in round 2: a deep wine red. The seven above
+   * already fill the neon hue circle, so an eighth color can't find a clear
+   * hue of its own — this one instead separates on **lightness**, sitting
+   * far below the bright c0 red and c6 pink it shares a family with (2.3:1
+   * and 2.9:1 respectively) while holding 2.3:1 against the .cell
+   * background so it still reads as a marble and not an empty cell.
+   *
+   * Those two goals pull in opposite directions: every step darker
+   * separates it further from red/pink and sinks it further into the
+   * near-black board. If this is ever retuned, check all three ratios, and
+   * judge it as alternating adjacent marbles rather than as a lone swatch
+   * pair — isolated swatches always read as more distinct than a board row
+   * does, which is how an earlier, too-similar green passed review. */
+  --c7: #9c1440; /* wine */
 
   --cell-size: 54px;
   --font-display: "Press Start 2P", monospace;
@@ -87,6 +101,28 @@ body {
   font-size: 13px;
   line-height: 1.6;
   letter-spacing: 0.4px;
+}
+
+.level-banner__heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.level-banner__round {
+  padding: 4px 8px;
+  border: 2px solid var(--accent2);
+  color: var(--accent2);
+}
+
+.level-banner__name {
+  color: var(--accent);
 }
 
 @keyframes flicker {
@@ -384,18 +420,22 @@ body {
 .c4 { --glow: var(--c4); background: var(--c4); }
 .c5 { --glow: var(--c5); background: var(--c5); }
 .c6 { --glow: var(--c6); background: var(--c6); }
+.c7 { --glow: var(--c7); background: var(--c7); }
 
 .topbar {
-  max-width: 720px;
+  /* Widened from 720px and tightened when "Restart round" became a fourth
+   * zone — at the old width the row wrapped and stranded Sound on a line of
+   * its own. 860px is the widest that still sits inside .table's 880px. */
+  max-width: 860px;
   margin: 0 auto 28px;
-  padding: 14px 24px;
+  padding: 14px 16px;
   background: var(--panel);
   border: 3px solid var(--panel-border);
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
@@ -442,12 +482,14 @@ body {
 }
 
 .gameover-dialog,
-.win-dialog {
+.win-dialog,
+.level-dialog {
   text-align: center;
 }
 
 .gameover-dialog__title,
-.win-dialog__title {
+.win-dialog__title,
+.level-dialog__title {
   font-family: var(--font-display) !important;
   font-size: 16px !important;
   margin: 0 0 4px;
@@ -457,13 +499,166 @@ body {
   color: var(--accent2) !important;
 }
 
-.win-dialog__title {
+.win-dialog__title,
+.level-dialog__title {
   color: #b8860b !important;
 }
 
 .gameover-dialog [data-slot="dialog-footer"],
-.win-dialog [data-slot="dialog-footer"] {
+.win-dialog [data-slot="dialog-footer"],
+.level-dialog [data-slot="dialog-footer"] {
   justify-content: center !important;
+  flex-wrap: wrap;
+}
+
+/* The preview of what's coming next round — boxed off from the "you won"
+ * copy above it, since it's the part that decides whether the player taps
+ * the button or closes the tab.
+ *
+ * Colors here come from the dialog's own --foreground/--muted-foreground
+ * (the tokens DialogDescription uses), NOT from the game's --text/--muted:
+ * dialog surfaces are light while the board is dark, and Tailwind's theme
+ * additionally redefines --muted on :root, so the game-side variables both
+ * read wrong and resolve to something unintended inside a dialog. */
+.level-dialog__next {
+  margin: 4px 0 2px;
+  padding: 12px;
+  border: 2px solid rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--foreground);
+}
+
+.level-dialog__next-label {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #b8860b;
+}
+
+.level-dialog__twist {
+  margin: 0 0 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--foreground);
+}
+
+/* The 8bit button's `outline` variant sets a background but no text color,
+ * so inside a dialog it inherits body's near-white --text and renders
+ * white-on-white. Same root cause as the --foreground note above: game-side
+ * colors don't survive a light dialog surface. */
+.dialog-button--secondary {
+  color: var(--foreground) !important;
+}
+
+.level-dialog__target,
+.win-dialog__run {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
+  color: var(--muted-foreground);
+}
+
+.win-dialog__run {
+  margin: 4px 0 0;
+}
+
+/* Testing-only round switcher (src/components/DevPanel.tsx), rendered only
+ * on localhost or with ?dev. Deliberately plain and un-themed — it should
+ * never be mistaken for part of the game, and it doesn't get to cost
+ * anything in the game's own visual budget. */
+.devpanel {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: #11162e;
+  border: 2px solid #3a4680;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  font-family: var(--font-display);
+  font-size: 8px;
+  color: #93a1cc;
+}
+
+.devpanel--collapsed {
+  padding: 6px 10px;
+  color: #93a1cc;
+  cursor: inherit;
+}
+
+.devpanel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.devpanel__title {
+  letter-spacing: 2px;
+  color: #5f6d9e;
+}
+
+.devpanel__close {
+  background: none;
+  border: none;
+  color: #93a1cc;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.devpanel__rounds {
+  display: flex;
+  gap: 4px;
+}
+
+.devpanel__round {
+  width: 22px;
+  height: 22px;
+  background: #1b2244;
+  border: 2px solid #3a4680;
+  color: #93a1cc;
+  font-family: inherit;
+  font-size: 8px;
+}
+
+.devpanel__round.is-active {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: #11162e;
+}
+
+.devpanel__level {
+  margin: 0;
+  color: #cdd8f5;
+  font-size: 8px;
+}
+
+.devpanel__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.devpanel__action {
+  flex: 1;
+  padding: 5px 6px;
+  background: #1b2244;
+  border: 2px solid #3a4680;
+  color: #cdd8f5;
+  font-family: inherit;
+  font-size: 8px;
+}
+
+.devpanel__keys {
+  margin: 0;
+  max-width: 190px;
+  line-height: 1.7;
+  color: #5f6d9e;
 }
 
 /* Mobile layout: the board can't sit between two flanking mascots on a
@@ -516,6 +711,27 @@ body {
   .titlebar__sub {
     font-size: 9px;
     line-height: 1.4;
+  }
+
+  /* The round chip and level name stay legible at phone size; the twist
+   * line below them shrinks with .titlebar__sub above. */
+  .level-banner__heading {
+    font-size: 9px;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .level-banner__round {
+    padding: 3px 6px;
+    border-width: 2px;
+  }
+
+  .level-dialog__next-label {
+    font-size: 9px;
+  }
+
+  .level-dialog__twist {
+    font-size: 9px;
   }
 
   /* Lighter, borderless topbar with icon-only buttons, pushed below the

@@ -177,6 +177,37 @@ describe("weightedRandomColor", () => {
     expect(color2Count).toBeGreaterThan(color6Count * 10);
   });
 
+  test("never returns a color outside the level's range", () => {
+    const board = createEmptyBoard();
+    // A color from outside the range already sitting on the board (as after
+    // a level change) must not drag the picker past `colorCount`.
+    place(board, [[0, 0], [0, 1], [0, 2], [0, 3]], 6);
+    for (let i = 0; i < 500; i++) {
+      const color = weightedRandomColor(board, 5);
+      expect(color).toBeGreaterThanOrEqual(0);
+      expect(color).toBeLessThan(5);
+    }
+  });
+
+  test("affinity 0 ignores the board entirely, unlike affinity 1", () => {
+    const board = createEmptyBoard();
+    // 40 marbles of color 0 — at affinity 1 that swamps every other color's
+    // +1 smoothing weight; at affinity 0 it should count for nothing.
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 8; c++) board[r]![c] = 0;
+    }
+    const runs = 3000;
+    let biased = 0;
+    let flat = 0;
+    for (let i = 0; i < runs; i++) {
+      if (weightedRandomColor(board, COLORS, 1) === 0) biased++;
+      if (weightedRandomColor(board, COLORS, 0) === 0) flat++;
+    }
+    // Expected shares: ~41/47 (~0.87) biased vs ~1/7 (~0.14) flat.
+    expect(biased / runs).toBeGreaterThan(0.7);
+    expect(flat / runs).toBeLessThan(0.25);
+  });
+
   test("falls back to uniform-ish behavior when no color dominates", () => {
     const board = createEmptyBoard();
     const counts = new Array(COLORS).fill(0);
@@ -300,7 +331,16 @@ describe("assignSpawnCells", () => {
   test("enableBlocking=false never blocks, even with an obvious threat", () => {
     const board = createEmptyBoard();
     place(board, [[4, 2], [4, 3], [4, 4], [4, 5]], 1);
-    const { blocked } = assignSpawnCells(board, [2], 3, false);
+    const { blocked } = assignSpawnCells(board, [2], { enableBlocking: false });
+    expect(blocked).toBe(false);
+  });
+
+  test("a threat in a color outside the level's range is not blocked", () => {
+    const board = createEmptyBoard();
+    // Color 6 exists on the board but round 1 only plays colors 0-4, so the
+    // threat scan must not see it and must not aim a spawn at it.
+    place(board, [[4, 2], [4, 3], [4, 4], [4, 5]], 6);
+    const { blocked } = assignSpawnCells(board, [2], { colorCount: 5 });
     expect(blocked).toBe(false);
   });
 });
