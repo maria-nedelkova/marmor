@@ -66,31 +66,55 @@ describe("the level ladder", () => {
   // Dimensions where a *lower* number is the harder setting.
   const lowerIsHarder = new Set(["previewShare", "colorAffinity"]);
 
-  test("each round changes exactly one difficulty dimension", () => {
+  /** Splits a round-to-round diff into dials that got harder and dials that
+   * got easier, accounting for the dimensions where a lower number is the
+   * harsher setting. */
+  function diffRound(i: number) {
+    const prev = LEVELS[i - 1]!;
+    const cur = LEVELS[i]!;
+    const harder: string[] = [];
+    const easier: string[] = [];
+    for (const [name, read] of Object.entries(dimensions)) {
+      const before = read(prev);
+      const after = read(cur);
+      if (before === after) continue;
+      const gotHarder = lowerIsHarder.has(name) ? after < before : after > before;
+      (gotHarder ? harder : easier).push(name);
+    }
+    return { round: i + 1, name: cur.name, harder, easier };
+  }
+
+  test("each round raises exactly one dial", () => {
     for (let i = 1; i < LEVEL_COUNT; i++) {
-      const prev = LEVELS[i - 1]!;
-      const cur = LEVELS[i]!;
-      const changed = Object.entries(dimensions)
-        .filter(([, read]) => read(prev) !== read(cur))
-        .map(([name]) => name);
-      expect({ round: i + 1, name: cur.name, changed }).toEqual({
-        round: i + 1,
-        name: cur.name,
-        changed: [changed[0]!],
+      const { round, name, harder } = diffRound(i);
+      // Asserted as an object so a failure names the offending round rather
+      // than just reporting "expected 1, got 2".
+      expect({ round, name, count: harder.length, harder }).toEqual({
+        round,
+        name,
+        count: 1,
+        harder,
       });
     }
   });
 
-  test("the one dimension each round changes always gets harder", () => {
+  test("a round eases at most one dial, and only alongside a harder one", () => {
     for (let i = 1; i < LEVEL_COUNT; i++) {
-      const prev = LEVELS[i - 1]!;
-      const cur = LEVELS[i]!;
-      for (const [name, read] of Object.entries(dimensions)) {
-        if (read(prev) === read(cur)) continue;
-        if (lowerIsHarder.has(name)) expect(read(cur)).toBeLessThan(read(prev));
-        else expect(read(cur)).toBeGreaterThan(read(prev));
-      }
+      const { round, name, harder, easier } = diffRound(i);
+      expect({ round, name, eased: easier.length }).toEqual({ round, name, eased: Math.min(easier.length, 1) });
+      // An easing is compensation for a heavier dial, never a free gift.
+      if (easier.length > 0) expect(harder.length).toBe(1);
     }
+  });
+
+  test("no round currently eases anything", () => {
+    // The rule permits one compensating easing per round, but the ladder as
+    // tuned uses none — every round is strictly harder than the last on its
+    // one dial. Pinned so that adding an easing is a deliberate act with a
+    // failing test to update, rather than something discovered from a diff
+    // months later.
+    const eased = Array.from({ length: LEVEL_COUNT - 1 }, (_, i) => diffRound(i + 1)).filter((d) => d.easier.length > 0);
+    expect(eased.map((d) => ({ round: d.round, easier: d.easier }))).toEqual([]);
   });
 
   test("colors and spawn count never go backwards", () => {

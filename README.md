@@ -56,8 +56,8 @@ increase, and nothing else**:
 | Round | Adds |
 | --- | --- |
 | 1 · The Duel | *the classic game* |
-| 2 · A Suspect Too Many | an 8th marble color |
-| 3 · Court Intrigue | the spawner sabotages your lines far more often |
+| 2 · Court Intrigue | the spawner spikes your near-complete lines more often |
+| 3 · A Suspect Too Many | an 8th marble color |
 | 4 · The Flood | 4 marbles a turn instead of 3 |
 | 5 · Blind Spot | "Next up" shows only 3 of the 4 |
 | 6 · Sworn Enemies | marbles stop clustering into colors you already have |

@@ -41,13 +41,15 @@ export interface LevelConfig {
  * not be "tuned"; changing it changes what the game *is*, not how hard
  * round 1 happens to be.
  *
- * **Every later round is the round before it plus exactly one difficulty
- * increase, and nothing else.** No round eases a dial to pay for a harder
- * one, and none stacks two increases at once — so each round has a single
- * legible identity ("the one where marbles come four at a time"), and the
- * player only ever has one new thing to adapt to. `levels.test.ts` enforces
- * this by diffing consecutive rounds; it fails if a step moves more than
- * one dial, or moves one the easy way.
+ * **Every later round raises exactly one dial, and may ease at most one
+ * other to pay for it.** Two increases never land at once, so each round
+ * keeps a single legible identity ("the one where marbles come four at a
+ * time") and the player only ever has one new thing to adapt to. The
+ * optional easing exists so a heavy dial can land without the round reading
+ * as spiteful; the ladder currently uses none, and `levels.test.ts` pins
+ * that, so introducing one is a deliberate act rather than something found
+ * later in a diff. Both halves are enforced by diffing consecutive rounds:
+ * more than one increase fails, and so does more than one easing.
  *
  * One subtlety: `spawnCount` and `previewCount` move together in round 4.
  * That is still a single increase, because what those two express jointly
@@ -68,28 +70,34 @@ export const LEVELS: LevelConfig[] = [
     twist: "The classic duel: seven colors, three marbles a turn, and a King who already fights dirty.",
   },
   {
+    name: "Court Intrigue",
+    colors: 7,
+    spawnCount: 3,
+    previewCount: 3,
+    startCount: 5,
+    // +0.05, the ladder's smallest step by some way. Blocking leads because
+    // it's the one dial the player can actually watch operate — a marble
+    // visibly lands on the line they were building — so even a small change
+    // has somewhere to register. Whether it registers at THIS size is an
+    // open question: 0.4 is roughly one extra blocked line per twenty turns,
+    // which may well sit under the threshold of noticing. Under playtest.
+    blockProbability: 0.4,
+    blockMinRunLength: 3,
+    colorAffinity: 1,
+    spawnOnClear: false,
+    twist: "The court plays dirty — your almost-finished lines start getting spiked.",
+  },
+  {
     name: "A Suspect Too Many",
     colors: 8, // +1 color
     spawnCount: 3,
     previewCount: 3,
     startCount: 5,
-    blockProbability: 0.35,
+    blockProbability: 0.4, // flat from here to the end of the ladder
     blockMinRunLength: 3,
     colorAffinity: 1,
     spawnOnClear: false,
     twist: "An eighth color joins the court. Every line you start is now harder to finish.",
-  },
-  {
-    name: "Court Intrigue",
-    colors: 8,
-    spawnCount: 3,
-    previewCount: 3,
-    startCount: 5,
-    blockProbability: 0.6, // +0.25 blocking
-    blockMinRunLength: 3,
-    colorAffinity: 1,
-    spawnOnClear: false,
-    twist: "The court plays dirty — your almost-finished lines get spiked far more often.",
   },
   {
     name: "The Flood",
@@ -97,7 +105,7 @@ export const LEVELS: LevelConfig[] = [
     spawnCount: 4, // +1 marble a turn, still fully previewed
     previewCount: 4,
     startCount: 5,
-    blockProbability: 0.6,
+    blockProbability: 0.4,
     blockMinRunLength: 3,
     colorAffinity: 1,
     spawnOnClear: false,
@@ -109,7 +117,7 @@ export const LEVELS: LevelConfig[] = [
     spawnCount: 4,
     previewCount: 3, // one of the four now lands unannounced
     startCount: 5,
-    blockProbability: 0.6,
+    blockProbability: 0.4,
     blockMinRunLength: 3,
     colorAffinity: 1,
     spawnOnClear: false,
@@ -121,7 +129,7 @@ export const LEVELS: LevelConfig[] = [
     spawnCount: 4,
     previewCount: 3,
     startCount: 5,
-    blockProbability: 0.6,
+    blockProbability: 0.4,
     blockMinRunLength: 3,
     colorAffinity: 0.45, // the board stops clustering colors in your favour
     spawnOnClear: false,
@@ -133,7 +141,7 @@ export const LEVELS: LevelConfig[] = [
     spawnCount: 4,
     previewCount: 3,
     startCount: 9, // crowded before you touch it
-    blockProbability: 0.6,
+    blockProbability: 0.4,
     blockMinRunLength: 3,
     colorAffinity: 0.45,
     spawnOnClear: false,
@@ -145,7 +153,7 @@ export const LEVELS: LevelConfig[] = [
     spawnCount: 4,
     previewCount: 3,
     startCount: 9,
-    blockProbability: 0.6,
+    blockProbability: 0.4,
     blockMinRunLength: 3,
     colorAffinity: 0.45,
     // The last dial, saved for last: clearing a line stops buying a free

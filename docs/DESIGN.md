@@ -86,9 +86,9 @@ The dials each round can turn, roughly in order of how hard they bite:
 
 | Dial | Range across the ladder | What it changes |
 | --- | --- | --- |
-| `blockProbability` | 0.35 → 0.6 | How often the board spikes your near-complete lines. |
+| `blockProbability` | 0.35 → 0.4 | How often the board spikes your near-complete lines. |
 | `spawnCount` | 3 → 4 | Marbles per turn. The largest single jump in the ladder. |
-| `colors` | 7 → 8 | An 8th color joins in round 2 (see below). |
+| `colors` | 7 → 8 | An 8th color joins in round 3 (see below). |
 | `previewCount` | 3 of 3 → 3 of 4 | How much of the coming spawn "Next up" reveals. |
 | `colorAffinity` | 1 → 0.45 | How strongly spawns cluster into colors already on the board. |
 | `startCount` | 5 → 9 | How cluttered the board is before the first move. |
@@ -96,15 +96,31 @@ The dials each round can turn, roughly in order of how hard they bite:
 
 Two rules hold the tuning together:
 
-- **Exactly one dial per round, and only upward.** Round N is round N−1 plus
-  a single difficulty increase — nothing else moves, and nothing is eased to
-  pay for it. So each round has one legible identity ("the one where marbles
-  come four at a time"), and the player only ever has one new thing to adapt
-  to. The round's `twist` line, under the title, is the player-facing
-  version of this. `levels.test.ts` enforces it by diffing consecutive
-  rounds and failing if a step moves more than one dial (or moves one the
-  easy way), so it's a structural property of the ladder rather than a
-  convention someone has to remember.
+- **Exactly one dial goes up per round; at most one may come down to pay for
+  it.** Two increases never land together, so each round keeps one legible
+  identity ("the one where marbles come four at a time") and the player only
+  ever has one new thing to adapt to. The round's `twist` line, under the
+  title, is the player-facing version of this. `levels.test.ts` enforces
+  both halves by diffing consecutive rounds — more than one increase fails,
+  and so does more than one easing — so it's a structural property of the
+  ladder rather than a convention someone has to remember.
+
+  The easing allowance is currently unused — every round is strictly harder
+  than the last on its one dial — and a third test pins that, so introducing
+  an easing means updating a failing test rather than slipping it past
+  review.
+
+  **Blocking is the open question in this tuning.** It moves once, in round
+  2, from 0.35 to 0.4, and then holds flat for the rest of the ladder. That
+  is a very small step: roughly one extra blocked line per twenty turns, and
+  quite possibly below the threshold at which anyone notices. It leads the
+  ladder because blocking is the only dial a player can literally watch
+  operate — a marble lands on the line they were building — so even a small
+  change has somewhere to register. Whether it registers *at this size* is
+  under playtest; rounds 1 and 2 are otherwise identical, which makes them a
+  clean A/B for exactly that question. If the answer is no, the options are
+  a bigger step (0.45–0.5, though 0.5 was tried and felt too harsh) or
+  giving round 2 a different dial entirely.
 
   The one apparent exception is round 4, which raises `spawnCount` *and*
   `previewCount` together, 3-of-3 to 4-of-4. That's still one increase: what
@@ -118,7 +134,7 @@ Two rules hold the tuning together:
 
 Four dials worth naming because they aren't obvious:
 
-- **The 8th color** (round 2) is the only change here that needed new art
+- **The 8th color** (round 3) is the only change here that needed new art
   rather than new numbers. The seven original colors already fill the neon
   hue circle, so an eighth cannot claim a clear hue of its own — it has to
   separate on **lightness** instead. `--c7` is a deep wine red, sitting far
