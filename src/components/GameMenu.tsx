@@ -114,9 +114,14 @@ export function GameMenu({
             <BookOpen className="menu-item__icon" size={16} aria-hidden="true" />
             <span>How to play</span>
           </button>
+          {/* Shortened from "Hall of Pretenders", which wrapped to two lines
+              and left this cell taller and busier than its three neighbours.
+              The dialog it opens is still titled in full, so the flavour name
+              isn't lost — and the joke arguably lands better cropped: a whole
+              hall of people who each insist they're the rightful king. */}
           <button type="button" className="menu-item" onClick={onOpenLeaderboard}>
             <Trophy className="menu-item__icon" size={16} aria-hidden="true" />
-            <span>Hall of Pretenders</span>
+            <span>Pretenders</span>
           </button>
         </div>
       </div>
