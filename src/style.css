@@ -40,6 +40,50 @@
   box-sizing: border-box;
 }
 
+/* Shared 3D bevel, used by the menu items and the top bar's buttons. The
+ * four colours and the two sizes are custom properties, so a caller only
+ * overrides what differs — the recipe itself lives in exactly one place.
+ * --btn-bevel is the inset edge thickness, --btn-drop the lift off the
+ * background (and therefore also the press distance). */
+.btn3d {
+  --btn-face: #2b3566;
+  --btn-light: #6675cc;
+  --btn-dark: #151b3c;
+  --btn-edge: #080b1c;
+  --btn-bevel: 4px;
+  --btn-drop: 6px;
+
+  position: relative;
+  border: none;
+  border-radius: 0;
+  background: var(--btn-face);
+  box-shadow:
+    inset var(--btn-bevel) var(--btn-bevel) 0 var(--btn-light),
+    inset calc(-1 * var(--btn-bevel)) calc(-1 * var(--btn-bevel)) 0 var(--btn-dark),
+    0 0 0 3px var(--btn-edge),
+    var(--btn-drop) var(--btn-drop) 0 rgba(0, 0, 0, 0.5);
+  font-family: var(--font-display);
+  color: var(--text);
+}
+
+.btn3d:hover {
+  --btn-face: #3a478a;
+  --btn-light: #8592e0;
+  color: #fff;
+}
+
+/* Pressed: the bevel inverts (light along the bottom/right now) and the face
+ * moves onto its own drop shadow, so it reads as physically pushed in rather
+ * than just recoloured. */
+.btn3d:active {
+  transform: translate(var(--btn-drop), var(--btn-drop));
+  box-shadow:
+    inset calc(-1 * var(--btn-bevel)) calc(-1 * var(--btn-bevel)) 0 var(--btn-light),
+    inset var(--btn-bevel) var(--btn-bevel) 0 var(--btn-dark),
+    0 0 0 3px var(--btn-edge);
+}
+
+
 /* Original pixel-art cursor (src/cursor-arrow.svg), used across the whole
  * page — not just the game box — instead of the OS default arrow or system
  * pointer/hand icon, so it's always the same custom cursor rather than
@@ -413,6 +457,22 @@ body {
   flex: 0 0 auto;
 }
 
+/* Same bevel as the menu items (.btn3d), scaled down: these are chrome
+ * sitting next to the board, so a thinner edge and a shorter lift keep them
+ * from competing with it. */
+.topbar__btn {
+  --btn-bevel: 3px;
+  --btn-drop: 4px;
+
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+
 .topbar__next {
   display: flex;
   align-items: center;
@@ -759,29 +819,14 @@ body {
  * variant just overrides the four --btn-* values. No border-radius and no
  * real gradients anywhere — the hard pixel edge is the point. */
 .menu-item {
-  --btn-face: #2b3566;
-  --btn-light: #6675cc;
-  --btn-dark: #151b3c;
-  --btn-edge: #080b1c;
-
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   padding: 16px 14px;
-  border: none;
-  background: var(--btn-face);
-  box-shadow:
-    inset 4px 4px 0 var(--btn-light),
-    inset -4px -4px 0 var(--btn-dark),
-    0 0 0 3px var(--btn-edge),
-    6px 6px 0 rgba(0, 0, 0, 0.5);
-  font-family: var(--font-display);
   font-size: 10px;
   line-height: 1.5;
   letter-spacing: 0.5px;
-  color: var(--text);
   text-align: center;
 }
 
@@ -799,23 +844,6 @@ body {
  * since their span is exactly as wide as their text. */
 .menu-item > span {
   text-align: left;
-}
-
-.menu-item:hover {
-  --btn-face: #3a478a;
-  --btn-light: #8592e0;
-  color: #fff;
-}
-
-/* Pressed: the bevel inverts (light along the bottom/right now) and the face
- * moves onto its own drop shadow, so it reads as physically pushed in rather
- * than just recoloured. */
-.menu-item:active {
-  transform: translate(6px, 6px);
-  box-shadow:
-    inset -4px -4px 0 var(--btn-light),
-    inset 4px 4px 0 var(--btn-dark),
-    0 0 0 3px var(--btn-edge);
 }
 
 .menu-item:active .menu-item__icon {

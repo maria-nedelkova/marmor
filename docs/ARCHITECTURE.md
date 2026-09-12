@@ -108,6 +108,21 @@ not the thing that opens it — which is the part worth testing.
 palette of 7 or 8, so no two adjacent cells ever share a color and the fill
 can't accidentally complete a line on its way to packing the board.
 
+## The .btn3d bevel, and why it sits near the top of style.css
+
+The chunky 3D button look (menu items, top bar) is one shared `.btn3d`
+rule. Its four colours and two sizes are custom properties, so a consumer
+overrides only what differs — `.topbar__btn` takes a thinner edge, and
+`.menu-item--wide` takes the cyan face.
+
+That block is declared **early**, right after the box-sizing reset, and
+that placement is load-bearing. Consumers override `.btn3d` with
+single-class selectors of equal specificity, so the later declaration wins.
+With `.btn3d` further down the file, `.topbar__btn`'s `--btn-bevel` was
+silently ignored and the top bar rendered at the menu's heavier bevel.
+Anything new that sets `--btn-*` must be declared after `.btn3d` (or use a
+compound selector).
+
 ## Dialog styling: use the dialog's own color tokens
 
 Anything rendered inside a `DialogContent` must take its colors from

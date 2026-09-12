@@ -97,20 +97,20 @@ export function GameMenu({
         {/* No icon here on purpose: it's the one action that resumes rather
             than navigates, and staying unadorned keeps it distinct from the
             four labelled options below. */}
-        <button type="button" className="menu-item menu-item--wide" onClick={onClose}>
+        <button type="button" className="btn3d menu-item menu-item--wide" onClick={onClose}>
           Back to game
         </button>
 
         <div className="menu-grid">
-          <button type="button" className="menu-item" onClick={onRestartRound}>
+          <button type="button" className="btn3d menu-item" onClick={onRestartRound}>
             <RotateCcw className="menu-item__icon" size={16} aria-hidden="true" />
             <span>Restart round</span>
           </button>
-          <button type="button" className="menu-item" onClick={onNewGame}>
+          <button type="button" className="btn3d menu-item" onClick={onNewGame}>
             <Sparkles className="menu-item__icon" size={16} aria-hidden="true" />
             <span>New game</span>
           </button>
-          <button type="button" className="menu-item" onClick={() => setInfoOpen(true)}>
+          <button type="button" className="btn3d menu-item" onClick={() => setInfoOpen(true)}>
             <BookOpen className="menu-item__icon" size={16} aria-hidden="true" />
             <span>How to play</span>
           </button>
@@ -119,7 +119,7 @@ export function GameMenu({
               The dialog it opens is still titled in full, so the flavour name
               isn't lost — and the joke arguably lands better cropped: a whole
               hall of people who each insist they're the rightful king. */}
-          <button type="button" className="menu-item" onClick={onOpenLeaderboard}>
+          <button type="button" className="btn3d menu-item" onClick={onOpenLeaderboard}>
             <Trophy className="menu-item__icon" size={16} aria-hidden="true" />
             <span>Pretenders</span>
           </button>
@@ -150,7 +150,7 @@ function InfoCard({ onClose }: { onClose: () => void }) {
           <li>Clear a line and the turn is free. Otherwise new marbles drop, and &ldquo;Next up&rdquo; shows what&rsquo;s coming.</li>
           <li>Reach the King&rsquo;s 100 points to take the round. Fill the board with no room left and you lose it.</li>
         </ul>
-        <button type="button" className="menu-item menu-item--wide" onClick={onClose}>
+        <button type="button" className="btn3d menu-item menu-item--wide" onClick={onClose}>
           Got it
         </button>
       </div>
