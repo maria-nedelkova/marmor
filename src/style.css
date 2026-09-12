@@ -572,6 +572,23 @@ body {
   color: var(--foreground) !important;
 }
 
+/* A .btn3d sized for a dialog footer. Unlike the text around it, this one
+ * needs no --foreground fix: the bevel paints its own dark face, so
+ * .btn3d's near-white label is already correct on top of it — the light
+ * dialog surface never shows through. Declared after .btn3d so its
+ * --btn-* overrides win (see ARCHITECTURE.md on that ordering). */
+.dialog-btn {
+  --btn-bevel: 3px;
+  --btn-drop: 5px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 22px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
 .level-dialog__target,
 .win-dialog__run {
   margin: 0;
