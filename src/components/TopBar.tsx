@@ -1,4 +1,4 @@
-import { RefreshCw, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Menu, Volume2, VolumeX } from "lucide-react";
 import type { ColorIndex } from "../game/types";
 import { NextPreview } from "./NextPreview";
 import { Button } from "./ui/8bit/button";
@@ -6,35 +6,21 @@ import { Button } from "./ui/8bit/button";
 interface TopBarProps {
   nextQueue: ColorIndex[];
   muted: boolean;
-  roundNumber: number;
   onToggleMute: () => void;
-  /** Restarts the current round, keeping the run's banked score. */
-  onRestartRound: () => void;
-  /** Drops back to round 1 for a fresh run. */
-  onNewGame: () => void;
+  /** Opens the pause menu, which now owns every action that isn't checked
+   * mid-turn (restart, new game, rules, leaderboard). */
+  onOpenMenu: () => void;
 }
 
-export function TopBar({
-  nextQueue,
-  muted,
-  roundNumber,
-  onToggleMute,
-  onRestartRound,
-  onNewGame,
-}: TopBarProps) {
+/** Deliberately down to three zones. "Next up" and mute are glanced at or
+ * toggled during play; everything else is a between-turns decision and lives
+ * behind the menu, so the bar above the board stays quiet. */
+export function TopBar({ nextQueue, muted, onToggleMute, onOpenMenu }: TopBarProps) {
   return (
     <div className="topbar">
-      {/* Restarting the round you're on is the common case — a board gets
-          jammed long before you want to abandon the whole run — so it sits
-          first, with "New game" (back to round 1) next to it. */}
-      <Button font="retro" onClick={onRestartRound} className="topbar__zone" title={`Restart round ${roundNumber}`}>
-        <RefreshCw size={16} aria-hidden="true" />
-        <span className="topbar__label">Restart round</span>
-      </Button>
-
-      <Button font="retro" onClick={onNewGame} className="topbar__zone" title="Start over from round 1">
-        <RotateCcw size={16} aria-hidden="true" />
-        <span className="topbar__label">New game</span>
+      <Button font="retro" onClick={onOpenMenu} className="topbar__zone" title="Open menu">
+        <Menu size={16} aria-hidden="true" />
+        <span className="topbar__label">Menu</span>
       </Button>
 
       <div className="topbar__zone topbar__next">

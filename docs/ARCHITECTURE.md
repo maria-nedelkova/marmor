@@ -39,6 +39,12 @@
   `levelRef` as well as in state, because the async spawn/move sequences
   read it mid-flight and a stale closure would silently apply the previous
   round's difficulty for one more turn.
+- **`src/components/GameMenu.tsx`** — the pause menu, and the one overlay
+  NOT built on the 8bitcn Dialog. It wants the game's dark palette (dialog
+  surfaces are light) and should read as a layer over the board rather than
+  a card above a dimmed page, so it is a plain fixed overlay with escape,
+  focus and `aria-modal` wired by hand. Escape unwinds one layer at a time:
+  the rules card first, then the menu.
 - **`src/components/`** — presentational React components (`Board`, `Cell`,
   `Marble`, `TopBar`, `DuelMascot`, `Pedestal`, `LevelBanner`,
   `GameOverOverlay`, `LevelClearedOverlay`, `WinOverlay`, `MarmorTitle`).

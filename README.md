@@ -47,7 +47,7 @@ The game is a ladder of 8 rounds. **The King defends 100 points in every
 round** — rounds get harder by making 100 harder to earn, never by moving
 the finish line. Reaching it advances you to the next round; filling the
 board loses the round, and you can retry it (or restart it mid-round from
-the top bar) without giving up the run.
+the menu) without giving up the run.
 
 **Round 1 is the classic game, unchanged** — seven colors, three marbles a
 turn. Each later round is the round before it **plus exactly one difficulty

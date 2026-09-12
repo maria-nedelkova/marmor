@@ -281,6 +281,28 @@ Everything reads as one consistent style on purpose:
   license, or ship) while still giving each action (select, glide tick,
   place, clear, win, lose) a distinct, era-appropriate blip/chime/jeer.
 
+## One bar for playing, one menu for everything else
+
+The top bar grew a button every time the game gained a feature — restart
+round, new game, next up, sound, and a leaderboard link stranded below the
+board — until four of its five controls were things you touch between runs,
+not during them. They were competing for attention with the one control you
+actually read every turn ("Next up"), and on a phone the row had already hit
+its width limit.
+
+So the bar keeps only what play needs — **Menu, Next up, Sound** — and
+everything else moves behind the menu: restart round, new game, the rules,
+and the Hall of Pretenders. The rules text used to sit permanently under the
+board; on demand it can afford to be four lines instead of one, which is a
+better answer for a new player than the single cramped sentence that fitted
+there.
+
+The menu is a full pause screen rather than a dropdown: a banner naming the
+round you're on, one wide primary action, then paired secondary ones. That
+shape is borrowed from console pause menus, and it earns its space by making
+"which round am I on, and what was it called again?" answerable without
+closing anything.
+
 ## Replay variety in win/lose messages
 
 `WinOverlay` and `GameOverOverlay` each pick a random quip from a small

@@ -472,15 +472,6 @@ body {
   height: 28px;
 }
 
-.hint {
-  max-width: 720px;
-  margin: 24px auto 0;
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.5;
-  text-align: center;
-}
-
 .gameover-dialog,
 .win-dialog,
 .level-dialog {
@@ -714,19 +705,153 @@ body {
   color: var(--muted-foreground);
 }
 
-/* Entry point to the board, under the hint — the topbar is already at its
- * four-zone limit on a phone, and this is a between-runs action rather than
- * something reached mid-game. */
-.hall-link {
-  display: block;
-  margin: 14px auto 0;
-  padding: 8px 14px;
-  background: none;
-  border: 2px solid var(--panel-border);
+/* Pause menu (src/components/GameMenu.tsx). Styled in the game's own dark
+ * palette rather than on the 8bitcn Dialog the win/lose overlays use — it
+ * should read as a layer dropped over the board, not as a light card
+ * floating above it. */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(5, 6, 15, 0.82);
+}
+
+.menu-panel {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  background: var(--panel);
+  border: 3px solid var(--panel-border);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
+  outline: none;
+}
+
+/* The "where am I" banner. Wider and louder than the items below it, the
+ * way the reference layout treats its own full-width row. */
+.menu-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 2px;
+  background: linear-gradient(180deg, rgba(179, 75, 255, 0.22), rgba(179, 75, 255, 0.08));
+  border: 3px solid var(--accent2);
   font-family: var(--font-display);
-  font-size: 9px;
+}
+
+.menu-banner__round {
+  font-size: 10px;
   letter-spacing: 1px;
-  color: var(--muted);
+  color: var(--accent2);
+}
+
+.menu-banner__name {
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.menu-item {
+  padding: 14px 12px;
+  background: #141a38;
+  border: 3px solid var(--panel-border);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  font-family: var(--font-display);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+  color: var(--text);
+  text-align: center;
+}
+
+.menu-item:hover {
+  background: #1e2650;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Pressing translates onto its own shadow, so buttons feel physically
+ * depressed rather than just recoloured. */
+.menu-item:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+.menu-item--wide {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  padding: 16px 12px;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.menu-item--wide:hover {
+  background: #17304a;
+}
+
+/* The rules card, layered above the menu it was opened from. */
+.info-card__scrim {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(5, 6, 15, 0.75);
+}
+
+.info-card {
+  width: 100%;
+  max-width: 430px;
+  padding: 18px;
+  background: var(--panel);
+  border: 3px solid var(--accent);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
+}
+
+.info-card__title {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--accent);
+  text-align: center;
+}
+
+.info-card__list {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-card__list li {
+  font-size: 11px;
+  line-height: 1.75;
+  color: var(--text);
+  padding-left: 14px;
+  border-left: 3px solid var(--panel-border);
+}
+
+/* .menu-item--wide spans its row via grid-column, which does nothing here —
+ * the card isn't a grid — so the dismiss button needs an explicit width. */
+.info-card .menu-item--wide {
+  width: 100%;
 }
 
 /* Testing-only round switcher (src/components/DevPanel.tsx), rendered only
@@ -1014,17 +1139,6 @@ body {
     display: none;
   }
 
-  /* Moved into the gap between the board and the (bottom-pinned) controls
-   * — there's usually free space there now that the board got bigger and
-   * the header/mascots got more compact, so the instructions get to stay
-   * without competing with the game for room. */
-  .hint {
-    order: 3;
-    max-width: none;
-    margin: 16px 0 0;
-    font-size: 8px;
-    padding: 0 12px;
-  }
 }
 
 /* Below 640px's own breakpoint (not overlapping it) — 375px-wide phones

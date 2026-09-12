@@ -5,6 +5,7 @@ import type { BoardHandle } from "./components/Board";
 import { DuelMascot } from "./components/DuelMascot";
 import { DuelProgress } from "./components/DuelProgress";
 import { DevPanel, isDevMode } from "./components/DevPanel";
+import { GameMenu } from "./components/GameMenu";
 import { GameOverOverlay } from "./components/GameOverOverlay";
 import { Leaderboard } from "./components/Leaderboard";
 import { LevelBanner } from "./components/LevelBanner";
@@ -56,6 +57,7 @@ export function App() {
 
   const [board, setBoard] = useState<RunEntry[]>([]);
   const [boardOpen, setBoardOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [playerName, setPlayerName] = useState("ANON");
   const playerIdRef = useRef<string | null>(null);
 
@@ -109,10 +111,8 @@ export function App() {
       <TopBar
         nextQueue={game.nextQueue}
         muted={muted}
-        roundNumber={game.levelIndex + 1}
         onToggleMute={toggleMute}
-        onRestartRound={game.retryLevel}
-        onNewGame={game.newGame}
+        onOpenMenu={() => setMenuOpen(true)}
       />
 
       <main className="layout">
@@ -183,11 +183,28 @@ export function App() {
         />
       </main>
 
-      <p className="hint">Click a marble, then an empty cell. A clear path is required — marbles can&rsquo;t jump.</p>
-
-      <button type="button" className="hall-link" onClick={() => setBoardOpen(true)}>
-        Hall of Pretenders
-      </button>
+      {/* The rules line and the leaderboard link both used to sit here under
+          the board; they're menu items now, so the board is the last thing
+          on the page. */}
+      <GameMenu
+        open={menuOpen}
+        level={game.level}
+        roundNumber={game.levelIndex + 1}
+        roundCount={game.levelCount}
+        onClose={() => setMenuOpen(false)}
+        onRestartRound={() => {
+          setMenuOpen(false);
+          game.retryLevel();
+        }}
+        onNewGame={() => {
+          setMenuOpen(false);
+          game.newGame();
+        }}
+        onOpenLeaderboard={() => {
+          setMenuOpen(false);
+          setBoardOpen(true);
+        }}
+      />
 
       <Leaderboard
         open={boardOpen}
