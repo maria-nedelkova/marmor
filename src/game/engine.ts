@@ -3,6 +3,7 @@
 // unit-tested and swapped to a different renderer without touching this file.
 
 import { COLORS, LINE_MIN, SIZE } from "./constants";
+import { rng } from "./rng";
 import type { Board, Cell, ColorIndex } from "./types";
 
 export function createEmptyBoard(): Board {
@@ -18,7 +19,7 @@ export function cloneBoard(board: Board): Board {
 // testable — without a level in hand.
 
 export function randomColor(colorCount = COLORS): ColorIndex {
-  return Math.floor(Math.random() * colorCount);
+  return Math.floor(rng.random() * colorCount);
 }
 
 export function randomColors(n: number, colorCount = COLORS): ColorIndex[] {
@@ -51,7 +52,7 @@ export function colorCounts(board: Board, colorCount = COLORS): number[] {
 export function weightedRandomColor(board: Board, colorCount = COLORS, affinity = 1): ColorIndex {
   const weights = colorCounts(board, colorCount).map((count) => count * affinity + 1);
   const total = weights.reduce((sum, w) => sum + w, 0);
-  let roll = Math.random() * total;
+  let roll = rng.random() * total;
   for (let i = 0; i < weights.length; i++) {
     roll -= weights[i]!;
     if (roll < 0) return i;
@@ -293,7 +294,7 @@ export function assignSpawnCells(board: Board, colors: ColorIndex[], opts: Spawn
     const blocker = threats.find((t) => t.color !== color && !usedKeys.has(`${t.cell.r},${t.cell.c}`));
     const idx = blocker
       ? remainingFree.findIndex((c) => c.r === blocker.cell.r && c.c === blocker.cell.c)
-      : Math.floor(Math.random() * remainingFree.length);
+      : Math.floor(rng.random() * remainingFree.length);
 
     const cell = remainingFree.splice(idx, 1)[0]!;
     usedKeys.add(`${cell.r},${cell.c}`);

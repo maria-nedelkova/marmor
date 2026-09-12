@@ -75,7 +75,7 @@ export function DuelMascot({ name, rows, palette, score, accent, side, heightRat
           </Badge>
           <PixelArt rows={displayRows} palette={palette} pixelSize={compact ? 4 : 6} label={name} />
         </div>
-        <Pedestal accent={accent} shaftHeight={shaftHeight} compact={compact} />
+        <Pedestal accent={accent} shaftHeight={shaftHeight} height={pedestalHeight} compact={compact} />
       </div>
       <span className="duel-mascot__name retro" style={{ color: accent }}>
         {name}

@@ -7,6 +7,7 @@
 // async here purely so that swap is a one-file change rather than a
 // refactor of every caller.
 
+import { rng } from "../game/rng";
 import { isBetterRun, rankEntries } from "../game/score";
 import type { RunEntry } from "../game/score";
 
@@ -86,13 +87,13 @@ export function getPlayerId(): string {
   try {
     const existing = localStorage.getItem(PLAYER_KEY);
     if (existing) return existing;
-    const id = `p_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+    const id = `p_${rng.random().toString(36).slice(2)}${Date.now().toString(36)}`;
     localStorage.setItem(PLAYER_KEY, id);
     return id;
   } catch {
     // No storage: a per-session id still ranks correctly, it just won't
     // survive a reload.
-    return `p_${Math.random().toString(36).slice(2)}`;
+    return `p_${rng.random().toString(36).slice(2)}`;
   }
 }
 

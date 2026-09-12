@@ -27,6 +27,7 @@ import {
 import { KING_SCORE } from "../game/constants";
 import { getLevel, isFinalLevel, LEVEL_COUNT } from "../game/levels";
 import type { LevelConfig } from "../game/levels";
+import { rng } from "../game/rng";
 import type { Board, Cell, ColorIndex } from "../game/types";
 
 const cellKey = (r: number, c: number) => `${r},${c}`;
@@ -148,8 +149,9 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       // Cells aren't picked uniformly at random — each turn has a flat,
       // per-level chance of the board looking for the player's near-complete
       // lines and dropping a mismatched color right on top of one, instead
-      // of anywhere empty.
-      const canBlock = !isInitial && Math.random() < blockProbability;
+      // of anywhere empty. Rolled through `rng`, not Math.random, for the
+      // reason given in game/rng.ts.
+      const canBlock = !isInitial && rng.random() < blockProbability;
       const { cells: placedCells } = assignSpawnCells(boardRef.current, colors, {
         minBlockLength: blockMinRunLength,
         enableBlocking: canBlock,

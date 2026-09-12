@@ -3,6 +3,43 @@
 Bugs and gotchas from building Marmor, kept around so we don't relearn them
 the hard way a second time.
 
+## The King's pedestal recurred short, on a device with a broken `Math.random`
+
+**Symptom:** on first load, the King's pedestal rendered at the same short
+height as the Pretender's (whose height reflects live score, starting at
+its shortest), with the King's sprite still positioned as if standing on a
+full-height pedestal — a visible gap between sprite and pedestal top.
+"New game" didn't fix it. Same visitor also hit a row-major ball-spawn bug traced to `Math.random()`
+returning degenerate values on their device, fixed by switching the engine
+to its own seeded generator (`src/game/rng.ts`) — worth noting since it
+points at the same kind of environment (an extension or hardened browser
+config interfering with the page), not a coincidence of two unrelated bugs.
+
+**Why New Game couldn't have fixed it:** the King's `heightRatio` prop is a
+hardcoded `1` (`App.tsx`), not derived from any state — it renders
+identically on every render, "New game" included. A bug that survives a
+full re-render with unchanged, correct props isn't a React logic bug; it's
+the browser failing to paint what the DOM/CSS actually describe.
+
+**What we did without being able to reproduce it:** the pedestal's total
+height (cap + shaft + base) previously only existed implicitly, as the sum
+of three flex children stacking in a column. It's now also set explicitly
+as the container's own `height` style in `Pedestal.tsx`, using the same
+number `DuelMascot` already uses to position the King/Pretender sprite
+above it (`bottom: pedestalHeight`) — so the two can't independently drift
+out of sync, whatever the underlying cause turns out to be. This is the
+same "cheap, harmless defensive fix without a confirmed root cause" move as
+the `--cell-size` fallback below — it doesn't explain *why* a device would
+fail to size the shaft correctly, but it removes one more way the
+container's box and the figure's position could disagree.
+
+**Lesson:** when the same visitor hits two independent-looking rendering
+bugs in one session, look for a shared environmental cause (a privacy
+extension, a hardened browser config) before treating them as two separate
+code bugs — and when you can't reproduce either, a redundant/explicit value
+that closes a plausible gap is worth shipping even without proof it's *the*
+fix.
+
 ## The board rendered as a blank strip for one real-world visitor
 
 **Symptom:** a friend testing the live site on "latest Chrome on a MacBook"
@@ -119,19 +156,81 @@ groups of cells ended up on different timelines, drifting apart.
 - Gating that interval to only run while `reachable.size > 0` — better, but
   didn't address the real performance cost, and still a needless recurring
   timer.
+- A `useMemo` computed once per new selection, `-(Date.now() % 1100)`,
+  exposed as a single CSS custom property (`--blink-delay`) set once on the
+  `.board` container and inherited by every reachable cell's `::after` via
+  `animation-delay: var(--blink-delay, 0ms)`. This looked like it worked —
+  it passed the "select a different, more-blocked marble" test above,
+  since a smaller reachable set only *removes* cells, never adds any, so no
+  new animation instances ever start during that test and there's nothing
+  to reveal a mismatch. It reappeared the moment someone selected a marble
+  with *more* reachable cells than the previous one: cells that were
+  already reachable never have `.reachable` toggled off and on (React just
+  keeps rendering the class), so their animation never restarts and keeps
+  running on whatever phase it started with; newly-reachable cells get a
+  fresh animation that reads the *current* `--blink-delay` — two groups on
+  two timelines again, just now revealed by the newly-added cells instead
+  of by cells returning after having left.
 
-**Actual fix:** replaced the timer entirely with a `useMemo` computed once
-per new selection: `-(Date.now() % 1100)`, exposed as a single CSS custom
-property (`--blink-delay`) set **once on the `.board` container**, not on
-every cell. Every reachable cell's `::after` pseudo-element inherits it via
-`animation-delay: var(--blink-delay, 0ms)`. No JS timer, no per-cell inline
-styles, no re-renders after the initial selection.
+**Actual root cause of the `Date.now()` version:** the idea (a negative
+`animation-delay` of `-(now % 1100)` snaps *any* fresh animation start onto
+the same absolute 1100ms grid, so it never matters when a given cell's
+animation actually began) is sound — but only if "now" is measured on the
+same clock the browser's animation engine schedules against. CSS animations
+run on the page's animation timeline, which tracks time-since-navigation
+(`performance.now()`'s clock), not wall-clock epoch time (`Date.now()`).
+The two differ by a large constant (`performance.timeOrigin`) that isn't a
+multiple of 1100, so the "any start time cancels out" property silently
+didn't hold — it just canceled out for cells that started at the *same*
+moment (the initial selection, all created in one React commit), which is
+exactly what the smaller-set test above could never violate.
 
-**Lesson:** CSS custom properties inherit down the DOM tree. If many
-sibling elements need to agree on one value (a start time, a phase, a
-delay), set it once on a shared ancestor instead of duplicating it onto
-every element — cheaper, and there's no per-element state to fall out of
-sync in the first place.
+**Fix attempt that was real but still incomplete:** switched to
+`-(performance.now() % 1100)`, on the reasoning above (right idea, wrong
+clock). Shipped, tested by hand, looked fixed. It wasn't — a user reported
+the same desync days later. Driving a headless Chrome instance directly via
+its DevTools protocol (`Runtime.evaluate`, clicking real cells, then reading
+`document.getAnimations()`) to actually measure phases instead of eyeballing
+video frames turned up the real mechanism: `animation-delay: var(--blink-delay)`
+is a **live** binding, not a snapshot. `Animation#effect.getTiming().delay`
+re-resolves the *current* value of `--blink-delay` even for an animation
+that's been running since three selections ago — but that instance's
+`startTime`/`currentTime` stay anchored to whenever it actually began. So a
+cell that survives several selections without React ever toggling its
+`.reachable` class keeps reading a fresh delay against a stale time
+baseline, drifting a little further every time *any* new selection changes
+`--blink-delay` — not just when that specific cell's own animation restarts.
+The `performance.now()` correction didn't fix this; it only happened to
+pass every by-hand test because those tests never chained enough selections
+for a persisting cell's drift to become visible in one sitting.
+
+**Actual fix:** stopped trying to make a shared delay value work at all.
+`Board.tsx` now force-restarts every *currently*-reachable cell's animation
+together on each new selection — remove the `.reachable` class, force a
+reflow (`grid.offsetWidth`), re-add it — the same remove/reflow/re-add
+trick `App.tsx` already used for `.shake`. Once every visible dot's
+animation restarts in the same synchronous pass, they all get an
+(essentially) identical `startTime`, so they're in sync with each other by
+construction — no shared delay value, no clock-matching, nothing left to
+drift. Verified by driving a real Chrome instance through 14 rapid,
+varying-size selections and checking `getAnimations()` phases after each:
+0ms spread every time, versus the `performance.now()` version's ~50-930ms
+spread on 2 of the same 14.
+
+**Lesson:** CSS custom properties inherit down the DOM tree, but *live*
+custom properties (`var()`) keep re-resolving for animations that are
+already running — they are not a "start value," they're read continuously.
+Relying on one to coordinate several independently-started animations only
+works if every one of them restarts every time the shared value changes;
+if any of them can persist unchanged across an update (exactly what class
+continuity across React re-renders does), the discrepancy between a live
+"used value" and a frozen `startTime` baseline reappears indefinitely, once
+per update that a given instance survives — and this is exactly the kind of
+intermittent, compounding drift that a single manual test (or even several)
+can pass while still shipping broken, because it only shows up after enough
+selections accumulate. When two things need to move in lockstep, actually
+restarting both together beats trying to compute a value that keeps them
+apart to look aligned.
 
 ## Doubled background gradient → visible seam lines
 

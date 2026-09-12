@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { ReactNode } from "react";
+import { rng } from "../game/rng";
 import { Button3D } from "./Button3D";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
@@ -36,7 +37,7 @@ export function GameOverOverlay({
   onRestart,
   children,
 }: GameOverOverlayProps) {
-  const quip = useMemo(() => QUIPS[Math.floor(Math.random() * QUIPS.length)]!, [visible]);
+  const quip = useMemo(() => QUIPS[Math.floor(rng.random() * QUIPS.length)]!, [visible]);
 
   return (
     <Dialog open={visible}>
