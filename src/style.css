@@ -790,6 +790,17 @@ body {
   color: var(--accent);
 }
 
+/* The label is left-aligned even though the button centres its contents.
+ * A label that wraps ("Hall of / Pretenders") gets a span as wide as its
+ * longest line, and inherited text-align: center then indents the shorter
+ * first line inside it — which reads as the icon drifting 48px away from
+ * its text, while the single-line labels sit at 10px. Aligning left pins
+ * every first line flush to the icon; single-line labels are unaffected,
+ * since their span is exactly as wide as their text. */
+.menu-item > span {
+  text-align: left;
+}
+
 .menu-item:hover {
   --btn-face: #3a478a;
   --btn-light: #8592e0;
