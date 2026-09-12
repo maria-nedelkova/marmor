@@ -5,19 +5,26 @@ import { Button3D } from "./Button3D";
 interface SubmitRunPromptProps {
   defaultName: string;
   onSubmit: (name: string) => void;
-  onSkip: () => void;
 }
 
 /** Name entry, rendered inside the win / game-over dialogs rather than as a
  * dialog of its own — stacking a second modal on the celebration is the
  * quickest way to make people dismiss both without reading either. */
-export function SubmitRunPrompt({ defaultName, onSubmit, onSkip }: SubmitRunPromptProps) {
+export function SubmitRunPrompt({ defaultName, onSubmit }: SubmitRunPromptProps) {
   // Per-run freshness comes from the caller's `key`, NOT from an effect
   // watching `defaultName`. Submitting updates the stored player name, so a
   // `[defaultName]` effect would fire on submit and immediately reset the
   // component back out of its confirmation state.
   const [name, setName] = useState(defaultName);
   const [submitted, setSubmitted] = useState(false);
+  // Skipping is purely this component's business — it hides its own form and
+  // leaves the surrounding dialog (quip, Retry, Start over) alone. It was
+  // briefly an `onSkip` prop, which the caller wired to the leaderboard's
+  // close handler; that dialog is never open at this point, so the link did
+  // nothing at all.
+  const [dismissed, setDismissed] = useState(false);
+
+  if (dismissed) return null;
 
   if (submitted) {
     return <p className="submit-run__done">Recorded in the Hall of Pretenders.</p>;
@@ -53,7 +60,7 @@ export function SubmitRunPrompt({ defaultName, onSubmit, onSkip }: SubmitRunProm
           Submit
         </Button3D>
       </div>
-      <button type="button" className="submit-run__skip" onClick={onSkip}>
+      <button type="button" className="submit-run__skip" onClick={() => setDismissed(true)}>
         skip
       </button>
     </form>

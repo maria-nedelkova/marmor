@@ -101,7 +101,6 @@ export function App() {
       key={`${game.runId}:${game.roundsCleared}:${game.moves}:${game.runScore}`}
       defaultName={playerName}
       onSubmit={submitRun}
-      onSkip={() => setBoardOpen(false)}
     />
   ) : null;
 
