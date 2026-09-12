@@ -8,6 +8,16 @@
   placement including the "sometimes block the player's near-complete line"
   logic (`assignSpawnCells`). Fully unit- and fuzz-tested in
   `src/game/engine.test.ts`. Nothing in this file touches React or the DOM.
+- **`src/game/score.ts`** — leaderboard ranking, pure and React-free:
+  `progressOf` (overshoot-stripped depth), `sortKeyOf` (both ranking keys
+  packed into the single float a Redis sorted set stores), and the
+  comparator. Tested in `score.test.ts`. See
+  [`DESIGN.md`](./DESIGN.md#the-leaderboard-ranks-progress-and-efficiency-not-points)
+  for why points are displayed but not ranked on.
+- **`src/leaderboard/store.ts`** — the `LeaderboardStore` interface plus a
+  `localStorage` implementation. Async by design so a Redis-backed store
+  drops in without touching callers; every read treats storage as hostile
+  (disabled, full, or holding junk) and degrades to an empty board.
 - **`src/game/levels.ts`** — the 8-round difficulty ladder, as plain data.
   Every knob the board can turn against the player (`colors`, `spawnCount`,
   `previewCount`, `blockProbability`, `colorAffinity`, `startCount`,

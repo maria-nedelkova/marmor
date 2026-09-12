@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { Button } from "./ui/8bit/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
@@ -13,6 +14,9 @@ interface GameOverOverlayProps {
   onRetry: () => void;
   /** Drops back to round 1 for a fresh run. */
   onRestart: () => void;
+  /** Slot for the leaderboard name prompt — a lost run still ranks, since
+   * the board orders partial runs by how far they got. */
+  children?: ReactNode;
 }
 
 const QUIPS: { title: string; body: string }[] = [
@@ -30,6 +34,7 @@ export function GameOverOverlay({
   roundNumber,
   onRetry,
   onRestart,
+  children,
 }: GameOverOverlayProps) {
   const quip = useMemo(() => QUIPS[Math.floor(Math.random() * QUIPS.length)]!, [visible]);
 
@@ -42,6 +47,7 @@ export function GameOverOverlay({
             Round {roundNumber}, {levelName} — {quip.body.replace("{score}", String(score))}
           </DialogDescription>
         </DialogHeader>
+        {children}
         <DialogFooter>
           <Button font="retro" onClick={onRetry}>
             Retry round {roundNumber}

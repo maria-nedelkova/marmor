@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { setMuted } from "./audio/sound";
 import { Board } from "./components/Board";
 import type { BoardHandle } from "./components/Board";
@@ -6,13 +6,17 @@ import { DuelMascot } from "./components/DuelMascot";
 import { DuelProgress } from "./components/DuelProgress";
 import { DevPanel, isDevMode } from "./components/DevPanel";
 import { GameOverOverlay } from "./components/GameOverOverlay";
+import { Leaderboard } from "./components/Leaderboard";
 import { LevelBanner } from "./components/LevelBanner";
 import { LevelClearedOverlay } from "./components/LevelClearedOverlay";
 import { MarmorTitle } from "./components/MarmorTitle";
+import { SubmitRunPrompt } from "./components/SubmitRunPrompt";
 import { TopBar } from "./components/TopBar";
 import { WinOverlay } from "./components/WinOverlay";
 import { KING_SCORE } from "./game/constants";
 import { getLevel } from "./game/levels";
+import type { RunEntry } from "./game/score";
+import { getPlayerId, localLeaderboard } from "./leaderboard/store";
 import { KING_PALETTE, KING_ROWS } from "./game/sprites/king";
 import { PRETENDER_PALETTE, PRETENDER_ROWS } from "./game/sprites/pretender";
 import { useGame } from "./hooks/useGame";
@@ -46,6 +50,54 @@ export function App() {
   // hands off to the next King instead.
   const roundCleared = game.cleared && !game.isFinal;
   const won = game.cleared && game.isFinal;
+  // A run ends either way — finishing the ladder or filling the board — and
+  // both are worth recording, since the board ranks partial runs too.
+  const runOver = won || game.gameOver;
+
+  const [board, setBoard] = useState<RunEntry[]>([]);
+  const [boardOpen, setBoardOpen] = useState(false);
+  const [playerName, setPlayerName] = useState("ANON");
+  const playerIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    playerIdRef.current = getPlayerId();
+    void localLeaderboard.list().then((entries) => {
+      setBoard(entries);
+      const mine = entries.find((e) => e.id === playerIdRef.current);
+      if (mine) setPlayerName(mine.name);
+    });
+  }, []);
+
+  const submitRun = useCallback(
+    (name: string) => {
+      const id = playerIdRef.current;
+      if (!id) return;
+      setPlayerName(name);
+      void localLeaderboard
+        .submit({
+          id,
+          name,
+          roundsCleared: game.roundsCleared,
+          partialPoints: game.partialPoints,
+          moves: game.moves,
+          score: game.runScore,
+          at: Date.now(),
+        })
+        .then(setBoard);
+    },
+    [game.roundsCleared, game.partialPoints, game.moves, game.runScore],
+  );
+
+  // Keyed by the run's own outcome so each finished run gets a fresh prompt
+  // rather than inheriting the previous one's "already submitted" state.
+  const runPrompt = runOver ? (
+    <SubmitRunPrompt
+      key={`${game.runId}:${game.roundsCleared}:${game.moves}:${game.runScore}`}
+      defaultName={playerName}
+      onSubmit={submitRun}
+      onSkip={() => setBoardOpen(false)}
+    />
+  ) : null;
 
   return (
     <div className="table">
@@ -93,7 +145,9 @@ export function App() {
             roundNumber={game.levelIndex + 1}
             onRetry={game.retryLevel}
             onRestart={game.newGame}
-          />
+          >
+            {runPrompt}
+          </GameOverOverlay>
           <LevelClearedOverlay
             visible={roundCleared}
             score={game.score}
@@ -109,7 +163,9 @@ export function App() {
             runScore={game.runScore}
             rounds={game.levelCount}
             onRestart={game.newGame}
-          />
+          >
+            {runPrompt}
+          </WinOverlay>
         </section>
 
         <DuelProgress score={game.score} kingScore={KING_SCORE} />
@@ -128,6 +184,17 @@ export function App() {
       </main>
 
       <p className="hint">Click a marble, then an empty cell. A clear path is required — marbles can&rsquo;t jump.</p>
+
+      <button type="button" className="hall-link" onClick={() => setBoardOpen(true)}>
+        Hall of Pretenders
+      </button>
+
+      <Leaderboard
+        open={boardOpen}
+        entries={board}
+        playerId={playerIdRef.current}
+        onClose={() => setBoardOpen(false)}
+      />
 
       {isDevMode() && (
         <DevPanel

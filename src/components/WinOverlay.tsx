@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { Button } from "./ui/8bit/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
@@ -10,6 +11,9 @@ interface WinOverlayProps {
   runScore: number;
   rounds: number;
   onRestart: () => void;
+  /** Slot for the leaderboard name prompt, so the run is recorded from the
+   * celebration itself rather than from a second stacked modal. */
+  children?: ReactNode;
 }
 
 const QUIPS: { title: string; body: string }[] = [
@@ -20,7 +24,7 @@ const QUIPS: { title: string; body: string }[] = [
   { title: "New management!", body: "{score} points later, the kingdom has a new tyrant. That's you." },
 ];
 
-export function WinOverlay({ visible, score, runScore, rounds, onRestart }: WinOverlayProps) {
+export function WinOverlay({ visible, score, runScore, rounds, onRestart, children }: WinOverlayProps) {
   const quip = useMemo(() => QUIPS[Math.floor(Math.random() * QUIPS.length)]!, [visible]);
 
   return (
@@ -33,6 +37,7 @@ export function WinOverlay({ visible, score, runScore, rounds, onRestart }: WinO
         <p className="win-dialog__run">
           All {rounds} rounds cleared &middot; {runScore} points on the run
         </p>
+        {children}
         <DialogFooter>
           <Button font="retro" onClick={onRestart}>
             New game

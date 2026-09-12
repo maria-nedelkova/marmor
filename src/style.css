@@ -564,6 +564,171 @@ body {
   margin: 4px 0 0;
 }
 
+/* Hall of Pretenders. Like the other dialog content, colors come from the
+ * dialog's own --foreground / --muted-foreground rather than the game's
+ * --text / --muted — see the note in ARCHITECTURE.md. */
+.leaderboard-dialog {
+  max-width: 560px;
+}
+
+.leaderboard__title {
+  font-family: var(--font-display) !important;
+  font-size: 15px !important;
+  color: #b8860b !important;
+  margin: 0 0 4px;
+}
+
+.leaderboard__rule,
+.leaderboard__empty {
+  margin: 0 0 12px;
+  font-size: 9px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+
+.leaderboard__empty {
+  text-align: center;
+  padding: 18px 0;
+}
+
+/* The table is fixed-width pixel type, so on a narrow screen it scrolls
+ * inside its own box rather than forcing the dialog (or the page) sideways. */
+.leaderboard__scroll {
+  overflow-x: auto;
+  border: 2px solid rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.leaderboard__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+.leaderboard__table th {
+  font-size: 8px;
+  font-weight: normal;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--muted-foreground);
+  padding: 8px 10px;
+}
+
+.leaderboard__table td {
+  padding: 7px 10px;
+}
+
+.leaderboard__num {
+  text-align: right;
+}
+
+.leaderboard__row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.leaderboard__row.is-podium .leaderboard__num:first-child {
+  color: #b8860b;
+}
+
+.leaderboard__row.is-player {
+  background: rgba(255, 47, 176, 0.14);
+  outline: 2px solid var(--accent2);
+}
+
+.leaderboard__row.is-player .leaderboard__name {
+  color: var(--accent2);
+}
+
+.leaderboard__done {
+  color: #b8860b;
+}
+
+.leaderboard__moves {
+  color: #0a7d4f;
+}
+
+.leaderboard__score {
+  color: var(--muted-foreground);
+}
+
+.leaderboard__gap td {
+  text-align: center;
+  padding: 2px;
+  color: var(--muted-foreground);
+}
+
+/* Name entry, shown inside the win / game-over dialogs. */
+.submit-run {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0 2px;
+  padding: 12px;
+  border: 2px solid rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.submit-run__label {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--muted-foreground);
+}
+
+.submit-run__row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.submit-run__input {
+  font-family: var(--font-display);
+  font-size: 11px;
+  padding: 8px 10px;
+  width: 170px;
+  color: var(--foreground);
+  background: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+}
+
+.submit-run__skip {
+  background: none;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-decoration: underline;
+  color: var(--muted-foreground);
+}
+
+.submit-run__done {
+  margin: 6px 0;
+  font-size: 9px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+
+/* Entry point to the board, under the hint — the topbar is already at its
+ * four-zone limit on a phone, and this is a between-runs action rather than
+ * something reached mid-game. */
+.hall-link {
+  display: block;
+  margin: 14px auto 0;
+  padding: 8px 14px;
+  background: none;
+  border: 2px solid var(--panel-border);
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
 /* Testing-only round switcher (src/components/DevPanel.tsx), rendered only
  * on localhost or with ?dev. Deliberately plain and un-themed — it should
  * never be mistaken for part of the game, and it doesn't get to cost

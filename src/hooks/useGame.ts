@@ -64,6 +64,17 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
   // cumulative rather than like eight unrelated games.
   const [bankedScore, setBankedScore] = useState(0);
   const bankedScoreRef = useRef(0);
+  // Run-wide tallies for the leaderboard. Both survive a round change and a
+  // retry — a retry keeps the run alive, so its cost stays on the bill. That
+  // is deliberate: retrying is free in progress terms but not in moves, so
+  // it never blocks a stuck player yet still shows up in the skill ranking.
+  const movesRef = useRef(0);
+  const [moves, setMoves] = useState(0);
+  const roundsClearedRef = useRef(0);
+  const [roundsCleared, setRoundsCleared] = useState(0);
+  /** Bumped whenever a fresh run starts, so UI keyed on the run (the
+   * leaderboard prompt) remounts instead of inheriting the last run's state. */
+  const [runId, setRunId] = useState(0);
   const [nextQueue, setNextQueue] = useState<ColorIndex[]>(() => nextQueueRef.current);
   const [gameOver, setGameOver] = useState(false);
   const [cleared, setCleared] = useState(false);
@@ -89,6 +100,8 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
     if (clearedRef.current || scoreRef.current < KING_SCORE) return;
     clearedRef.current = true;
     setCleared(true);
+    roundsClearedRef.current += 1;
+    setRoundsCleared(roundsClearedRef.current);
     playKingFall();
     // The full fanfare is saved for the last King — every earlier round
     // gets the topple sound only, so the final one still lands as an
@@ -211,6 +224,10 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       boardRef.current[to.r]![to.c] = color;
       sync();
       playPlace();
+      // Counted on completion, not on click: a click that finds no path
+      // never reaches here, so an unroutable tap costs nothing.
+      movesRef.current += 1;
+      setMoves(movesRef.current);
 
       const matches = findLinesThrough(boardRef.current, to);
       if (matches.length > 0) {
@@ -247,6 +264,17 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
         mode === "advance" ? bankedScoreRef.current + scoreRef.current : mode === "retry" ? bankedScoreRef.current : 0;
       bankedScoreRef.current = banked;
       setBankedScore(banked);
+
+      // "restart" is the only mode that begins a new run, so it's the only
+      // one that clears the run-wide tallies. Advancing and retrying both
+      // continue the same run and carry them forward.
+      if (mode === "restart") {
+        movesRef.current = 0;
+        setMoves(0);
+        roundsClearedRef.current = 0;
+        setRoundsCleared(0);
+        setRunId((n) => n + 1);
+      }
 
       boardRef.current = createEmptyBoard();
       scoreRef.current = 0;
@@ -345,6 +373,13 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
     selected,
     score,
     runScore: bankedScore + score,
+    moves,
+    roundsCleared,
+    runId,
+    // Points banked in the round the run ended in. Zero once the ladder is
+    // finished, so a finisher's progress is exactly MAX_PROGRESS and they're
+    // separated only by moves — see progressOf in game/score.ts.
+    partialPoints: roundsCleared >= LEVEL_COUNT ? 0 : score,
     level,
     levelIndex,
     levelCount: LEVEL_COUNT,

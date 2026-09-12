@@ -200,6 +200,55 @@ The round-cleared dialog also previews the *next* round by name and twist.
 That panel is the only thing standing between "I won" and closing the tab,
 so it's the one place in the UI that gets to advertise what's coming.
 
+## The leaderboard ranks progress and efficiency, not points
+
+The obvious metric — sum every Pretender point across the run — degenerates.
+A round ends the *instant* the score crosses the King's 100, so a round is
+worth `100 + overshoot`, and the overshoot is only ever however long the
+final clear happened to be. Total points therefore reduces to "how many
+rounds did you clear", plus noise: every player who finishes the ladder
+lands somewhere around 800–880, ordered by whether their last clear was a
+6-line instead of a 5-line. That's luck deciding the top of the board.
+
+So ranking uses two keys (`src/game/score.ts`):
+
+1. **`progressOf`** — a flat 100 per cleared round, plus whatever was banked
+   in the round the run ended in. Overshoot is discarded, so every finisher
+   lands on exactly `MAX_PROGRESS` and players who fell short still order
+   smoothly by depth.
+2. **`moves`, fewer first** — the tiebreak, which therefore decides the
+   entire finisher tier. Moves rather than elapsed time: no clock pressure
+   on a puzzle game, unaffected by animation timings, and deterministic.
+
+Total points is still shown in the table, because it's the number players
+actually feel — it just isn't what they're ranked on.
+
+A retry keeps the run alive and keeps its move count. Retrying is free in
+progress terms (so a jammed board never ends a run) but not in efficiency
+terms, which is the right shape: available to everyone, not free at the top.
+
+`sortKeyOf` packs both keys into one number, because a Redis sorted set has
+exactly one float per member — the storage design that Phase 2 wants is
+already the ranking design.
+
+## Leaderboard storage: local first, Redis later
+
+`src/leaderboard/store.ts` defines a `LeaderboardStore` interface with an
+async `localStorage` implementation. Async from day one purely so swapping in
+a Redis-backed version is a one-file change rather than a refactor of every
+call site.
+
+Phase 2 is a sorted set (`ZADD … GT` keyed on `sortKeyOf`, `ZREVRANGE` for
+the top N, a hash per player for display fields) behind two serverless
+routes. The genuinely hard part there is not storage but trust: a static SPA
+can post any number it likes. Signing the payload client-side is not a fix —
+the key ships in the bundle. The real answer, and the reason `engine.ts` is
+kept pure and DOM-free, is server-side replay: seed the RNG, record the move
+list, and re-run the same engine on the server to recompute the score. That
+needs a seeded PRNG threaded through the four gameplay `Math.random()` calls
+(three in `engine.ts`, one in `useGame.ts`), which is why it's deliberately
+deferred until someone actually cheats.
+
 ## Progress isn't persisted (yet)
 
 Reloading returns you to round 1 — there's no `localStorage` of the highest
