@@ -4,11 +4,17 @@
   --grid-line: #1b2244;
   --panel: #0a0e20;
   --panel-border: #2a3568;
-  --accent: #29f1ff;
+  /* Namespaced --mr-* because src/tailwind.css declares an UNLAYERED :root
+   * defining --accent and --muted too, and it wins the cascade here — so the
+   * plain names silently resolved to Tailwind's near-white oklch(.97 0 0)
+   * rather than these values. Anything the game adds whose name collides
+   * with a shadcn token (--foreground, --background, --border, --ring,
+   * --card, --input) needs the same prefix. */
+  --mr-accent: #29f1ff;
   --accent-dim: #0f6b78;
   --accent2: #ff2fb0;
   --text: #eaf3ff;
-  --muted: #7c8ab8;
+  --mr-muted: #7c8ab8;
 
   --c0: #ff3b3b; /* red */
   --c1: #ff9f1c; /* orange */
@@ -135,7 +141,7 @@ body {
   font-size: 32px;
   letter-spacing: 6px;
   margin: 0 0 12px;
-  color: var(--accent);
+  color: var(--mr-accent);
   animation: flicker 4.5s ease-in-out infinite;
 }
 
@@ -341,7 +347,7 @@ body {
   position: absolute;
   width: 8px;
   height: 8px;
-  background: var(--accent);
+  background: var(--mr-accent);
   animation: pulse-dot 1.1s steps(2, jump-none) infinite;
   /* --blink-delay is recomputed once per new selection (see Board.tsx) so
    * every dot in the current reachable set starts in the same phase —
@@ -358,7 +364,7 @@ body {
 
 .cell.selected {
   background: #182055;
-  box-shadow: inset 0 0 0 3px var(--accent);
+  box-shadow: inset 0 0 0 3px var(--mr-accent);
 }
 
 .marble {
@@ -393,7 +399,7 @@ body {
   position: absolute;
   inset: -35%;
   border-radius: 50%;
-  border: 3px solid var(--glow, var(--accent));
+  border: 3px solid var(--glow, var(--mr-accent));
   animation: burst-ring 340ms steps(4, end) forwards;
 }
 
@@ -483,7 +489,7 @@ body {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: var(--muted);
+  color: var(--mr-muted);
 }
 
 /* Hidden only in the compact mobile topbar (see the max-width: 640px
@@ -500,6 +506,32 @@ body {
 .next-preview .marble {
   width: 28px;
   height: 28px;
+}
+
+/* All four gameplay dialogs (win, game over, round cleared, leaderboard)
+ * render on the game's dark panel instead of the 8bitcn light card.
+ *
+ * This replaces a running battle rather than being a cosmetic preference.
+ * The light default meant every piece of text inside a dialog had to opt
+ * out of the game's own palette and into --foreground/--muted-foreground,
+ * because --text is near-white and Tailwind's theme additionally shadows
+ * --muted on :root. Two separate white-on-white bugs shipped from that.
+ * With the surface dark, the game's variables are simply correct again. */
+.game-dialog {
+  background: var(--panel) !important;
+  color: var(--text);
+}
+
+/* The 8bit dialog paints its frame as two absolutely-positioned aria-hidden
+ * divs bordered in --foreground (near-black), which vanishes against a dark
+ * panel. Recoloured here rather than in the shared component, which other
+ * (light) dialogs could still want. */
+.game-dialog > div[aria-hidden="true"] {
+  border-color: var(--panel-border) !important;
+}
+
+.game-dialog [data-slot="dialog-description"] {
+  color: var(--mr-muted) !important;
 }
 
 .gameover-dialog,
@@ -522,7 +554,7 @@ body {
 
 .win-dialog__title,
 .level-dialog__title {
-  color: #b8860b !important;
+  color: #e8c14a !important;
 }
 
 .gameover-dialog [data-slot="dialog-footer"],
@@ -534,19 +566,13 @@ body {
 
 /* The preview of what's coming next round — boxed off from the "you won"
  * copy above it, since it's the part that decides whether the player taps
- * the button or closes the tab.
- *
- * Colors here come from the dialog's own --foreground/--muted-foreground
- * (the tokens DialogDescription uses), NOT from the game's --text/--muted:
- * dialog surfaces are light while the board is dark, and Tailwind's theme
- * additionally redefines --muted on :root, so the game-side variables both
- * read wrong and resolve to something unintended inside a dialog. */
+ * the button or closes the tab. */
 .level-dialog__next {
   margin: 4px 0 2px;
   padding: 12px;
-  border: 2px solid rgba(0, 0, 0, 0.18);
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--foreground);
+  border: 2px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
 }
 
 .level-dialog__next-label {
@@ -554,29 +580,18 @@ body {
   font-family: var(--font-display);
   font-size: 10px;
   letter-spacing: 1px;
-  color: #b8860b;
+  color: var(--mr-accent);
 }
 
 .level-dialog__twist {
   margin: 0 0 8px;
   font-size: 11px;
   line-height: 1.6;
-  color: var(--foreground);
+  color: var(--text);
 }
 
-/* The 8bit button's `outline` variant sets a background but no text color,
- * so inside a dialog it inherits body's near-white --text and renders
- * white-on-white. Same root cause as the --foreground note above: game-side
- * colors don't survive a light dialog surface. */
-.dialog-button--secondary {
-  color: var(--foreground) !important;
-}
-
-/* A .btn3d sized for a dialog footer. Unlike the text around it, this one
- * needs no --foreground fix: the bevel paints its own dark face, so
- * .btn3d's near-white label is already correct on top of it — the light
- * dialog surface never shows through. Declared after .btn3d so its
- * --btn-* overrides win (see ARCHITECTURE.md on that ordering). */
+/* A .btn3d sized for a dialog footer. Declared after .btn3d so its --btn-*
+ * overrides win (see ARCHITECTURE.md on that ordering). */
 .dialog-btn {
   --btn-bevel: 3px;
   --btn-drop: 5px;
@@ -589,22 +604,39 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* Secondary action: a dimmer face and a shallower bevel, so it reads as
+ * available rather than recommended next to the primary button. */
+.dialog-btn--ghost {
+  --btn-face: #1b2244;
+  --btn-light: #3a4680;
+  --btn-dark: #0b0f22;
+  --btn-bevel: 2px;
+  --btn-drop: 4px;
+
+  color: var(--mr-muted);
+}
+
+.dialog-btn--ghost:hover {
+  --btn-face: #262f5c;
+  --btn-light: #4a5799;
+  color: var(--text);
+}
+
 .level-dialog__target,
 .win-dialog__run {
   margin: 0;
   font-size: 10px;
   line-height: 1.6;
   letter-spacing: 0.5px;
-  color: var(--muted-foreground);
+  color: var(--mr-muted);
 }
 
 .win-dialog__run {
   margin: 4px 0 0;
 }
 
-/* Hall of Pretenders. Like the other dialog content, colors come from the
- * dialog's own --foreground / --muted-foreground rather than the game's
- * --text / --muted — see the note in ARCHITECTURE.md. */
+/* Hall of Pretenders. On the shared dark .game-dialog surface, so the
+ * game palette applies directly — no --foreground indirection. */
 .leaderboard-dialog {
   max-width: 560px;
 }
@@ -612,7 +644,7 @@ body {
 .leaderboard__title {
   font-family: var(--font-display) !important;
   font-size: 15px !important;
-  color: #b8860b !important;
+  color: #e8c14a !important;
   margin: 0 0 4px;
 }
 
@@ -621,7 +653,7 @@ body {
   margin: 0 0 12px;
   font-size: 9px;
   line-height: 1.7;
-  color: var(--muted-foreground);
+  color: var(--mr-muted);
 }
 
 .leaderboard__empty {
@@ -633,8 +665,8 @@ body {
  * inside its own box rather than forcing the dialog (or the page) sideways. */
 .leaderboard__scroll {
   overflow-x: auto;
-  border: 2px solid rgba(0, 0, 0, 0.18);
-  background: rgba(0, 0, 0, 0.04);
+  border: 2px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .leaderboard__table {
@@ -642,7 +674,7 @@ body {
   border-collapse: collapse;
   font-family: var(--font-display);
   font-size: 10px;
-  color: var(--foreground);
+  color: var(--text);
   white-space: nowrap;
 }
 
@@ -652,7 +684,7 @@ body {
   letter-spacing: 1px;
   text-transform: uppercase;
   text-align: left;
-  color: var(--muted-foreground);
+  color: var(--mr-muted);
   padding: 8px 10px;
 }
 
@@ -665,11 +697,11 @@ body {
 }
 
 .leaderboard__row:nth-child(even) {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .leaderboard__row.is-podium .leaderboard__num:first-child {
-  color: #b8860b;
+  color: #e8c14a;
 }
 
 .leaderboard__row.is-player {
@@ -682,21 +714,21 @@ body {
 }
 
 .leaderboard__done {
-  color: #b8860b;
+  color: #e8c14a;
 }
 
 .leaderboard__moves {
-  color: #0a7d4f;
+  color: #39ff8f;
 }
 
 .leaderboard__score {
-  color: var(--muted-foreground);
+  color: var(--mr-muted);
 }
 
 .leaderboard__gap td {
   text-align: center;
   padding: 2px;
-  color: var(--muted-foreground);
+  color: var(--mr-muted);
 }
 
 /* Name entry, shown inside the win / game-over dialogs. */
@@ -707,14 +739,14 @@ body {
   align-items: center;
   margin: 4px 0 2px;
   padding: 12px;
-  border: 2px solid rgba(0, 0, 0, 0.18);
-  background: rgba(0, 0, 0, 0.05);
+  border: 2px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .submit-run__label {
   font-size: 9px;
   letter-spacing: 0.5px;
-  color: var(--muted-foreground);
+  color: var(--mr-muted);
 }
 
 .submit-run__row {
@@ -730,9 +762,16 @@ body {
   font-size: 11px;
   padding: 8px 10px;
   width: 170px;
-  color: var(--foreground);
-  background: #fff;
-  border: 2px solid rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  /* Was #fff, which paired with the near-white --text to make the field
+     white-on-white the moment the dialog surface went dark. */
+  background: #070a18;
+  border: 2px solid var(--panel-border);
+}
+
+.submit-run__input:focus {
+  outline: none;
+  border-color: var(--mr-accent);
 }
 
 .submit-run__skip {
@@ -742,14 +781,14 @@ body {
   font-size: 8px;
   letter-spacing: 1px;
   text-decoration: underline;
-  color: var(--muted-foreground);
+  color: var(--mr-muted);
 }
 
 .submit-run__done {
   margin: 6px 0;
   font-size: 9px;
   line-height: 1.7;
-  color: var(--muted-foreground);
+  color: var(--mr-muted);
 }
 
 /* Pause menu (src/components/GameMenu.tsx). Styled in the game's own dark
@@ -808,14 +847,14 @@ body {
 
 .menu-banner__name {
   font-size: 12px;
-  color: var(--accent);
+  color: var(--mr-accent);
 }
 
 .menu-banner__twist {
   margin: 9px 0 0;
   font-size: 9px;
   line-height: 1.7;
-  color: var(--muted);
+  color: var(--mr-muted);
 }
 
 .menu-grid {
@@ -849,7 +888,7 @@ body {
 
 .menu-item__icon {
   flex: 0 0 auto;
-  color: var(--accent);
+  color: var(--mr-accent);
 }
 
 /* The label is left-aligned even though the button centres its contents.
@@ -902,7 +941,7 @@ body {
   max-width: 430px;
   padding: 18px;
   background: var(--panel);
-  border: 3px solid var(--accent);
+  border: 3px solid var(--mr-accent);
   box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
 }
 
@@ -910,7 +949,7 @@ body {
   margin: 0 0 14px;
   font-family: var(--font-display);
   font-size: 13px;
-  color: var(--accent);
+  color: var(--mr-accent);
   text-align: center;
 }
 

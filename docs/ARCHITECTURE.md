@@ -123,23 +123,42 @@ silently ignored and the top bar rendered at the menu's heavier bevel.
 Anything new that sets `--btn-*` must be declared after `.btn3d` (or use a
 compound selector).
 
-## Dialog styling: use the dialog's own color tokens
+## Dialog styling: the dark .game-dialog surface
 
-Anything rendered inside a `DialogContent` must take its colors from
-`--foreground` / `--muted-foreground` (the tokens `DialogDescription` itself
-uses), **not** from the game's `--text` / `--muted`. Dialog surfaces are
-light while the board is dark, so game-side variables produce near-white
-text on a white panel — and Tailwind's theme additionally redefines `--muted`
-on `:root`, so `var(--muted)` inside a dialog silently resolves to
-Tailwind's near-white value rather than the game's slate blue.
+The four gameplay dialogs (win, game over, round cleared, leaderboard) all
+carry `.game-dialog`, which paints the 8bitcn dialog with the game's dark
+`--panel` instead of its default light card, recolours the frame (the 8bit
+dialog draws it as two `aria-hidden` divs bordered in `--foreground`, which
+vanishes on dark), and fixes `DialogDescription`.
 
-The same trap catches the 8bit `Button`'s `outline` variant, which sets a
-background but no text color — inside a dialog it inherits body's near-white
-`--text` and renders white-on-white. Secondary dialog buttons therefore need
-`className="dialog-button--secondary"` (see `GameOverOverlay`), which pins
-them to `--foreground`. Both bugs shipped briefly and were caught by reading
-computed styles, not by looking at a screenshot: the pixel font's dark
-outline decoration makes invisible text still look vaguely present.
+This replaced a running battle rather than being a preference. On the light
+default, every piece of text inside a dialog had to opt out of the game's
+palette and into `--foreground`/`--muted-foreground`; two separate
+white-on-white bugs shipped from forgetting to. With the surface dark, the
+game's own variables are simply correct.
+
+## CSS custom properties collide with shadcn tokens
+
+`src/tailwind.css` declares an **unlayered** `:root` with the full shadcn
+token set — `--accent`, `--muted`, `--foreground`, `--background`,
+`--border`, `--ring`, `--card`, `--input`. Two of those names were also the
+game's, and Tailwind's block won the cascade, so `var(--accent)` and
+`var(--muted)` had been silently resolving to near-white `oklch(.97 0 0)`
+for some time — cyan accents rendering white across the menu, the info card
+and the top bar, with nothing in the code hinting at it.
+
+The game's two are now `--mr-accent` / `--mr-muted`. Anything added later
+whose name collides with a shadcn token needs the same prefix; renaming the
+game side is preferred over overriding Tailwind's, since shadcn components
+read those tokens for their own styling.
+
+A practical note on catching this class of bug: a contrast check has to
+resolve colours through the **browser** (paint onto a 1x1 canvas and read
+the pixel), not by regex over `getComputedStyle().color`. Chrome returns
+`oklch()` and `rgba()` verbatim, and a naive numeric parse reads
+`oklch(0.97 0 0)` as `rgb(0.97, 0, 0)` — near-black — which produced
+confidently wrong readings both ways during this work.
+
 
 ## Why the glide overlay bypasses React
 

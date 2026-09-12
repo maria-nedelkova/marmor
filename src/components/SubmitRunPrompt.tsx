@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MAX_NAME_LENGTH, sanitizeName } from "../leaderboard/store";
-import { Button } from "./ui/8bit/button";
+import { Button3D } from "./Button3D";
 
 interface SubmitRunPromptProps {
   defaultName: string;
@@ -49,9 +49,9 @@ export function SubmitRunPrompt({ defaultName, onSubmit, onSkip }: SubmitRunProm
           spellCheck={false}
           onChange={(e) => setName(e.target.value)}
         />
-        <Button font="retro" type="submit">
+        <Button3D className="dialog-btn" type="submit">
           Submit
-        </Button>
+        </Button3D>
       </div>
       <button type="button" className="submit-run__skip" onClick={onSkip}>
         skip

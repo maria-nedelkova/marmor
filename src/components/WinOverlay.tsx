@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { ReactNode } from "react";
-import { Button } from "./ui/8bit/button";
+import { Button3D } from "./Button3D";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
 interface WinOverlayProps {
@@ -29,7 +29,7 @@ export function WinOverlay({ visible, score, runScore, rounds, onRestart, childr
 
   return (
     <Dialog open={visible}>
-      <DialogContent showCloseButton={false} className="win-dialog">
+      <DialogContent showCloseButton={false} className="game-dialog win-dialog">
         <DialogHeader>
           <DialogTitle className="win-dialog__title">{quip.title}</DialogTitle>
           <DialogDescription>{quip.body.replace("{score}", String(score))}</DialogDescription>
@@ -39,9 +39,9 @@ export function WinOverlay({ visible, score, runScore, rounds, onRestart, childr
         </p>
         {children}
         <DialogFooter>
-          <Button font="retro" onClick={onRestart}>
+          <Button3D className="dialog-btn" onClick={onRestart}>
             New game
-          </Button>
+          </Button3D>
         </DialogFooter>
       </DialogContent>
     </Dialog>

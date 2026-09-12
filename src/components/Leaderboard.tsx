@@ -30,7 +30,7 @@ export function Leaderboard({ open, entries, playerId, onClose }: LeaderboardPro
 
   return (
     <Dialog open={open}>
-      <DialogContent showCloseButton={false} className="leaderboard-dialog">
+      <DialogContent showCloseButton={false} className="game-dialog leaderboard-dialog">
         <DialogHeader>
           <DialogTitle className="leaderboard__title">Hall of Pretenders</DialogTitle>
         </DialogHeader>

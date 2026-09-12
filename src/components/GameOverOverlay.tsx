@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { ReactNode } from "react";
-import { Button } from "./ui/8bit/button";
+import { Button3D } from "./Button3D";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
 interface GameOverOverlayProps {
@@ -40,7 +40,7 @@ export function GameOverOverlay({
 
   return (
     <Dialog open={visible}>
-      <DialogContent showCloseButton={false} className="gameover-dialog">
+      <DialogContent showCloseButton={false} className="game-dialog gameover-dialog">
         <DialogHeader>
           <DialogTitle className="gameover-dialog__title">{quip.title}</DialogTitle>
           <DialogDescription>
@@ -49,12 +49,15 @@ export function GameOverOverlay({
         </DialogHeader>
         {children}
         <DialogFooter>
-          <Button font="retro" onClick={onRetry}>
+          <Button3D className="dialog-btn" onClick={onRetry}>
             Retry round {roundNumber}
-          </Button>
-          <Button font="retro" variant="outline" className="dialog-button--secondary" onClick={onRestart}>
+          </Button3D>
+          {/* Secondary: a flatter, dimmer face so "Start over" doesn't
+              compete with retrying, which is the action nearly everyone
+              wants after losing a round. */}
+          <Button3D className="dialog-btn dialog-btn--ghost" onClick={onRestart}>
             Start over
-          </Button>
+          </Button3D>
         </DialogFooter>
       </DialogContent>
     </Dialog>

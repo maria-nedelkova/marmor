@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { LevelConfig } from "../game/levels";
-import { Button } from "./ui/8bit/button";
+import { Button3D } from "./Button3D";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
 interface LevelClearedOverlayProps {
@@ -36,7 +36,7 @@ export function LevelClearedOverlay({
 
   return (
     <Dialog open={visible}>
-      <DialogContent showCloseButton={false} className="level-dialog">
+      <DialogContent showCloseButton={false} className="game-dialog level-dialog">
         <DialogHeader>
           <DialogTitle className="level-dialog__title">{quip.title}</DialogTitle>
           <DialogDescription>
@@ -55,9 +55,9 @@ export function LevelClearedOverlay({
         </div>
 
         <DialogFooter>
-          <Button font="retro" onClick={onNext}>
+          <Button3D className="dialog-btn" onClick={onNext}>
             Round {nextRoundNumber}
-          </Button>
+          </Button3D>
         </DialogFooter>
       </DialogContent>
     </Dialog>
