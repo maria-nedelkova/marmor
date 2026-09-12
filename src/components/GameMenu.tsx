@@ -1,3 +1,4 @@
+import { BookOpen, RotateCcw, Sparkles, Trophy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { LevelConfig } from "../game/levels";
 
@@ -79,29 +80,43 @@ export function GameMenu({
         tabIndex={-1}
         ref={panelRef}
       >
+        {/* The round's name and twist used to sit under the title on the
+            main screen. This banner is now their only home, so it carries
+            the twist line too — otherwise "what changed this round?" would
+            have no answer anywhere in the UI. */}
         <div className="menu-banner">
-          <span className="menu-banner__round">
-            Round {roundNumber}/{roundCount}
-          </span>
-          <span className="menu-banner__name">{level.name}</span>
+          <p className="menu-banner__heading">
+            <span className="menu-banner__round">
+              Round {roundNumber}/{roundCount}
+            </span>
+            <span className="menu-banner__name">{level.name}</span>
+          </p>
+          <p className="menu-banner__twist">{level.twist}</p>
         </div>
 
+        {/* No icon here on purpose: it's the one action that resumes rather
+            than navigates, and staying unadorned keeps it distinct from the
+            four labelled options below. */}
         <button type="button" className="menu-item menu-item--wide" onClick={onClose}>
           Back to game
         </button>
 
         <div className="menu-grid">
           <button type="button" className="menu-item" onClick={onRestartRound}>
-            Restart round
+            <RotateCcw className="menu-item__icon" size={16} aria-hidden="true" />
+            <span>Restart round</span>
           </button>
           <button type="button" className="menu-item" onClick={onNewGame}>
-            New game
+            <Sparkles className="menu-item__icon" size={16} aria-hidden="true" />
+            <span>New game</span>
           </button>
           <button type="button" className="menu-item" onClick={() => setInfoOpen(true)}>
-            How to play
+            <BookOpen className="menu-item__icon" size={16} aria-hidden="true" />
+            <span>How to play</span>
           </button>
           <button type="button" className="menu-item" onClick={onOpenLeaderboard}>
-            Hall of Pretenders
+            <Trophy className="menu-item__icon" size={16} aria-hidden="true" />
+            <span>Hall of Pretenders</span>
           </button>
         </div>
       </div>

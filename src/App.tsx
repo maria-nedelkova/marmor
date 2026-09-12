@@ -8,7 +8,6 @@ import { DevPanel, isDevMode } from "./components/DevPanel";
 import { GameMenu } from "./components/GameMenu";
 import { GameOverOverlay } from "./components/GameOverOverlay";
 import { Leaderboard } from "./components/Leaderboard";
-import { LevelBanner } from "./components/LevelBanner";
 import { LevelClearedOverlay } from "./components/LevelClearedOverlay";
 import { MarmorTitle } from "./components/MarmorTitle";
 import { SubmitRunPrompt } from "./components/SubmitRunPrompt";
@@ -105,7 +104,6 @@ export function App() {
     <div className="table">
       <header className="titlebar">
         <MarmorTitle />
-        <LevelBanner level={game.level} index={game.levelIndex} count={game.levelCount} />
       </header>
 
       <TopBar

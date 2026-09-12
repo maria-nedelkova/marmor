@@ -7,18 +7,23 @@ interface TopBarProps {
   nextQueue: ColorIndex[];
   muted: boolean;
   onToggleMute: () => void;
-  /** Opens the pause menu, which now owns every action that isn't checked
+  /** Opens the pause menu, which owns every action that isn't checked
    * mid-turn (restart, new game, rules, leaderboard). */
   onOpenMenu: () => void;
 }
 
-/** Deliberately down to three zones. "Next up" and mute are glanced at or
- * toggled during play; everything else is a between-turns decision and lives
- * behind the menu, so the bar above the board stays quiet. */
+/** Three zones, grouped tight around "Next up" rather than spread across the
+ * bar. Next up is the only thing here read every turn, so Menu and Sound sit
+ * beside it as satellites instead of being pushed to the far edges where
+ * they read as three equally-important controls.
+ *
+ * Both buttons use the `ghost` variant, which is what suppresses the 8bit
+ * Button's pixel-border decorations — the borders made two incidental
+ * controls look as heavy as the board itself. */
 export function TopBar({ nextQueue, muted, onToggleMute, onOpenMenu }: TopBarProps) {
   return (
     <div className="topbar">
-      <Button font="retro" onClick={onOpenMenu} className="topbar__zone" title="Open menu">
+      <Button font="retro" variant="ghost" onClick={onOpenMenu} className="topbar__zone" title="Open menu">
         <Menu size={16} aria-hidden="true" />
         <span className="topbar__label">Menu</span>
       </Button>
@@ -28,7 +33,14 @@ export function TopBar({ nextQueue, muted, onToggleMute, onOpenMenu }: TopBarPro
         <NextPreview colors={nextQueue} />
       </div>
 
-      <Button font="retro" onClick={onToggleMute} className="topbar__zone" aria-pressed={muted}>
+      <Button
+        font="retro"
+        variant="ghost"
+        onClick={onToggleMute}
+        className="topbar__zone"
+        aria-pressed={muted}
+        title={muted ? "Unmute" : "Mute"}
+      >
         {muted ? <VolumeX size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
         <span className="topbar__label">Sound</span>
       </Button>

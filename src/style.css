@@ -95,36 +95,6 @@ body {
   animation: flicker 4.5s ease-in-out infinite;
 }
 
-.titlebar__sub {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.6;
-  letter-spacing: 0.4px;
-}
-
-.level-banner__heading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 0 0 8px;
-  font-family: var(--font-display);
-  font-size: 11px;
-  letter-spacing: 1px;
-}
-
-.level-banner__round {
-  padding: 4px 8px;
-  border: 2px solid var(--accent2);
-  color: var(--accent2);
-}
-
-.level-banner__name {
-  color: var(--accent);
-}
-
 @keyframes flicker {
   0%, 92%, 100% { opacity: 1; }
   93% { opacity: 0.75; }
@@ -434,8 +404,11 @@ body {
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  /* Grouped tight in the centre rather than spread edge-to-edge: Next up is
+   * the zone that matters during play, and Menu/Sound read better as things
+   * flanking it than as two far-apart controls of equal weight. */
+  justify-content: center;
+  gap: 18px;
   flex-wrap: wrap;
 }
 
@@ -736,16 +709,21 @@ body {
 /* The "where am I" banner. Wider and louder than the items below it, the
  * way the reference layout treats its own full-width row. */
 .menu-banner {
+  padding: 13px 14px;
+  margin-bottom: 2px;
+  text-align: center;
+  background: rgba(255, 47, 176, 0.12);
+  border: 3px solid var(--accent2);
+  font-family: var(--font-display);
+}
+
+.menu-banner__heading {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 12px 14px;
-  margin-bottom: 2px;
-  background: linear-gradient(180deg, rgba(179, 75, 255, 0.22), rgba(179, 75, 255, 0.08));
-  border: 3px solid var(--accent2);
-  font-family: var(--font-display);
+  margin: 0;
 }
 
 .menu-banner__round {
@@ -759,17 +737,49 @@ body {
   color: var(--accent);
 }
 
+.menu-banner__twist {
+  margin: 9px 0 0;
+  font-size: 9px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
 .menu-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
 
+/* Chunky bevelled buttons in the style of 8-bit UI: a bright opaque edge
+ * along the top/left and a dark one along the bottom/right, so the face
+ * reads as raised and lit from the top-left. Plus a hard outline (the 0 0 0
+ * spread shadow) and a drop shadow to lift it off the panel.
+ *
+ * The bevel colours are OPAQUE, not rgba overlays. A translucent white/black
+ * bevel over a mid-tone face washes out to a soft gradient-ish edge at this
+ * size; discrete light/dark shades keep the three planes visibly separate,
+ * which is what makes the shape read as 3D rather than merely shaded. Each
+ * variant just overrides the four --btn-* values. No border-radius and no
+ * real gradients anywhere — the hard pixel edge is the point. */
 .menu-item {
-  padding: 14px 12px;
-  background: #141a38;
-  border: 3px solid var(--panel-border);
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
+  --btn-face: #2b3566;
+  --btn-light: #6675cc;
+  --btn-dark: #151b3c;
+  --btn-edge: #080b1c;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 14px;
+  border: none;
+  background: var(--btn-face);
+  box-shadow:
+    inset 4px 4px 0 var(--btn-light),
+    inset -4px -4px 0 var(--btn-dark),
+    0 0 0 3px var(--btn-edge),
+    6px 6px 0 rgba(0, 0, 0, 0.5);
   font-family: var(--font-display);
   font-size: 10px;
   line-height: 1.5;
@@ -778,29 +788,49 @@ body {
   text-align: center;
 }
 
-.menu-item:hover {
-  background: #1e2650;
-  border-color: var(--accent);
+.menu-item__icon {
+  flex: 0 0 auto;
   color: var(--accent);
 }
 
-/* Pressing translates onto its own shadow, so buttons feel physically
- * depressed rather than just recoloured. */
-.menu-item:active {
-  transform: translate(3px, 3px);
-  box-shadow: none;
+.menu-item:hover {
+  --btn-face: #3a478a;
+  --btn-light: #8592e0;
+  color: #fff;
 }
 
+/* Pressed: the bevel inverts (light along the bottom/right now) and the face
+ * moves onto its own drop shadow, so it reads as physically pushed in rather
+ * than just recoloured. */
+.menu-item:active {
+  transform: translate(6px, 6px);
+  box-shadow:
+    inset -4px -4px 0 var(--btn-light),
+    inset 4px 4px 0 var(--btn-dark),
+    0 0 0 3px var(--btn-edge);
+}
+
+.menu-item:active .menu-item__icon {
+  color: #fff;
+}
+
+/* The resume action, in the game's cyan rather than the neutral blue of the
+ * options below it — it's the one button you reach for without reading. */
 .menu-item--wide {
+  --btn-face: #0f7d8e;
+  --btn-light: #4fd2e6;
+  --btn-dark: #053b45;
+  --btn-edge: #01181d;
+
   grid-column: 1 / -1;
   font-size: 12px;
-  padding: 16px 12px;
-  border-color: var(--accent);
-  color: var(--accent);
+  padding: 18px 14px;
+  color: #eaffff;
 }
 
 .menu-item--wide:hover {
-  background: #17304a;
+  --btn-face: #139db2;
+  --btn-light: #7ff0ff;
 }
 
 /* The rules card, layered above the menu it was opened from. */
@@ -996,24 +1026,6 @@ body {
     font-size: 16px;
     letter-spacing: 2px;
     margin-bottom: 24px; /* matches .titlebar's own margin-bottom below */
-  }
-
-  .titlebar__sub {
-    font-size: 9px;
-    line-height: 1.4;
-  }
-
-  /* The round chip and level name stay legible at phone size; the twist
-   * line below them shrinks with .titlebar__sub above. */
-  .level-banner__heading {
-    font-size: 9px;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-
-  .level-banner__round {
-    padding: 3px 6px;
-    border-width: 2px;
   }
 
   .level-dialog__next-label {
