@@ -392,16 +392,13 @@ body {
 .c6 { --glow: var(--c6); background: var(--c6); }
 .c7 { --glow: var(--c7); background: var(--c7); }
 
+/* No panel, border or shadow — the controls sit directly on the backdrop.
+ * Once the row shrank to three tight-grouped zones there was nothing left
+ * for a frame to organise, and the box just added weight above the board. */
 .topbar {
-  /* Widened from 720px and tightened when "Restart round" became a fourth
-   * zone — at the old width the row wrapped and stranded Sound on a line of
-   * its own. 860px is the widest that still sits inside .table's 880px. */
   max-width: 860px;
   margin: 0 auto 28px;
-  padding: 14px 16px;
-  background: var(--panel);
-  border: 3px solid var(--panel-border);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   /* Grouped tight in the centre rather than spread edge-to-edge: Next up is
@@ -1036,10 +1033,10 @@ body {
     font-size: 9px;
   }
 
-  /* Lighter, borderless topbar with icon-only buttons, pushed below the
-   * board/mascot area — the full-text, bordered version reads as too
-   * heavy/boxy at phone width, and controls matter less than the game
-   * itself once the board is the thing you're looking at. */
+  /* Icon-only, and pushed below the board/mascot area — controls matter
+   * less than the game once the board is the thing you're looking at. The
+   * bar is borderless at every width now, so only the order and spacing
+   * change here. */
   .topbar {
     order: 4;
     max-width: none;
@@ -1048,9 +1045,6 @@ body {
      * below it — see .table's min-height above. */
     margin: auto 0 0;
     padding: 10px 4px;
-    background: none;
-    border: none;
-    box-shadow: none;
     gap: 10px;
   }
 
