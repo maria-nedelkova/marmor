@@ -75,6 +75,18 @@ function noiseBurst(opts: { duration?: number; peak?: number; filterFreq?: numbe
   noise.start();
 }
 
+/** A 3D button being pressed — a short, dry mechanical clack.
+ *
+ * Two layers, both deliberately brief: a clicky high noise transient for
+ * the plastic contact, plus a fast downward square sweep for the body of
+ * the key travelling. Kept quieter and drier than the gameplay sounds
+ * (nothing rings out) because a UI click can fire many times in a row and
+ * shouldn't compete with the board's own effects. */
+export function playButtonClick(): void {
+  noiseBurst({ duration: 0.025, peak: 0.07, filterFreq: 5200 });
+  blip(240, { type: "square", duration: 0.045, peak: 0.075, sweepTo: 130 });
+}
+
 /** Marble picked up / selected. */
 export function playSelect(): void {
   blip(520, { type: "square", duration: 0.05, peak: 0.1 });

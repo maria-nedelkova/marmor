@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { setMuted } from "./audio/sound";
+import { playButtonClick, setMuted } from "./audio/sound";
 import { Board } from "./components/Board";
 import type { BoardHandle } from "./components/Board";
 import { DuelMascot } from "./components/DuelMascot";
@@ -39,11 +39,16 @@ export function App() {
   }, [game.shakeToken]);
 
   const toggleMute = () => {
-    setMutedState((prev) => {
-      const next = !prev;
-      setMuted(next);
-      return next;
-    });
+    const next = !muted;
+    setMutedState(next);
+    setMuted(next);
+    // Unmuting needs its own confirmation click: Button3D plays the press
+    // sound on pointerdown, which is still inside the muted window, so
+    // turning sound back on would otherwise be the one button in the UI
+    // that never makes a noise. (Computed outside the state updater rather
+    // than inside it — an updater that emits sound would fire twice under
+    // StrictMode's double-invoke.)
+    if (!next) playButtonClick();
   };
 
   // The final round's clear is the run's actual victory; every earlier one
