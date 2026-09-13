@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- viewport-fit=cover lets the page paint into the rounded-corner / home
+     indicator areas, which is what makes env(safe-area-inset-*) report real
+     values — style.css uses the bottom inset so the controls aren't tucked
+     under the home bar. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>MARMOR — a marble-lines arcade puzzle</title>
 <link rel="icon" type="image/svg+xml" href="./src/favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com">

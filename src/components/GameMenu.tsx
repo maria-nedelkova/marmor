@@ -145,11 +145,14 @@ function InfoCard({ onClose }: { onClose: () => void }) {
     >
       <div className="info-card" role="dialog" aria-modal="true" aria-label="How to play">
         <h2 className="info-card__title">How to play</h2>
+        {/* Kept deliberately terse — this has to fit a phone screen without
+            scrolling, and every line here is read once. The long-form
+            version lived under the board and had the room; this doesn't. */}
         <ul className="info-card__list">
-          <li>Click a marble, then an empty cell. A clear path is required — marbles can&rsquo;t jump.</li>
-          <li>Line up 5 or more of one colour — across, down, or either diagonal — to clear them and score.</li>
-          <li>Clear a line and the turn is free. Otherwise new marbles drop, and &ldquo;Next up&rdquo; shows what&rsquo;s coming.</li>
-          <li>Reach the King&rsquo;s 100 points to take the round. Fill the board with no room left and you lose it.</li>
+          <li>Tap a marble, then an empty cell. Marbles walk — they can&rsquo;t jump.</li>
+          <li>Line up 5+ of one colour, any direction, to clear and score.</li>
+          <li>Clearing is a free turn. Otherwise marbles drop — see &ldquo;Next up&rdquo;.</li>
+          <li>Hit 100 to win the round. Fill the board and you lose it.</li>
         </ul>
         <Button3D className="menu-item menu-item--wide" onClick={onClose}>
           Got it

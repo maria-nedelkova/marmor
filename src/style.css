@@ -896,6 +896,11 @@ body {
   line-height: 1.5;
   letter-spacing: 0.5px;
   text-align: center;
+  /* Grid items default to min-width:auto, which refuses to shrink below the
+   * label's min-content width. On a narrow phone that blew the 1fr track
+   * out past the panel — "New game" and "Pretenders" rendered off the right
+   * edge of the screen. min-width:0 lets the track win instead. */
+  min-width: 0;
 }
 
 .menu-item__icon {
@@ -1105,12 +1110,20 @@ body {
     display: flex;
     flex-direction: column;
     /* Fills the viewport so the layout can distribute space top-to-bottom
-     * (see .layout's and .hint's margin-top: auto below) instead of the
-     * whole group being vertically centered by body with dead space on
-     * both ends. 100vh first as a fallback for anything that doesn't know
-     * dvh. */
+     * (see .layout's auto margins below) instead of the whole group being
+     * vertically centered by body with dead space on both ends. 100vh
+     * first as a fallback for anything that doesn't know dvh.
+     *
+     * dvh, not vh, is what keeps the bottom controls on screen while
+     * Safari's address bar is showing: vh is the bar-hidden height, so a
+     * vh-sized page is always taller than the visible area and its last
+     * row sits under the chrome until you scroll. There is no way to hide
+     * that bar from script — dvh tracking the live height is the fix. */
     min-height: 100vh;
     min-height: 100dvh;
+    /* Keeps the bottom row clear of the home indicator (needs
+     * viewport-fit=cover in index.html to report anything). */
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
   }
 
   /* Reordered so the King/progress/Pretender row and the board read as one
@@ -1124,15 +1137,19 @@ body {
   /* Always pinned to the very top — only the mascots/board group below it
    * (see .layout's margin-top: auto) is pushed down into the leftover
    * space, not the title itself. */
+  /* No bottom margin: the sub-line that used to sit under the title is
+   * gone (it is the menu banner now), and a fixed margin here would be
+   * added on top of .layout's auto margins, making the gap above the
+   * board permanently larger than the one below it. */
   .titlebar {
     order: 1;
-    margin-bottom: 24px;
+    margin-bottom: 0;
   }
 
   .titlebar__title {
     font-size: 16px;
     letter-spacing: 2px;
-    margin-bottom: 24px; /* matches .titlebar's own margin-bottom below */
+    margin-bottom: 0;
   }
 
   .level-dialog__next-label {
@@ -1152,12 +1169,16 @@ body {
    * the hint, so Next up/New game/Sound are visible without scrolling".
    * The hint is gone (its text is a menu item now) and so is New game, so
    * the bar is simply last — nothing can push it off-screen. */
+  /* Last, and pinned to the bottom by .layout's auto bottom margin rather
+   * than by an auto margin of its own — one element owning the slack keeps
+   * the split predictable. */
   .topbar {
     order: 3;
     max-width: none;
-    margin: 16px 0 0;
+    margin: 0;
     padding: 10px 4px;
     gap: 10px;
+    flex-shrink: 0;
   }
 
   .topbar__label {
@@ -1179,11 +1200,16 @@ body {
    * the .titlebar/.layout/.topbar `order` above for why. */
   .layout {
     order: 2;
-    /* Pushes this group down away from the pinned title, using up
-     * whatever vertical space isn't needed by the fixed-height items below
-     * it (topbar, hint) — see .hint's own margin-top: auto, which does the
-     * equivalent job of pinning the trailing hint to .table's bottom edge. */
+    /* auto on BOTH sides, so the leftover vertical space is split equally
+     * above and below this group: title pinned at the top, controls pinned
+     * at the bottom, board + mascots centred evenly between them.
+     *
+     * margin-top alone (what this used to be) dumped all the slack into one
+     * gap — measured 262px of dead space under the title against 16px above
+     * the controls, which is the "too much space between the game name and
+     * mascots" that made the bottom row look cropped. */
     margin-top: auto;
+    margin-bottom: auto;
     display: grid;
     grid-template-columns: auto 1fr auto;
     grid-template-areas:
@@ -1261,6 +1287,92 @@ body {
      trailed off a short viewport rather than the controls. Dropped rather
      than merged: the hint element no longer exists — its text is the "How
      to play" menu item — so the problem that ordering solved is gone. */
+
+  /* --- Pause menu: one column ---------------------------------------
+   * Two columns can't hold a label like "Restart round" at phone width
+   * without either clipping or wrapping every cell to two lines. One
+   * column gives each button the full panel width, so the labels stay on
+   * one line and the icons stay aligned; the buttons get thinner and the
+   * text smaller to pay for the extra rows. */
+  .menu-panel {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Left-aligned once they're full-width: a centred label on a wide button
+   * drifts away from its icon. */
+  .menu-item {
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 11px 14px;
+    font-size: 9px;
+  }
+
+  .menu-item--wide {
+    justify-content: center;
+    padding: 13px 14px;
+    font-size: 10px;
+  }
+
+  .menu-banner {
+    padding: 10px;
+  }
+
+  .menu-banner__name {
+    font-size: 10px;
+  }
+
+  .menu-banner__twist {
+    font-size: 8px;
+  }
+
+  /* --- Dialogs: keep their frame on screen ---------------------------
+   * The 8bitcn dialog is full-bleed at this width, so its border sat
+   * exactly on (or past) the screen edges and read as a missing frame.
+   * A hard width leaves a visible margin on both sides. */
+  .game-dialog {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  .leaderboard__title,
+  .level-dialog__title,
+  .win-dialog__title,
+  .gameover-dialog__title {
+    font-size: 13px !important;
+  }
+
+  /* --- Rules card ----------------------------------------------------
+   * Smaller type and tighter spacing on top of the shortened copy. The
+   * scroll cap is a backstop for the shortest viewports (a phone with the
+   * address bar showing loses ~120px), so "Got it" can never be pushed
+   * off the bottom the way it was. */
+  .info-card {
+    padding: 14px;
+    max-height: calc(100dvh - 120px);
+    overflow-y: auto;
+  }
+
+  .info-card__title {
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+
+  .info-card__list {
+    gap: 9px;
+    margin-bottom: 12px;
+  }
+
+  .info-card__list li {
+    font-size: 9px;
+    line-height: 1.65;
+    padding-left: 10px;
+  }
 }
 
 /* Below 640px's own breakpoint (not overlapping it) — 375px-wide phones
