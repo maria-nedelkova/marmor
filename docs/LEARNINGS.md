@@ -44,9 +44,32 @@ also present as "no sound on mobile":
   and does not always resume on return, so there's now a
   `visibilitychange` listener that resumes it.
 
+**Follow-up: it was still dying on a tab switch.** The first pass only
+watched `visibilitychange` and only treated `"suspended"` as needing a
+resume. Three things were wrong with that, all of them fixed by borrowing
+the mechanisms in unmute.js (github.com/swevans/unmute), which the
+notysing project vendors:
+
+1. **iOS has a fourth state, `"interrupted"`.** It is not in the spec and
+   not in TypeScript's `AudioContextState` union, and it is exactly what
+   you land in after a tab switch or an incoming call. `state ===
+   "suspended"` silently ignores it. Anything that is not `running` or
+   `closed` needs resuming. Verified by faking the state: the old check
+   declined to resume, the new one resumed.
+2. **iOS's Page Visibility API is unreliable**, so `visibilitychange`
+   alone misses cases. It does dispatch window `focus`/`blur`, so those
+   are watched too, along with the context's own `statechange` — which is
+   the most reliable of the three, since an interruption is reported
+   there and nowhere else.
+3. **`resume()` often will not take effect outside a user gesture.** So
+   whenever the context is not running, listeners are armed on the next
+   interaction to retry there. Even if the automatic resume is refused,
+   sound returns on the player's next tap.
+
 **If it is ever silent again,** check in this order: the ring switch and the
 audio session claim; whether a context exists before the first tap
-(it should not); and whether the context's `state` is `running` after one.
+(it should not); and whether `state` is `running` after one — remembering
+that `"interrupted"` is a state that exists only on iOS.
 
 ## The King's pedestal recurred short, on a device with a broken `Math.random`
 

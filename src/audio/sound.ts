@@ -51,6 +51,10 @@ function getCtx(): AudioContext | null {
   if (!ctx) {
     claimPlaybackSession();
     ctx = new AudioCtx();
+    // iOS announces an interruption (and its end) through this rather than
+    // through any page event, so it's the most reliable trigger of the
+    // three we listen on.
+    ctx.addEventListener("statechange", checkContextState);
   }
   // resume() is async and deliberately not awaited — callers synthesize
   // immediately after. The context accepts scheduling while resuming, so
@@ -61,13 +65,58 @@ function getCtx(): AudioContext | null {
   return ctx;
 }
 
-/** iOS suspends the context when the tab is backgrounded or the phone
- * locks, and does not always resume it on return — without this, sound dies
- * silently the first time you switch apps mid-game. */
+/* Keeping the context alive across tab switches, backgrounding and phone
+ * locks. The mechanisms below are the ones that matter from unmute.js
+ * (github.com/swevans/unmute), which the notysing project vendors — an
+ * earlier attempt here handled only `visibilitychange` + `"suspended"` and
+ * still lost sound after switching tabs, for three separate reasons:
+ *
+ * 1. iOS has a fourth state, "interrupted", that isn't in the spec or in
+ *    TypeScript's AudioContextState. Checking `state === "suspended"`
+ *    silently ignores it, which is the state you actually land in after a
+ *    tab switch or an incoming call. Anything that isn't running or closed
+ *    needs resuming.
+ * 2. iOS's Page Visibility API is unreliable, so visibilitychange alone
+ *    misses cases. It does dispatch window focus/blur, so those are watched
+ *    too.
+ * 3. resume() frequently won't take effect outside a user gesture. So when
+ *    the context is not running we arm listeners on the next interaction
+ *    and retry there — the sound comes back on the player's next tap even
+ *    if the automatic resume was refused. */
+const RESUME_EVENTS = ["pointerdown", "touchend", "click", "keydown"] as const;
+let resumeListenersArmed = false;
+
+function needsResume(audio: AudioContext): boolean {
+  // Compared as a string because "interrupted" is iOS-only and absent from
+  // the AudioContextState union.
+  const state = audio.state as string;
+  return state !== "running" && state !== "closed";
+}
+
+function armResumeListeners(arm: boolean): void {
+  if (resumeListenersArmed === arm || typeof window === "undefined") return;
+  resumeListenersArmed = arm;
+  for (const event of RESUME_EVENTS) {
+    if (arm) window.addEventListener(event, checkContextState, { capture: true, passive: true });
+    else window.removeEventListener(event, checkContextState, { capture: true });
+  }
+}
+
+function checkContextState(): void {
+  if (!ctx) return;
+  if (needsResume(ctx)) {
+    void ctx.resume();
+    armResumeListeners(true);
+  } else {
+    armResumeListeners(false);
+  }
+}
+
 if (typeof document !== "undefined") {
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && ctx && ctx.state === "suspended") void ctx.resume();
-  });
+  document.addEventListener("visibilitychange", checkContextState, true);
+  window.addEventListener("focus", checkContextState, true);
+  window.addEventListener("blur", checkContextState, true);
+  window.addEventListener("pageshow", checkContextState, true);
 }
 
 export function setMuted(value: boolean): void {
