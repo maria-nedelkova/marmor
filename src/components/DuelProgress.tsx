@@ -10,10 +10,10 @@ interface DuelProgressProps {
  * screens, where the two pedestals sit too close together (and too short)
  * for their relative heights to read clearly.
  *
- * It fills right-to-left (see `.duel-progress` in style.css). The bar sits
- * between the two mascots with the Pretender on the right, so growing
- * leftward reads as the Pretender advancing on the King rather than as an
- * abstract meter — the fill points at whoever is being caught. */
+ * It fills left-to-right. On mobile the Pretender sits to the LEFT of this
+ * bar and the King to the right (see .layout's grid-template-areas), so the
+ * fill grows out of the player's own mascot and advances on the King —
+ * it points at whoever is being caught. */
 export function DuelProgress({ score, kingScore }: DuelProgressProps) {
   const value = Math.min(100, (score / kingScore) * 100);
   return (

@@ -38,8 +38,19 @@ interface DuelMascotProps {
 // display, not a property of the artwork.
 const HEAD_ROWS = 10;
 
+/** Blanks the leftmost and rightmost pixel columns.
+ *
+ * Both mascots hold their weapon in an outer column — the King's scepter at
+ * 15, the Pretender's sword at 0 — and inside the head crop that column
+ * holds nothing else, so this removes the weapons and only the weapons.
+ * Cropping to the head left just the scepter orb and the sword tip floating
+ * beside the face, which read as specks of dirt rather than as weapons. */
+function stripWeaponColumns(pixelRow: string): string {
+  return `.${pixelRow.slice(1, -1)}.`;
+}
+
 export function DuelMascot({ name, rows, palette, score, accent, side, heightRatio, falling, compact }: DuelMascotProps) {
-  const displayRows = compact ? rows.slice(0, HEAD_ROWS) : rows;
+  const displayRows = compact ? rows.slice(0, HEAD_ROWS).map(stripWeaponColumns) : rows;
   const capHeight = compact ? PEDESTAL_CAP_HEIGHT_COMPACT : PEDESTAL_CAP_HEIGHT;
   const baseHeight = compact ? PEDESTAL_BASE_HEIGHT_COMPACT : PEDESTAL_BASE_HEIGHT;
   const shaftMin = compact ? PEDESTAL_SHAFT_MIN_COMPACT : PEDESTAL_SHAFT_MIN;

@@ -217,16 +217,13 @@ body {
 /* Only ever shown in the mobile layout (see the max-width breakpoint below)
  * — on desktop the two pedestals' relative height already communicates the
  * score race, so a second indicator would be redundant. */
+/* Fills left-to-right, which is the 8bit Progress's native direction — it
+ * briefly carried a scaleX(-1) to fill from the right, back when the
+ * Pretender sat on the right of this bar. Swapping the two mascots on
+ * mobile put the Pretender on the left, so the natural direction now grows
+ * from the player toward the King and the mirror is no longer needed. */
 .duel-progress {
   display: none;
-  /* Mirrored so the bar fills from the right — the Pretender's side —
-   * toward the King on the left. The 8bit Progress fills its squares from
-   * index 0 rightward and has no reverse option; flipping the wrapper is
-   * enough because every part of the bar (plain square blocks, symmetric
-   * pixel border) is left-right symmetric, so the mirror is invisible
-   * apart from the fill direction. Nothing else renders that component,
-   * so this can't surprise another caller. */
-  transform: scaleX(-1);
 }
 
 .duel-mascot {
@@ -1265,8 +1262,14 @@ body {
     margin-bottom: auto;
     display: grid;
     grid-template-columns: auto 1fr auto;
+    /* Pretender left, King right — the reverse of desktop. The progress bar
+     * between them fills left-to-right, so with the Pretender on the left
+     * the fill grows out of the player's own mascot and advances on the
+     * King, which reads as chasing him down. The area names stay true to
+     * who occupies them; it's .duel-mascot--left/--right (desktop sides)
+     * that are swapped relative to them here. */
     grid-template-areas:
-      "king progress pretender"
+      "pretender progress king"
       "board board board";
     row-gap: 10px;
     column-gap: 8px;
@@ -1290,6 +1293,21 @@ body {
   .board {
     transform: scale(0.66);
     transform-origin: top left;
+  }
+
+  /* The topple direction is set inline by DuelMascot from its `side` prop,
+   * which still describes the DESKTOP side — so after the swap above both
+   * mascots would tumble inward, toward each other, instead of outward as
+   * intended. Re-point them here. !important because the component writes
+   * these custom properties as inline styles. */
+  .duel-mascot--compact.duel-mascot--left .duel-mascot__figure--falling {
+    --fall-x: 55px !important;
+    --fall-rotate: 98deg !important;
+  }
+
+  .duel-mascot--compact.duel-mascot--right .duel-mascot__figure--falling {
+    --fall-x: -55px !important;
+    --fall-rotate: -98deg !important;
   }
 
   .duel-mascot--left {

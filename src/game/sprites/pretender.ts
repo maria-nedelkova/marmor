@@ -7,9 +7,9 @@ const W = 16;
 // sword held on his left (outer) side — mirrors the King's silhouette
 // compositionally, distinct in color, headwear, and weapon shape.
 export const PRETENDER_ROWS: string[] = [
-  row(W, ".", [[1, 1, "v"], [4, 4, "v"], [7, 8, "v"], [11, 11, "v"], [14, 14, "v"]]), // hair spikes
-  row(W, ".", [[1, 2, "v"], [3, 5, "v"], [6, 9, "v"], [10, 12, "v"], [13, 14, "v"]]), // spikes widen
-  row(W, ".", [[1, 14, "v"], [7, 8, "u"]]), // hair band + streak
+  row(W, ".", [[1, 1, "c"], [4, 4, "c"], [7, 8, "c"], [11, 11, "c"], [14, 14, "c"]]), // crown spikes
+  row(W, ".", [[1, 2, "c"], [3, 5, "c"], [6, 9, "c"], [10, 12, "c"], [13, 14, "c"]]), // spikes widen
+  row(W, ".", [[1, 14, "c"], [7, 8, "u"]]), // crown band + streak
   row(W, ".", [[1, 14, "t"]]), // hair shadow band
   row(W, ".", [[1, 2, "v"], [3, 12, "f"], [13, 14, "v"]]), // hairline + forehead
   row(W, ".", [[1, 1, "v"], [2, 13, "f"], [14, 14, "v"]]), // face
@@ -32,8 +32,13 @@ export const PRETENDER_ROWS: string[] = [
 ];
 
 export const PRETENDER_PALETTE: PixelPalette = {
+  /** Crown. Split out from `v` (which still outlines the face) so the
+   * headwear could be lifted out of near-black without turning the face
+   * outline purple too — at #241a33 the crown read as a dark smudge,
+   * especially at the smaller mobile sprite size. */
+  c: "#5b3a9e",
   v: "#241a33",
-  u: "#6c4fd6",
+  u: "#8f74f0",
   t: "#160f22",
   f: "#ffd9b3",
   n: "#e0ab7a",
