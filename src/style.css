@@ -219,6 +219,14 @@ body {
  * score race, so a second indicator would be redundant. */
 .duel-progress {
   display: none;
+  /* Mirrored so the bar fills from the right — the Pretender's side —
+   * toward the King on the left. The 8bit Progress fills its squares from
+   * index 0 rightward and has no reverse option; flipping the wrapper is
+   * enough because every part of the bar (plain square blocks, symmetric
+   * pixel border) is left-right symmetric, so the mirror is invisible
+   * apart from the fill direction. Nothing else renders that component,
+   * so this can't surprise another caller. */
+  transform: scaleX(-1);
 }
 
 .duel-mascot {
