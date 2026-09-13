@@ -161,6 +161,22 @@ Four dials worth naming because they aren't obvious:
   difficulty in the whole ladder. Nothing about the board changes; the
   player just stops being able to plan the last marble. It attacks the
   *skill* the game rewards rather than piling on more marbles.
+- **Color smoothing** (`COLOR_SMOOTHING` in `engine.ts`) is the counterweight
+  to that bias, and the thing that decides whether a color can come back
+  once it falls behind. Every color's spawn weight starts at this value
+  before its on-board count is added, so it alone sets the floor for a color
+  that is absent. It was 1, which on a realistic 47-marble board with 8
+  colors is a 1.8% floor — an expected 18 turns before an absent color
+  reappears. In play that showed up as one color missing for a whole round
+  and, worse, the 8th color introduced in round 3 never establishing itself:
+  it enters an already-populated board at zero and has no way to climb. At
+  3 the floor is ~4.2% (~8 turns). Measured over 4,000 simulated rounds,
+  that takes fully-absent colors from 1.05 per round to 0.25 and the
+  dominant color's share from 35.6% to 27%, without flattening the
+  clustering that makes lines buildable.
+
+  Worth noting the original 7-color game had the same 1.9% floor — adding a
+  color mid-ladder is what made a long-standing flaw visible.
 - **Color affinity** turns down the bias in `weightedRandomColor` that makes
   spawns favour colors already on the table. That bias exists to *help* the
   player (clustered colors finish lines), so dialling it toward uniform in

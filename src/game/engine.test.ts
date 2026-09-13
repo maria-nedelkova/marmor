@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { COLORS, SIZE } from "./constants";
 import {
   assignSpawnCells,
+  COLOR_SMOOTHING,
   colorCounts,
   createEmptyBoard,
   findLinesThrough,
@@ -192,8 +193,8 @@ describe("weightedRandomColor", () => {
 
   test("affinity 0 ignores the board entirely, unlike affinity 1", () => {
     const board = createEmptyBoard();
-    // 40 marbles of color 0 — at affinity 1 that swamps every other color's
-    // +1 smoothing weight; at affinity 0 it should count for nothing.
+    // 40 marbles of color 0 — at affinity 1 that dominates the weighting;
+    // at affinity 0 it should count for nothing.
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 8; c++) board[r]![c] = 0;
     }
@@ -204,9 +205,37 @@ describe("weightedRandomColor", () => {
       if (weightedRandomColor(board, COLORS, 1) === 0) biased++;
       if (weightedRandomColor(board, COLORS, 0) === 0) flat++;
     }
-    // Expected shares: ~41/47 (~0.87) biased vs ~1/7 (~0.14) flat.
-    expect(biased / runs).toBeGreaterThan(0.7);
-    expect(flat / runs).toBeLessThan(0.25);
+    // Asserted against the formula rather than hard-coded shares, which
+    // silently encode whatever COLOR_SMOOTHING happens to be — the previous
+    // version of this test failed purely because that constant was retuned.
+    const expectedBiased = (40 + COLOR_SMOOTHING) / (40 + COLORS * COLOR_SMOOTHING);
+    const expectedFlat = 1 / COLORS;
+    expect(biased / runs).toBeGreaterThan(expectedBiased - 0.08);
+    expect(biased / runs).toBeLessThan(expectedBiased + 0.08);
+    expect(flat / runs).toBeGreaterThan(expectedFlat - 0.05);
+    expect(flat / runs).toBeLessThan(expectedFlat + 0.05);
+    // The point of the dial: clustering must be much stronger at 1 than 0.
+    expect(biased).toBeGreaterThan(flat * 3);
+  });
+
+  test("an absent color keeps a usable chance on a busy board", () => {
+    // The bug this guards: with too small a smoothing constant, a color
+    // that falls behind effectively never returns. On a realistic 47-marble
+    // board an absent color must stay well above ~1 in 50 per spawn, or it
+    // takes ~18 turns to reappear and the board looks stuck on 3 colors.
+    const board = createEmptyBoard();
+    let placed = 0;
+    outer: for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        if (placed >= 47) break outer;
+        board[r]![c] = placed % 3; // three colors hog the board
+        placed++;
+      }
+    }
+    const runs = 20_000;
+    let absent = 0;
+    for (let i = 0; i < runs; i++) if (weightedRandomColor(board, COLORS, 1) === 7) absent++;
+    expect(absent / runs).toBeGreaterThan(0.03);
   });
 
   test("falls back to uniform-ish behavior when no color dominates", () => {

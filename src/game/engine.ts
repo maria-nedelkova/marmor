@@ -40,17 +40,34 @@ export function colorCounts(board: Board, colorCount = COLORS): number[] {
   return counts;
 }
 
+/** Additive smoothing: every color's weight starts here before its
+ * on-board count is added, so this alone sets the floor probability for a
+ * color that isn't on the board at all.
+ *
+ * It was 1, which is far too low once the board fills. On a realistic
+ * 47-marble board with 8 colors that floor is 1/55 — about 1.8% per spawn,
+ * or an expected 18 turns before an absent color shows up at all. Observed
+ * in play: one color never appeared across a whole round, and the 8th color
+ * introduced in round 3 stayed at the single marble it started with,
+ * because a color that falls behind has no way back. (The original
+ * 7-color game had the same 1.9% floor — adding a color mid-ladder is what
+ * made the flaw visible, since that color enters an established board at
+ * zero.) At 3 the floor is ~4.2%, or roughly 8 turns, which keeps the
+ * board's palette moving without flattening the clustering that makes
+ * lines buildable in the first place. */
+export const COLOR_SMOOTHING = 3;
+
 /** Picks a color weighted toward colors already present on the board — the
  * more of a color already on the table, the likelier it spawns again, which
- * makes lines easier to complete (and to run into by accident). A +1
- * smoothing weight keeps every color reachable even when absent.
+ * makes lines easier to complete (and to run into by accident).
+ * COLOR_SMOOTHING keeps every color reachable even when absent.
  *
  * `affinity` scales how much that already-on-the-board bias counts: 1 is
  * the classic helpful clustering, 0 flattens it to uniform random. Late
  * levels turn it down to make runs stall without changing anything the
  * player can see. */
 export function weightedRandomColor(board: Board, colorCount = COLORS, affinity = 1): ColorIndex {
-  const weights = colorCounts(board, colorCount).map((count) => count * affinity + 1);
+  const weights = colorCounts(board, colorCount).map((count) => count * affinity + COLOR_SMOOTHING);
   const total = weights.reduce((sum, w) => sum + w, 0);
   let roll = rng.random() * total;
   for (let i = 0; i < weights.length; i++) {
