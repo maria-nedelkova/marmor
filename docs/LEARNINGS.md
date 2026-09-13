@@ -3,6 +3,51 @@
 Bugs and gotchas from building Marmor, kept around so we don't relearn them
 the hard way a second time.
 
+## Sound was completely silent on iPhone, fine on desktop
+
+**Symptom:** no sound at all on a real iPhone. Everything worked on desktop
+Chrome, and nothing in the code looked conditional on platform.
+
+**Root cause:** the game built its `AudioContext` during page load, not on a
+user gesture. `useGame` runs an opening spawn on mount, that calls
+`playPlace()`, and the first `getCtx()` constructed the context right there
+— before anyone had touched the page. iOS gives you a context in that
+situation but never reliably starts it, and calling `resume()` from a
+later, genuine gesture does not rescue one that was constructed outside a
+gesture. Desktop browsers are far more forgiving, which is exactly why this
+never showed up locally.
+
+**How it was found:** by counting Web Audio node construction rather than
+listening. Patching `AudioContext.prototype.createBuffer` to log its
+`length` argument distinguishes the two buffers the code makes — the
+silent unlock buffer is 1 frame, a noise burst is ~1100 — and the log after
+a first tap showed only the noise burst. That meant the unlock had already
+run (and burned its one-shot flag) before the tap, which only happens if
+something created the context earlier. `length` was the tell; a plain call
+count looked identical either way and had already produced one wrong
+conclusion.
+
+**Fix:** `getCtx()` refuses to construct anything until `primeAudio()` has
+been called, and `primeAudio()` is only ever called from a real gesture
+(`Button3D`'s pointerdown, the board's cell handler). Sounds fired before
+the first tap are dropped, which costs nothing — browsers would have
+blocked them anyway.
+
+**Two other iOS-specific things fixed alongside it,** either of which can
+also present as "no sound on mobile":
+
+- Web Audio on iOS obeys the physical ring/silent switch unless the page
+  claims a media audio session. `navigator.audioSession.type = "playback"`
+  (Safari 16.4+) opts out of that. Without it the game is silent whenever
+  the switch is set to silent, with no other symptom.
+- iOS suspends the context when the tab is backgrounded or the phone locks,
+  and does not always resume on return, so there's now a
+  `visibilitychange` listener that resumes it.
+
+**If it is ever silent again,** check in this order: the ring switch and the
+audio session claim; whether a context exists before the first tap
+(it should not); and whether the context's `state` is `running` after one.
+
 ## The King's pedestal recurred short, on a device with a broken `Math.random`
 
 **Symptom:** on first load, the King's pedestal rendered at the same short

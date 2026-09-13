@@ -6,14 +6,68 @@
 
 let ctx: AudioContext | null = null;
 let muted = false;
+let unlocked = false;
+/** Set only by primeAudio(), which is only ever called from a real user
+ * gesture. Until then getCtx() refuses to construct a context at all. */
+let primed = false;
+
+/** iOS silences Web Audio whenever the ring/silent switch is on — the
+ * default audio session is "auto", which behaves like a notification sound
+ * rather than media playback. Declaring "playback" opts into the media
+ * category, so the game is audible with the switch either way (and this is
+ * the whole reason sound appeared dead on iPhone while working on desktop).
+ *
+ * Safari 16.4+ only, and not in lib.dom yet, hence the cast and the guard. */
+function claimPlaybackSession(): void {
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+  if (session) session.type = "playback";
+}
+
+/** iOS also keeps a context "running" but mute until something has actually
+ * been played from inside a user gesture. A one-frame silent buffer is the
+ * cheapest thing that satisfies it. */
+function unlock(audio: AudioContext): void {
+  if (unlocked) return;
+  unlocked = true;
+  const buffer = audio.createBuffer(1, 1, audio.sampleRate);
+  const source = audio.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audio.destination);
+  source.start(0);
+}
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
+  // Refuse to build a context before the first gesture. The board's opening
+  // spawn plays a sound during mount, which used to construct the context
+  // at page load — and a context constructed outside a gesture is one iOS
+  // never reliably starts, no matter how many times it's resumed later.
+  // That single call was why the whole game was silent on iPhone while
+  // working on desktop. Sounds fired before the first tap are simply
+  // dropped; browsers wouldn't have played them anyway.
+  if (!ctx && !primed) return null;
   const AudioCtx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AudioCtx) return null;
-  if (!ctx) ctx = new AudioCtx();
+  if (!ctx) {
+    claimPlaybackSession();
+    ctx = new AudioCtx();
+  }
+  // resume() is async and deliberately not awaited — callers synthesize
+  // immediately after. The context accepts scheduling while resuming, so
+  // the sound still plays; awaiting here would mean every effect fired a
+  // frame late.
   if (ctx.state === "suspended") void ctx.resume();
+  unlock(ctx);
   return ctx;
+}
+
+/** iOS suspends the context when the tab is backgrounded or the phone
+ * locks, and does not always resume it on return — without this, sound dies
+ * silently the first time you switch apps mid-game. */
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && ctx && ctx.state === "suspended") void ctx.resume();
+  });
 }
 
 export function setMuted(value: boolean): void {
@@ -214,6 +268,11 @@ export function playKingFall(): void {
 }
 
 /** Resumes the audio context on first user gesture (browsers block autoplay). */
+/** Call from inside a real user gesture (pointerdown / click). Creating the
+ * context, claiming the playback session and unlocking all have to happen
+ * with a gesture on the stack, so this exists to be wired to the first
+ * thing a player touches — see Button3D and useGame's cell handler. */
 export function primeAudio(): void {
+  primed = true;
   getCtx();
 }
