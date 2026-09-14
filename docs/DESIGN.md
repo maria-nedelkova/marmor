@@ -265,13 +265,45 @@ needs a seeded PRNG threaded through the four gameplay `Math.random()` calls
 (three in `engine.ts`, one in `useGame.ts`), which is why it's deliberately
 deferred until someone actually cheats.
 
-## Progress isn't persisted (yet)
+## A run is one sitting — but an evicted tab isn't leaving
 
-Reloading returns you to round 1 — there's no `localStorage` of the highest
-round reached. This is a known gap, not a decision: it's the obvious next
-step if the ladder proves worth finishing. `?round=N` in the URL exists as
-a playtesting shortcut in the meantime, since tuning round 7 is otherwise
-gated behind winning rounds 1–6 every time.
+Progress is deliberately not saved across sessions. The ladder is meant to
+be played in one go: close the game and you start at round 1 again, which is
+what gives finishing all eight rounds any weight.
+
+That intent collides with a phone. iOS evicts backgrounded tabs under memory
+pressure and reloads the page when you return, and losing a run to the OS
+reclaiming memory is not the player choosing to stop — it just reads as the
+game being broken.
+
+`src/game/progress.ts` separates the two cases, and the storage choice is
+what does the separating: **`sessionStorage`, not `localStorage`.** It is
+scoped to the tab session, so it survives a reload and is gone the moment the
+tab or the browser closes. The rule lives in the storage layer rather than in
+logic that has to be trusted to implement it. A 30-minute freshness stamp
+covers the one case sessionStorage can't — a tab left open in the background
+overnight should feel like a new run, not a resumed one.
+
+| what happened | result |
+| --- | --- |
+| iOS discarded the tab, you came back | resume, same board |
+| Closed the browser, reopened the link | round 1 |
+| Left the tab open for hours | round 1 |
+| Reloaded on purpose | resume (same session, indistinguishable — and harmless) |
+
+The snapshot is the whole board, not just the round number, so a resume is
+invisible rather than merely merciful. It's written only from settled states
+— after a completed turn, after a round transition — never mid-animation, so
+a restored board is always one a player could have been looking at. It's
+cleared when the run ends either way (final round cleared, or board full),
+since resuming onto a finished run is worse than not resuming at all.
+
+Two deliberate details. `?round=N` always beats a snapshot, or the dev
+panel's round buttons would appear dead once one existed. And the loader
+validates bounds as well as shape — a board of the wrong size or a level
+index past the end of the ladder would otherwise crash far from here, so bad
+data is rejected where it arrives.
+
 
 ## Visual and audio style: coherent pixel-art arcade
 

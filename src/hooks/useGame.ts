@@ -27,6 +27,8 @@ import {
 import { KING_SCORE } from "../game/constants";
 import { getLevel, isFinalLevel, LEVEL_COUNT } from "../game/levels";
 import type { LevelConfig } from "../game/levels";
+import { clearRun, loadRun, saveRun } from "../game/progress";
+import type { RunSnapshot } from "../game/progress";
 import { rng } from "../game/rng";
 import type { Board, Cell, ColorIndex } from "../game/types";
 
@@ -42,6 +44,15 @@ function initialLevelIndex(): number {
   const round = Number(new URLSearchParams(window.location.search).get("round"));
   if (!Number.isFinite(round) || round < 1) return 0;
   return Math.min(Math.floor(round), LEVEL_COUNT) - 1;
+}
+
+/** Whether the URL pins a round. A saved run must not override it, or the
+ * dev panel's round buttons would appear to do nothing once a snapshot
+ * exists. */
+function hasExplicitRound(): boolean {
+  if (typeof window === "undefined") return false;
+  const round = Number(new URLSearchParams(window.location.search).get("round"));
+  return Number.isFinite(round) && round >= 1;
 }
 
 export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
@@ -85,6 +96,47 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
   const [spawningKeys, setSpawningKeys] = useState<Set<string>>(new Set());
   const [shakeToken, setShakeToken] = useState(0);
 
+  /** Writes the current run to sessionStorage. Called only from settled
+   * states — after a completed turn and after a round transition — never
+   * mid-animation, so a restored board is always one a player could have
+   * been looking at. */
+  const persist = useCallback(() => {
+    saveRun({
+      levelIndex: levelIndexRef.current,
+      board: boardRef.current,
+      nextQueue: nextQueueRef.current,
+      score: scoreRef.current,
+      bankedScore: bankedScoreRef.current,
+      moves: movesRef.current,
+      roundsCleared: roundsClearedRef.current,
+    });
+  }, []);
+
+  /** Rehydrates a snapshot straight into the refs and their mirrored state,
+   * bypassing the opening spawn entirely — the saved board already has its
+   * marbles, and spawning more would quietly inflate it on every reload. */
+  const restoreRun = useCallback((snapshot: RunSnapshot) => {
+    const level = getLevel(snapshot.levelIndex);
+    levelIndexRef.current = snapshot.levelIndex;
+    levelRef.current = level;
+    setLevelIndex(snapshot.levelIndex);
+    setLevel(level);
+
+    boardRef.current = snapshot.board.map((row) => row.slice());
+    scoreRef.current = snapshot.score;
+    bankedScoreRef.current = snapshot.bankedScore;
+    movesRef.current = snapshot.moves;
+    roundsClearedRef.current = snapshot.roundsCleared;
+    nextQueueRef.current = snapshot.nextQueue;
+
+    setBoard(cloneBoard(boardRef.current));
+    setScore(snapshot.score);
+    setBankedScore(snapshot.bankedScore);
+    setMoves(snapshot.moves);
+    setRoundsCleared(snapshot.roundsCleared);
+    setNextQueue(snapshot.nextQueue);
+  }, []);
+
   const sync = useCallback(() => setBoard(cloneBoard(boardRef.current)), []);
 
   const addScore = useCallback((points: number) => {
@@ -107,7 +159,13 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
     // The full fanfare is saved for the last King — every earlier round
     // gets the topple sound only, so the final one still lands as an
     // event rather than as the eighth identical victory jingle.
-    if (isFinalLevel(levelIndexRef.current)) setTimeout(playWin, 1050);
+    if (isFinalLevel(levelIndexRef.current)) {
+      setTimeout(playWin, 1050);
+      // Clearing the last round ends the run, so there's nothing left to
+      // recover — and leaving the snapshot would drop a returning player
+      // back into a round they already finished.
+      clearRun();
+    }
   }, []);
 
   const clearCells = useCallback(
@@ -194,9 +252,16 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       if (emptyCells(boardRef.current).length === 0) {
         setGameOver(true);
         playPretenderBoo();
+        // The run is over — nothing left to recover, and leaving the
+        // snapshot would resume straight back onto a dead board.
+        clearRun();
+        return;
       }
+      // Settled: marbles placed, any lines resolved, board is final for
+      // this turn.
+      persist();
     },
-    [clearCells, sync],
+    [clearCells, persist, sync],
   );
 
   const animateMove = useCallback(
@@ -238,7 +303,12 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
         // Classic rules: clearing a line buys the turn back — nothing
         // spawns. The last round switches that off (`spawnOnClear`), which
         // is the single biggest advantage the player ever loses.
-        if (!levelRef.current.spawnOnClear || clearedRef.current) return;
+        if (!levelRef.current.spawnOnClear || clearedRef.current) {
+          // A clearing move ends the turn with no spawn, so spawnBalls
+          // never runs and this is the only place the new board is settled.
+          if (!clearedRef.current) persist();
+          return;
+        }
         await spawnBalls(levelRef.current.spawnCount);
         return;
       }
@@ -247,8 +317,9 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       if (clearedRef.current) return;
       await spawnBalls(levelRef.current.spawnCount);
     },
-    [clearCells, spawnBalls, sync],
+    [clearCells, persist, spawnBalls, sync],
   );
+
 
   /** Resets the board and starts `index` from scratch. `mode` decides what
    * happens to the run total: advancing banks the round you just cleared,
@@ -292,6 +363,10 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       boardHandleRef.current?.hideGlide();
       setPoppingKeys(new Set());
       setSpawningKeys(new Set());
+      // A brand-new run must not inherit the old snapshot. Advancing and
+      // retrying keep the run alive, and spawnBalls persists the new round
+      // once its opening marbles land.
+      if (mode === "restart") clearRun();
       void spawnBalls(nextLevel.startCount, true);
     },
     [spawnBalls],
@@ -367,8 +442,16 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
   useEffect(() => {
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
+
+    // An explicit ?round= always wins: the dev panel has to be able to jump
+    // to a round without a stale snapshot dragging it somewhere else.
+    const snapshot = hasExplicitRound() ? null : loadRun();
+    if (snapshot) {
+      restoreRun(snapshot);
+      return;
+    }
     void spawnBalls(levelRef.current.startCount, true);
-  }, [spawnBalls]);
+  }, [restoreRun, spawnBalls]);
 
   return {
     board,
