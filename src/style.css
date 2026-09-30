@@ -209,9 +209,23 @@ body {
 .layout {
   display: flex;
   gap: 28px;
-  align-items: center;
+  /* flex-end, not center: the middle item is the tools+board column, and
+   * centering it against the mascots would push the board down by half the
+   * rack's height, breaking the line the mascots stand on. Bottom-aligning
+   * keeps their feet level with the board's bottom edge whatever the rack
+   * does, which is also the physically correct reading — they're standing
+   * on the same ground. */
+  align-items: flex-end;
   justify-content: center;
   flex-wrap: nowrap;
+}
+
+/* Tools sit on top of the board and move with it. See App.tsx on why this
+ * is one wrapper rather than a ToolBar placed separately per layout. */
+.board-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* Only ever shown in the mobile layout (see the max-width breakpoint below)
@@ -506,10 +520,10 @@ body {
 
 /* No panel, border or shadow — the controls sit directly on the backdrop.
  * Once the row shrank to three tight-grouped zones there was nothing left
- * for a frame to organise, and the box just added weight above the board. */
+ * for a frame to organise, and the box just added weight beside the board. */
 .topbar {
   max-width: 860px;
-  margin: 0 auto 28px;
+  margin: 20px auto 0;
   padding: 10px 16px;
   display: flex;
   align-items: center;
@@ -853,11 +867,15 @@ body {
   color: var(--mr-muted);
 }
 
-/* The tool rack, below the board. Locked tools stay rendered but inert, so
- * the rack keeps its shape as rounds unlock things instead of growing under
- * the player's hands — and the locked silhouette shows what's coming. */
+/* The tool rack, directly above the board. Locked tools stay rendered but
+ * inert, so the rack keeps its shape as rounds unlock things instead of
+ * growing under the player's hands — and the locked silhouette shows what's
+ * coming.
+ *
+ * The drop shadow on .btn3d hangs 5px below the buttons, so the visual gap
+ * to the board is larger than this margin reads. */
 .toolbar {
-  margin: 18px auto 0;
+  margin: 0 auto 10px;
   text-align: center;
 }
 
@@ -1319,20 +1337,20 @@ body {
     font-size: 9px;
   }
 
-  /* Icon-only, and pushed below the board/mascot area — controls matter
-   * less than the game once the board is the thing you're looking at. The
-   * bar is borderless at every width now, so only the order and spacing
-   * change here.
+  /* Icon-only here; the bar sits below the board at every width now, so
+   * position is no longer what this breakpoint changes — only the labels
+   * and the spacing are.
    *
-   * main's version of this comment explained the order as "third, before
-   * the hint, so Next up/New game/Sound are visible without scrolling".
-   * The hint is gone (its text is a menu item now) and so is New game, so
-   * the bar is simply last — nothing can push it off-screen. */
-  /* Last, and pinned to the bottom by .layout's auto bottom margin rather
+   * `order` is redundant against the DOM order it restates, but it is kept
+   * explicit because the dialogs are siblings in this same flex container
+   * with no order of their own, and an unordered sibling sorts ahead of an
+   * ordered one.
+   *
+   * Last, and pinned to the bottom by .layout's auto bottom margin rather
    * than by an auto margin of its own — one element owning the slack keeps
    * the split predictable. */
   .topbar {
-    order: 4;
+    order: 3;
     max-width: none;
     margin: 0;
     padding: 10px 4px;
@@ -1399,8 +1417,14 @@ body {
     margin-top: 2px;
   }
 
-  .board-wrap {
+  /* The column takes the grid's board area, which is what lands the rack
+   * between the progress bar and the board — no separate mobile placement
+   * for the ToolBar. */
+  .board-column {
     grid-area: board;
+  }
+
+  .board-wrap {
     width: 354px; /* 536px unscaled footprint * 0.66 */
     height: 354px;
   }
@@ -1470,8 +1494,7 @@ body {
   }
 
   .toolbar {
-    order: 3;
-    margin: 12px 0 0;
+    margin: 0 0 8px;
   }
 
   /* 10px, not the tighter spacing a phone row invites: the charge count and

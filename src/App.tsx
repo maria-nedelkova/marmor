@@ -111,13 +111,6 @@ export function App() {
         <MarmorTitle />
       </header>
 
-      <TopBar
-        nextQueue={game.nextQueue}
-        muted={muted}
-        onToggleMute={toggleMute}
-        onOpenMenu={() => setMenuOpen(true)}
-      />
-
       <main className="layout">
         <DuelMascot
           name="King"
@@ -131,45 +124,62 @@ export function App() {
           compact={isMobile}
         />
 
-        <section className="board-wrap" ref={boardWrapRef}>
-          <Board
-            ref={boardRef}
-            board={game.board}
-            selected={game.selected ?? game.swapFirst}
-            reachable={game.reachable}
-            poppingKeys={game.poppingKeys}
-            spawningKeys={game.spawningKeys}
-            onCellClick={game.handleCellClick}
+        {/* Tools and board travel together as one column. That single
+            wrapper is what puts the rack directly above the board in both
+            layouts: on desktop it's the middle item of the King/board/
+            Pretender row, and on mobile it takes the grid's board area, so
+            the rack lands between the progress bar and the board without
+            either layout needing its own copy of the ToolBar. */}
+        <div className="board-column">
+          <ToolBar
+            levelIndex={game.levelIndex}
+            charges={game.charges}
+            activeTool={game.activeTool}
+            awaitingSecondPick={game.swapFirst !== null}
+            onArm={game.armTool}
+            onUse={game.useInstantTool}
           />
-          <GameOverOverlay
-            visible={game.gameOver}
-            score={game.score}
-            levelName={game.level.name}
-            roundNumber={game.levelIndex + 1}
-            onRetry={game.retryLevel}
-            onRestart={game.newGame}
-          >
-            {runPrompt}
-          </GameOverOverlay>
-          <LevelClearedOverlay
-            visible={roundCleared}
-            score={game.score}
-            runScore={game.runScore}
-            level={game.level}
-            nextLevel={getLevel(game.levelIndex + 1)}
-            nextRoundNumber={game.levelIndex + 2}
-            onNext={game.advanceLevel}
-          />
-          <WinOverlay
-            visible={won}
-            score={game.score}
-            runScore={game.runScore}
-            rounds={game.levelCount}
-            onRestart={game.newGame}
-          >
-            {runPrompt}
-          </WinOverlay>
-        </section>
+
+          <section className="board-wrap" ref={boardWrapRef}>
+            <Board
+              ref={boardRef}
+              board={game.board}
+              selected={game.selected ?? game.swapFirst}
+              reachable={game.reachable}
+              poppingKeys={game.poppingKeys}
+              spawningKeys={game.spawningKeys}
+              onCellClick={game.handleCellClick}
+            />
+            <GameOverOverlay
+              visible={game.gameOver}
+              score={game.score}
+              levelName={game.level.name}
+              roundNumber={game.levelIndex + 1}
+              onRetry={game.retryLevel}
+              onRestart={game.newGame}
+            >
+              {runPrompt}
+            </GameOverOverlay>
+            <LevelClearedOverlay
+              visible={roundCleared}
+              score={game.score}
+              runScore={game.runScore}
+              level={game.level}
+              nextLevel={getLevel(game.levelIndex + 1)}
+              nextRoundNumber={game.levelIndex + 2}
+              onNext={game.advanceLevel}
+            />
+            <WinOverlay
+              visible={won}
+              score={game.score}
+              runScore={game.runScore}
+              rounds={game.levelCount}
+              onRestart={game.newGame}
+            >
+              {runPrompt}
+            </WinOverlay>
+          </section>
+        </div>
 
         <DuelProgress score={game.score} kingScore={KING_SCORE} />
 
@@ -186,13 +196,14 @@ export function App() {
         />
       </main>
 
-      <ToolBar
-        levelIndex={game.levelIndex}
-        charges={game.charges}
-        activeTool={game.activeTool}
-        awaitingSecondPick={game.swapFirst !== null}
-        onArm={game.armTool}
-        onUse={game.useInstantTool}
+      {/* Below the board, not above it: the tool rack took the slot over the
+          board, and of the two the rack is what you reach for mid-turn while
+          Next up / Sound are glanced at. */}
+      <TopBar
+        nextQueue={game.nextQueue}
+        muted={muted}
+        onToggleMute={toggleMute}
+        onOpenMenu={() => setMenuOpen(true)}
       />
 
       {/* The rules line and the leaderboard link both used to sit here under
