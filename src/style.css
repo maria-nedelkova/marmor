@@ -206,23 +206,43 @@ body {
   97% { opacity: 1; }
 }
 
+/* Grid rather than a flex row because the controls strip belongs on its own
+ * full-width line under the mascots-and-board row, and a flex row can only
+ * put it beside them. The mobile breakpoint re-declares the areas rather
+ * than switching layout mode, so both layouts are the same three names
+ * moved around. */
 .layout {
-  display: flex;
-  gap: 28px;
-  /* flex-end, not center: the middle item is the tools+board column, and
-   * centering it against the mascots would push the board down by half the
-   * rack's height, breaking the line the mascots stand on. Bottom-aligning
-   * keeps their feet level with the board's bottom edge whatever the rack
-   * does, which is also the physically correct reading — they're standing
-   * on the same ground. */
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  grid-template-areas:
+    "king board pretender"
+    "mid  mid   mid";
   justify-content: center;
-  flex-wrap: nowrap;
+  /* end, not center: the middle column is the tools+board stack, and
+   * centering it against the mascots would push the board down by half the
+   * rack's height — and move it again each time a round unlocks another
+   * tool. Bottom-aligning pins the board's bottom edge, which is also the
+   * physically correct reading: the mascots stand on the same ground. */
+  align-items: end;
+  column-gap: 28px;
+}
+
+.duel-mascot--left {
+  grid-area: king;
+}
+
+.duel-mascot--right {
+  grid-area: pretender;
+}
+
+.duel-middle {
+  grid-area: mid;
 }
 
 /* Tools sit on top of the board and move with it. See App.tsx on why this
  * is one wrapper rather than a ToolBar placed separately per layout. */
 .board-column {
+  grid-area: board;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1337,24 +1357,15 @@ body {
     font-size: 9px;
   }
 
-  /* Icon-only here; the bar sits below the board at every width now, so
-   * position is no longer what this breakpoint changes — only the labels
-   * and the spacing are.
-   *
-   * `order` is redundant against the DOM order it restates, but it is kept
-   * explicit because the dialogs are siblings in this same flex container
-   * with no order of their own, and an unordered sibling sorts ahead of an
-   * ordered one.
-   *
-   * Last, and pinned to the bottom by .layout's auto bottom margin rather
-   * than by an auto margin of its own — one element owning the slack keeps
-   * the split predictable. */
+  /* Icon-only, and up between the two mascots directly under the progress
+   * bar rather than in a row of its own. That strip is ~190px wide, which
+   * the three zones only just fit once the labels are dropped — hence the
+   * tighter gap and padding here. */
   .topbar {
-    order: 3;
     max-width: none;
-    margin: 0;
-    padding: 10px 4px;
-    gap: 10px;
+    margin: 8px 0 0;
+    padding: 0;
+    gap: 8px;
     flex-shrink: 0;
   }
 
@@ -1396,35 +1407,53 @@ body {
      * who occupies them; it's .duel-mascot--left/--right (desktop sides)
      * that are swapped relative to them here. */
     grid-template-areas:
-      "pretender progress king"
-      "board board board";
+      "pretender mid   king"
+      "board     board board"
+      "tools     tools tools";
     row-gap: 10px;
     column-gap: 8px;
     justify-items: center;
-    align-items: center;
+    /* start, not center: the middle strip is now taller than the mascots
+     * (progress bar plus the controls under it), and centering would drop
+     * the mascots half that difference, taking their score badges out of
+     * line with the bar. */
+    align-items: start;
+  }
+
+  /* The strip between the two mascots carries the controls on mobile, so it
+   * needs the column's full width rather than shrink-wrapping the bar. */
+  .duel-middle {
+    grid-area: mid;
+    width: 100%;
   }
 
   /* Raised to sit level with the two score badges rather than centred in
-   * the row, so the bar reads as the span between those two numbers — 0 at
-   * the Pretender's badge on the left, 100 at the King's on the right —
+   * the strip, so the bar reads as the span between those two numbers — 0
+   * at the Pretender's badge on the left, 100 at the King's on the right —
    * instead of floating between two heads. The offset is the badge's own
    * half-height, which is what puts the bar through the middle of them. */
   .duel-progress {
     display: block;
-    grid-area: progress;
     width: 100%;
-    align-self: start;
     margin-top: 2px;
   }
 
-  /* The column takes the grid's board area, which is what lands the rack
-   * between the progress bar and the board — no separate mobile placement
-   * for the ToolBar. */
+  /* Broken apart here: the desktop stack puts the rack above the board, but
+   * on mobile the rack goes below it and the controls take the space over
+   * it, so the two children need to be grid items in their own right. */
   .board-column {
-    grid-area: board;
+    display: contents;
+  }
+
+  .toolbar {
+    grid-area: tools;
+    /* The grid's row-gap already separates it from the board; the desktop
+     * margin is for the rack sitting above one. */
+    margin: 0;
   }
 
   .board-wrap {
+    grid-area: board;
     width: 354px; /* 536px unscaled footprint * 0.66 */
     height: 354px;
   }
@@ -1491,10 +1520,6 @@ body {
    * that row could be mistaken for something else. */
   .duel-mascot--compact .duel-mascot__name {
     display: none;
-  }
-
-  .toolbar {
-    margin: 0 0 8px;
   }
 
   /* 10px, not the tighter spacing a phone row invites: the charge count and
@@ -1619,6 +1644,39 @@ body {
 
   .board {
     transform: scale(0.56);
+  }
+
+  /* The controls sit in the strip between the two mascots, and below this
+   * width that strip is too narrow for the bar's three zones — measured at
+   * 320px and 360px, the row wrapped onto a second line and doubled its
+   * height. The next three rules buy the strip back the ~50px it needs:
+   * narrower mascots, a tighter column gap, and the "Next up" caption
+   * dropped so the queue is just its three marbles. The caption is the
+   * cheapest of the three to lose — it sits directly above the marbles it
+   * names, which are already the only marbles on screen outside the
+   * board. */
+  .duel-mascot--compact {
+    width: 62px;
+  }
+
+  .layout {
+    column-gap: 4px;
+  }
+
+  .topbar__next-label {
+    display: none;
+  }
+
+  /* Still 10px over at 320px after the three rules above, so the queue
+   * marbles come down a size too. 44 + 70 + 44 + 2x6 = 170 into a 176px
+   * strip. */
+  .topbar {
+    gap: 6px;
+  }
+
+  .next-preview .marble {
+    width: 18px;
+    height: 18px;
   }
 }
 

@@ -124,12 +124,11 @@ export function App() {
           compact={isMobile}
         />
 
-        {/* Tools and board travel together as one column. That single
-            wrapper is what puts the rack directly above the board in both
-            layouts: on desktop it's the middle item of the King/board/
-            Pretender row, and on mobile it takes the grid's board area, so
-            the rack lands between the progress bar and the board without
-            either layout needing its own copy of the ToolBar. */}
+        {/* Tools above the board on desktop. On mobile the rack goes below
+            the board instead, which this wrapper allows by going
+            `display: contents` there — its two children become grid items
+            of .layout in their own right and take separate areas. One
+            ToolBar either way. */}
         <div className="board-column">
           <ToolBar
             levelIndex={game.levelIndex}
@@ -181,7 +180,20 @@ export function App() {
           </section>
         </div>
 
-        <DuelProgress score={game.score} kingScore={KING_SCORE} />
+        {/* The strip between the two mascots. On mobile that strip is the
+            progress bar with the controls stacked under it, which is why
+            they share a wrapper; on desktop the bar is hidden and the
+            wrapper is just the controls row, spanning the full width under
+            the board. */}
+        <div className="duel-middle">
+          <DuelProgress score={game.score} kingScore={KING_SCORE} />
+          <TopBar
+            nextQueue={game.nextQueue}
+            muted={muted}
+            onToggleMute={toggleMute}
+            onOpenMenu={() => setMenuOpen(true)}
+          />
+        </div>
 
         <DuelMascot
           name="Pretender"
@@ -195,16 +207,6 @@ export function App() {
           compact={isMobile}
         />
       </main>
-
-      {/* Below the board, not above it: the tool rack took the slot over the
-          board, and of the two the rack is what you reach for mid-turn while
-          Next up / Sound are glanced at. */}
-      <TopBar
-        nextQueue={game.nextQueue}
-        muted={muted}
-        onToggleMute={toggleMute}
-        onOpenMenu={() => setMenuOpen(true)}
-      />
 
       {/* The rules line and the leaderboard link both used to sit here under
           the board; they're menu items now, so the board is the last thing
