@@ -278,6 +278,33 @@ export interface SpawnAssignment {
   blocked: boolean;
 }
 
+/** Removes a marble. Returns false if the cell was already empty, so the
+ * caller can decline to spend a charge on a no-op. Mutates `board` — the
+ * same convention the spawn/clear paths already use. */
+export function smashMarble(board: Board, { r, c }: Cell): boolean {
+  if (!inBounds(r, c) || board[r]![c] === null) return false;
+  board[r]![c] = null;
+  return true;
+}
+
+/** Exchanges two marbles' colors. Both cells must hold a marble, and they
+ * must differ — swapping a color with itself would silently burn a charge.
+ *
+ * Deliberately a swap rather than a recolor: it rearranges what the board
+ * already gave you instead of conjuring a color out of nothing, which keeps
+ * it tactical rather than a "win a line" button. */
+export function swapMarbleColors(board: Board, a: Cell, b: Cell): boolean {
+  if (!inBounds(a.r, a.c) || !inBounds(b.r, b.c)) return false;
+  // `?? null` because indexed access is `ColorIndex | null | undefined`
+  // here; narrowing only against null would leave undefined in the type.
+  const colorA = board[a.r]![a.c] ?? null;
+  const colorB = board[b.r]![b.c] ?? null;
+  if (colorA === null || colorB === null || colorA === colorB) return false;
+  board[a.r]![a.c] = colorB;
+  board[b.r]![b.c] = colorA;
+  return true;
+}
+
 export interface SpawnOptions {
   /** How long an existing run must be before blocking it is worthwhile. */
   minBlockLength?: number;

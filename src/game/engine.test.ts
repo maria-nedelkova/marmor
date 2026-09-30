@@ -11,6 +11,8 @@ import {
   longestRunThrough,
   reachableFrom,
   scoreForClear,
+  smashMarble,
+  swapMarbleColors,
   weightedRandomColor,
 } from "./engine";
 import { rng } from "./rng";
@@ -444,5 +446,76 @@ describe("fuzz: random legal moves never crash or corrupt marble count", () => {
       expect(count).toBeGreaterThanOrEqual(0);
       expect(count).toBeLessThanOrEqual(SIZE * SIZE);
     }
+  });
+});
+
+describe("smashMarble", () => {
+  test("removes the marble and reports success", () => {
+    const board = createEmptyBoard();
+    place(board, [[3, 3]], 2);
+    expect(smashMarble(board, { r: 3, c: 3 })).toBe(true);
+    expect(board[3]![3]).toBeNull();
+  });
+
+  test("declines on an empty cell, so no charge is wasted on a no-op", () => {
+    const board = createEmptyBoard();
+    expect(smashMarble(board, { r: 0, c: 0 })).toBe(false);
+  });
+
+  test("declines out of bounds rather than writing past the board", () => {
+    const board = createEmptyBoard();
+    expect(smashMarble(board, { r: -1, c: 0 })).toBe(false);
+    expect(smashMarble(board, { r: 0, c: SIZE })).toBe(false);
+  });
+
+  test("can open the gap that a blocked line needed", () => {
+    const board = createEmptyBoard();
+    place(board, [[4, 0], [4, 1], [4, 2], [4, 4], [4, 5]], 1);
+    place(board, [[4, 3]], 6); // the spike sitting in the middle of the run
+    smashMarble(board, { r: 4, c: 3 });
+    board[4]![3] = 1; // the player then moves a matching marble in
+    expect(findLinesThrough(board, { r: 4, c: 3 }).length).toBe(6);
+  });
+});
+
+describe("swapMarbleColors", () => {
+  test("exchanges two colors", () => {
+    const board = createEmptyBoard();
+    place(board, [[1, 1]], 2);
+    place(board, [[5, 5]], 4);
+    expect(swapMarbleColors(board, { r: 1, c: 1 }, { r: 5, c: 5 })).toBe(true);
+    expect(board[1]![1]).toBe(4);
+    expect(board[5]![5]).toBe(2);
+  });
+
+  test("can complete a line", () => {
+    const board = createEmptyBoard();
+    place(board, [[4, 0], [4, 1], [4, 2], [4, 3]], 1);
+    place(board, [[4, 4]], 6); // wrong color at the end of the run
+    place(board, [[0, 0]], 1); // a spare of the color we want
+    swapMarbleColors(board, { r: 4, c: 4 }, { r: 0, c: 0 });
+    expect(findLinesThrough(board, { r: 4, c: 4 }).length).toBe(5);
+  });
+
+  test("refuses when either cell is empty", () => {
+    const board = createEmptyBoard();
+    place(board, [[1, 1]], 2);
+    expect(swapMarbleColors(board, { r: 1, c: 1 }, { r: 5, c: 5 })).toBe(false);
+    expect(board[1]![1]).toBe(2);
+  });
+
+  test("refuses two marbles of the same color — that would burn a charge for nothing", () => {
+    const board = createEmptyBoard();
+    place(board, [[1, 1], [5, 5]], 3);
+    expect(swapMarbleColors(board, { r: 1, c: 1 }, { r: 5, c: 5 })).toBe(false);
+  });
+
+  test("conserves the marble count — it rearranges, never conjures", () => {
+    const board = createEmptyBoard();
+    place(board, [[1, 1]], 2);
+    place(board, [[5, 5]], 4);
+    const before = board.flat().filter((c) => c !== null).length;
+    swapMarbleColors(board, { r: 1, c: 1 }, { r: 5, c: 5 });
+    expect(board.flat().filter((c) => c !== null).length).toBe(before);
   });
 });
