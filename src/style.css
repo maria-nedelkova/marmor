@@ -1379,9 +1379,22 @@ body {
     gap: 4px;
   }
 
+  /* Sized for FOUR marbles, not three. The strip between the mascots is a
+   * fixed width, so the queue has to fit its longest case or the bar wraps
+   * to a second line and shoves the board down — which is what round 4
+   * (previewCount 4) did, and what the crystal ball does on rounds 5-8 when
+   * it reveals the hidden marble. min-width reserves the fourth slot even
+   * while it is empty, so revealing it doesn't shunt the Menu and Sound
+   * buttons sideways mid-turn. */
+  .next-preview {
+    gap: 4px;
+    min-width: 84px; /* 4x18 + 3x4 */
+    justify-content: center;
+  }
+
   .next-preview .marble {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
   }
 
   /* The King/progress/Pretender row now comes first, board second — see
@@ -1667,16 +1680,20 @@ body {
     display: none;
   }
 
-  /* Still 10px over at 320px after the three rules above, so the queue
-   * marbles come down a size too. 44 + 70 + 44 + 2x6 = 170 into a 176px
-   * strip. */
+  /* Still over at 320px after the three rules above, so the bar's own gap
+   * and the queue marbles come down again: 44 + 76 + 44 + 2x4 = 172 into a
+   * 176px strip, with the queue again reserving all four slots. */
   .topbar {
-    gap: 6px;
+    gap: 4px;
+  }
+
+  .next-preview {
+    min-width: 76px; /* 4x16 + 3x4 */
   }
 
   .next-preview .marble {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 }
 
