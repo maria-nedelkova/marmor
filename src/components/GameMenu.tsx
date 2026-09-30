@@ -153,6 +153,7 @@ function InfoCard({ onClose }: { onClose: () => void }) {
           <li>Line up 5+ of one colour, any direction, to clear and score.</li>
           <li>Clearing is a free turn. Otherwise marbles drop — see &ldquo;Next up&rdquo;.</li>
           <li>Hit 100 to win the round. Fill the board and you lose it.</li>
+          <li>Rounds 2&ndash;5 each unlock a tool. One use each per round — then they start stacking up.</li>
         </ul>
         <Button3D className="menu-item menu-item--wide" onClick={onClose}>
           Got it

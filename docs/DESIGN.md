@@ -265,6 +265,56 @@ needs a seeded PRNG threaded through the four gameplay `Math.random()` calls
 (three in `engine.ts`, one in `useGame.ts`), which is why it's deliberately
 deferred until someone actually cheats.
 
+## Tools: giving the player an answer instead of lowering the bar
+
+Round 4 played as a wall — the first round with both four marbles a turn and
+eight colours. The obvious response is to soften the round, but that spends
+the ladder's teeth to fix one step of it.
+
+Tools are the other answer: the round keeps its difficulty, and the player
+gains a way to meet it. Each of rounds 2 to 5 unlocks one, and each unlock
+answers the pressure that same round introduces — the round hands over a
+problem and the means to deal with it.
+
+| round | it adds | it unlocks |
+| --- | --- | --- |
+| 2 | blocking starts spiking your lines | **Hammer** — smash any marble |
+| 3 | an eighth colour | **Swap** — exchange two marbles' colours |
+| 4 | four marbles a turn | **Reroll** — reshuffle Next up |
+| 5 | one of the four goes hidden | **Foresight** — reveal the whole spawn |
+
+Rounds 6 to 8 unlock nothing. The endgame is about using what you hold well,
+not about learning more buttons.
+
+**Charges are granted, not bought.** A currency means an economy, a shop, a
+second balance surface, and a puzzle game that feels free-to-play.
+Unlocking by progress buys the same "something new each round" for none of
+that.
+
+**The charge rule has two phases**, and the split is the whole design:
+
+- *Rounds 2–5, while tools are still arriving:* one use each per round, and
+  anything unspent is discarded. Players reliably hoard consumables for a
+  rainy day that never comes, and a tool nobody uses teaches nobody
+  anything. Use it or lose it gets them tried.
+- *Round 6 on, once the set is complete:* the round's grant is added to
+  whatever survived. Saving a charge through one round now pays for a
+  harder one, which is exactly the decision worth having in the endgame.
+
+Hoarding everything from round 6 leaves four of each by round 8 — round 5's
+unspent charge is the one that carries across the phase boundary. That is a
+lot of relief, deliberately: it has to be earned by surviving rounds 6 and 7
+unaided.
+
+**Swap exchanges two colours rather than recolouring one.** A free recolour
+is a "win a line" button; a swap rearranges what the board already dealt,
+which keeps it tactical. Both board tools refuse no-ops — an empty cell, two
+marbles already the same colour — so a charge can never be burned on
+nothing.
+
+**Using a tool doesn't cost a turn.** The marble pressure would simply cancel
+the relief if it did; the charge itself is the cost.
+
 ## A run is one sitting — but an evicted tab isn't leaving
 
 Progress is deliberately not saved across sessions. The ladder is meant to

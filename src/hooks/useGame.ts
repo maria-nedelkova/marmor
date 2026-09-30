@@ -21,6 +21,8 @@ import {
   randomColors,
   reachableFrom,
   scoreForClear,
+  smashMarble,
+  swapMarbleColors,
   weightedRandomColor,
   weightedRandomColors,
 } from "../game/engine";
@@ -30,6 +32,13 @@ import type { LevelConfig } from "../game/levels";
 import { clearRun, loadRun, saveRun } from "../game/progress";
 import type { RunSnapshot } from "../game/progress";
 import { rng } from "../game/rng";
+import {
+  grantCharges,
+  hasCharge,
+  NO_CHARGES,
+  spendCharge,
+} from "../game/tools";
+import type { ToolCharges, ToolId } from "../game/tools";
 import type { Board, Cell, ColorIndex } from "../game/types";
 
 const cellKey = (r: number, c: number) => `${r},${c}`;
@@ -96,6 +105,14 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
   const [spawningKeys, setSpawningKeys] = useState<Set<string>>(new Set());
   const [shakeToken, setShakeToken] = useState(0);
 
+  // Tools. Charges live in a ref as well as state for the same reason the
+  // level does: the async tool paths read them mid-flight.
+  const chargesRef = useRef<ToolCharges>(grantCharges(NO_CHARGES, levelIndexRef.current));
+  const [charges, setCharges] = useState<ToolCharges>(chargesRef.current);
+  const [activeTool, setActiveTool] = useState<ToolId | null>(null);
+  /** Swap's first pick, held until the second tap lands. */
+  const [swapFirst, setSwapFirst] = useState<Cell | null>(null);
+
   /** Writes the current run to sessionStorage. Called only from settled
    * states — after a completed turn and after a round transition — never
    * mid-animation, so a restored board is always one a player could have
@@ -109,6 +126,7 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       bankedScore: bankedScoreRef.current,
       moves: movesRef.current,
       roundsCleared: roundsClearedRef.current,
+      charges: chargesRef.current,
     });
   }, []);
 
@@ -128,6 +146,10 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
     movesRef.current = snapshot.moves;
     roundsClearedRef.current = snapshot.roundsCleared;
     nextQueueRef.current = snapshot.nextQueue;
+    // Restored as saved, NOT re-granted — re-granting would refund a
+    // charge every time a tab was evicted.
+    chargesRef.current = snapshot.charges;
+    setCharges(snapshot.charges);
 
     setBoard(cloneBoard(boardRef.current));
     setScore(snapshot.score);
@@ -349,6 +371,14 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
         setRunId((n) => n + 1);
       }
 
+      // Charges are granted on arrival at a round. A fresh run starts from
+      // nothing; advancing or retrying carries the existing charges in, and
+      // grantCharges decides whether they survive (see its two phases).
+      chargesRef.current = grantCharges(mode === "restart" ? NO_CHARGES : chargesRef.current, levelIndexRef.current);
+      setCharges(chargesRef.current);
+      setActiveTool(null);
+      setSwapFirst(null);
+
       boardRef.current = createEmptyBoard();
       scoreRef.current = 0;
       nextQueueRef.current = randomColors(nextLevel.previewCount, nextLevel.colors);
@@ -407,10 +437,137 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
     void spawnBalls(1);
   }, [gameOver, spawnBalls, sync]);
 
+  /** Arms a tool, or disarms it if it's already armed. Selecting a tool
+   * clears any marble selection, so the board is never showing a move
+   * target and a tool target at the same time. */
+  const armTool = useCallback(
+    (id: ToolId) => {
+      if (busy || gameOver || cleared) return;
+      primeAudio();
+      setSelected(null);
+      setSwapFirst(null);
+      setActiveTool((current) => {
+        if (current === id) return null;
+        return hasCharge(chargesRef.current, id) ? id : null;
+      });
+    },
+    [busy, cleared, gameOver],
+  );
+
+  const disarmTool = useCallback(() => {
+    setActiveTool(null);
+    setSwapFirst(null);
+  }, []);
+
+  const spend = useCallback((id: ToolId) => {
+    chargesRef.current = spendCharge(chargesRef.current, id);
+    setCharges(chargesRef.current);
+  }, []);
+
+  /** Tools that don't target the board fire straight from the tool bar.
+   *
+   * Reroll replaces the queue outright. Foresight extends it to the full
+   * spawn: spawnBalls already reads `nextQueueRef[i] ?? <fresh roll>` for
+   * every marble it places, so simply making the queue as long as the spawn
+   * both reveals the hidden marble and commits it — the preview can't then
+   * disagree with what lands. */
+  const useInstantTool = useCallback(
+    (id: ToolId) => {
+      if (busy || gameOver || cleared || !hasCharge(chargesRef.current, id)) return;
+      primeAudio();
+      const { previewCount, spawnCount, colors: colorCount, colorAffinity } = levelRef.current;
+
+      if (id === "reroll") {
+        nextQueueRef.current = weightedRandomColors(boardRef.current, previewCount, colorCount, colorAffinity);
+      } else if (id === "foresight") {
+        if (nextQueueRef.current.length >= spawnCount) return; // nothing hidden to reveal
+        const extra = weightedRandomColors(
+          boardRef.current,
+          spawnCount - nextQueueRef.current.length,
+          colorCount,
+          colorAffinity,
+        );
+        nextQueueRef.current = [...nextQueueRef.current, ...extra];
+      } else {
+        return;
+      }
+
+      setNextQueue(nextQueueRef.current);
+      spend(id);
+      disarmTool();
+      playSelect();
+      persist();
+    },
+    [busy, cleared, disarmTool, gameOver, persist, spend],
+  );
+
+  /** Applies a board-targeting tool to a cell. Hammer resolves on one tap;
+   * swap needs two, holding the first pick until the second arrives. */
+  const applyToolAt = useCallback(
+    async (cell: Cell) => {
+      const tool = activeTool;
+      if (!tool || !hasCharge(chargesRef.current, tool)) return;
+
+      if (tool === "hammer") {
+        if (!smashMarble(boardRef.current, cell)) return; // empty cell: no charge spent
+        sync();
+        spend("hammer");
+        disarmTool();
+        playClear(1);
+        setShakeToken((t) => t + 1);
+        persist();
+        return;
+      }
+
+      if (tool === "swap") {
+        if (boardRef.current[cell.r]![cell.c] === null) return;
+        if (!swapFirst) {
+          setSwapFirst(cell);
+          playSelect();
+          return;
+        }
+        if (swapFirst.r === cell.r && swapFirst.c === cell.c) {
+          setSwapFirst(null); // tapping the same marble twice cancels the pick
+          return;
+        }
+        if (!swapMarbleColors(boardRef.current, swapFirst, cell)) {
+          // Same colour — nothing to exchange. Keep the tool armed so the
+          // player can pick a different second marble.
+          setSwapFirst(null);
+          return;
+        }
+        sync();
+        spend("swap");
+        disarmTool();
+        playPlace();
+
+        // A swap can complete a line at either end, so both are checked.
+        const matched = new Map<string, Cell>();
+        for (const at of [swapFirst, cell]) {
+          findLinesThrough(boardRef.current, at).forEach((m) => matched.set(cellKey(m.r, m.c), m));
+        }
+        if (matched.size > 0) {
+          setBusy(true);
+          await clearCells([...matched.values()]);
+          setBusy(false);
+        }
+        persist();
+      }
+    },
+    [activeTool, clearCells, disarmTool, persist, spend, swapFirst, sync],
+  );
+
   const handleCellClick = useCallback(
     (r: number, c: number) => {
       if (busy || gameOver || cleared) return;
       primeAudio();
+
+      // An armed tool takes over the tap entirely — no selecting, no moving
+      // — so a mis-tap while armed can never also move a marble.
+      if (activeTool) {
+        void applyToolAt({ r, c });
+        return;
+      }
 
       const occupied = boardRef.current[r]![c] !== null;
 
@@ -430,7 +587,7 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
 
       setSelected(null);
     },
-    [animateMove, busy, gameOver, cleared, selected],
+    [activeTool, applyToolAt, animateMove, busy, gameOver, cleared, selected],
   );
 
   const reachable = useMemo(() => {
@@ -477,6 +634,11 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
     spawningKeys,
     reachable,
     shakeToken,
+    charges,
+    activeTool,
+    swapFirst,
+    armTool,
+    useInstantTool,
     handleCellClick,
     advanceLevel,
     retryLevel,

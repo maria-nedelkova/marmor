@@ -853,6 +853,74 @@ body {
   color: var(--mr-muted);
 }
 
+/* The tool rack, below the board. Locked tools stay rendered but inert, so
+ * the rack keeps its shape as rounds unlock things instead of growing under
+ * the player's hands. */
+.toolbar {
+  margin: 18px auto 0;
+  text-align: center;
+}
+
+.toolbar__row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbar__tool {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  background: #1b2244;
+  border: 2px solid var(--panel-border);
+  font-family: var(--font-display);
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--text);
+}
+
+.toolbar__tool:hover:not(:disabled) {
+  border-color: var(--mr-accent);
+  color: var(--mr-accent);
+}
+
+/* Armed: the board is now waiting for a target, and this is the only cue
+ * that the next tap won't move a marble. */
+.toolbar__tool.is-active {
+  background: var(--mr-accent);
+  border-color: var(--mr-accent);
+  color: #04222a;
+}
+
+.toolbar__tool.is-spent {
+  opacity: 0.35;
+}
+
+.toolbar__count {
+  min-width: 14px;
+  padding: 1px 4px;
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--mr-accent);
+}
+
+.toolbar__tool.is-active .toolbar__count {
+  background: rgba(0, 0, 0, 0.3);
+  color: #eaffff;
+}
+
+/* Always present, even when empty — see the note in ToolBar.tsx: letting it
+ * appear and vanish would shift the board every time a tool is armed. */
+.toolbar__prompt {
+  margin: 8px 0 0;
+  min-height: 14px;
+  font-family: var(--font-display);
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--mr-accent);
+}
+
 /* Pause menu (src/components/GameMenu.tsx). Styled in the game's own dark
  * palette rather than on the 8bitcn Dialog the win/lose overlays use — it
  * should read as a layer dropped over the board, not as a light card
@@ -1223,7 +1291,7 @@ body {
    * than by an auto margin of its own — one element owning the slack keeps
    * the split predictable. */
   .topbar {
-    order: 3;
+    order: 4;
     max-width: none;
     margin: 0;
     padding: 10px 4px;
@@ -1352,6 +1420,32 @@ body {
    * that row could be mistaken for something else. */
   .duel-mascot--compact .duel-mascot__name {
     display: none;
+  }
+
+  .toolbar {
+    order: 3;
+    margin: 12px 0 0;
+  }
+
+  .toolbar__row {
+    gap: 6px;
+  }
+
+  .toolbar__tool {
+    padding: 8px 9px;
+    font-size: 8px;
+    gap: 5px;
+  }
+
+  /* Names are dropped at phone width — the icon plus the charge count is
+   * enough once you have met the tool, and four labelled buttons do not fit
+   * one row at 320px. */
+  .toolbar__name {
+    display: none;
+  }
+
+  .toolbar__prompt {
+    font-size: 8px;
   }
 
   /* main had a `.hint` rule here, ordered last so it was the thing that

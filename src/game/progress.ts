@@ -15,6 +15,8 @@
 
 import { LEVEL_COUNT } from "./levels";
 import { SIZE } from "./constants";
+import { NO_CHARGES } from "./tools";
+import type { ToolCharges, ToolId } from "./tools";
 import type { Board, ColorIndex } from "./types";
 
 const KEY = "marmor.progress.v1";
@@ -32,6 +34,9 @@ export interface RunSnapshot {
   bankedScore: number;
   moves: number;
   roundsCleared: number;
+  /** Unspent tool charges. Persisted so a recovered tab resumes with what
+   * the player actually had left, rather than silently refunding a hammer. */
+  charges: ToolCharges;
   /** Epoch ms of the save, for the freshness check. */
   at: number;
 }
@@ -83,8 +88,21 @@ function isSnapshot(value: unknown): value is RunSnapshot {
   if (!ints.every((k) => typeof s[k] === "number" && Number.isFinite(s[k]))) return false;
   if ((s.levelIndex as number) < 0 || (s.levelIndex as number) >= LEVEL_COUNT) return false;
   if (!Array.isArray(s.nextQueue) || !s.nextQueue.every((c) => typeof c === "number")) return false;
+  if (!isCharges(s.charges)) return false;
   if (!Array.isArray(s.board) || s.board.length !== SIZE) return false;
   return (s.board as unknown[]).every(
     (row) => Array.isArray(row) && row.length === SIZE && row.every((cell) => cell === null || typeof cell === "number"),
+  );
+}
+
+/** Charges are rejected outright rather than clamped if anything is off:
+ * a hand-edited save handing out twenty hammers would quietly undo the
+ * whole point of the charge economy, and starting the round fresh is a far
+ * better failure than an unbounded one. */
+function isCharges(value: unknown): value is ToolCharges {
+  if (typeof value !== "object" || value === null) return false;
+  const c = value as Record<string, unknown>;
+  return (Object.keys(NO_CHARGES) as ToolId[]).every(
+    (id) => typeof c[id] === "number" && Number.isInteger(c[id]) && (c[id] as number) >= 0 && (c[id] as number) <= 9,
   );
 }

@@ -64,6 +64,10 @@ increase, and nothing else**:
 | 7 · Standing Room Only | the board starts crowded |
 | 8 · The Coronation | clearing a line no longer buys a free turn |
 
+Rounds 2-5 each also unlock a **tool** — hammer, swap, reroll, foresight —
+with one use per round. Once all four are unlocked, unused charges start
+stacking up, so saving one through round 6 pays for round 8.
+
 The whole ladder is data in [`src/game/levels.ts`](./src/game/levels.ts);
 tuning it means editing that file, not the engine. `levels.test.ts` enforces
 the one-dial-per-round rule structurally, so a step that stacks two

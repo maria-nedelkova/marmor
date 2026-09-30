@@ -11,6 +11,7 @@ import { Leaderboard } from "./components/Leaderboard";
 import { LevelClearedOverlay } from "./components/LevelClearedOverlay";
 import { MarmorTitle } from "./components/MarmorTitle";
 import { SubmitRunPrompt } from "./components/SubmitRunPrompt";
+import { ToolBar } from "./components/ToolBar";
 import { TopBar } from "./components/TopBar";
 import { WinOverlay } from "./components/WinOverlay";
 import { KING_SCORE } from "./game/constants";
@@ -134,7 +135,7 @@ export function App() {
           <Board
             ref={boardRef}
             board={game.board}
-            selected={game.selected}
+            selected={game.selected ?? game.swapFirst}
             reachable={game.reachable}
             poppingKeys={game.poppingKeys}
             spawningKeys={game.spawningKeys}
@@ -184,6 +185,15 @@ export function App() {
           compact={isMobile}
         />
       </main>
+
+      <ToolBar
+        levelIndex={game.levelIndex}
+        charges={game.charges}
+        activeTool={game.activeTool}
+        awaitingSecondPick={game.swapFirst !== null}
+        onArm={game.armTool}
+        onUse={game.useInstantTool}
+      />
 
       {/* The rules line and the leaderboard link both used to sit here under
           the board; they're menu items now, so the board is the last thing
