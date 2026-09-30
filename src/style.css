@@ -855,7 +855,7 @@ body {
 
 /* The tool rack, below the board. Locked tools stay rendered but inert, so
  * the rack keeps its shape as rounds unlock things instead of growing under
- * the player's hands. */
+ * the player's hands — and the locked silhouette shows what's coming. */
 .toolbar {
   margin: 18px auto 0;
   text-align: center;
@@ -864,56 +864,97 @@ body {
 .toolbar__row {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
+/* Square, so the icon is the whole button — no label to balance against.
+ * Sits on the shared .btn3d bevel (declared earlier in this file, which is
+ * what lets these overrides win; see ARCHITECTURE.md on that ordering). */
 .toolbar__tool {
+  --btn-bevel: 3px;
+  --btn-drop: 5px;
+
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 9px 12px;
-  background: #1b2244;
-  border: 2px solid var(--panel-border);
-  font-family: var(--font-display);
-  font-size: 9px;
-  letter-spacing: 0.5px;
-  color: var(--text);
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  padding: 0;
 }
 
-.toolbar__tool:hover:not(:disabled) {
-  border-color: var(--mr-accent);
-  color: var(--mr-accent);
+.toolbar__art {
+  /* Nearest-neighbour so the hand-authored 12x12 grid stays hard-edged at
+   * whatever size the zoom tiers render it. */
+  image-rendering: pixelated;
 }
 
 /* Armed: the board is now waiting for a target, and this is the only cue
  * that the next tap won't move a marble. */
 .toolbar__tool.is-active {
-  background: var(--mr-accent);
-  border-color: var(--mr-accent);
-  color: #04222a;
+  --btn-face: #0f7d8e;
+  --btn-light: #4fd2e6;
+  --btn-dark: #053b45;
+  --btn-edge: #01181d;
 }
 
-.toolbar__tool.is-spent {
-  opacity: 0.35;
+/* Out of charges but unlocked: dimmed, still legible as itself. */
+.toolbar__tool.is-spent .toolbar__art {
+  opacity: 0.3;
 }
 
+/* Not yet unlocked: drained of colour rather than hidden, with the padlock
+ * sitting over it. grayscale keeps the object's shape readable, so the rack
+ * reads as "four tools, two of them still locked" at a glance. */
+.toolbar__tool.is-locked {
+  --btn-face: #171c33;
+  --btn-light: #2c3350;
+  --btn-dark: #0a0d1c;
+}
+
+.toolbar__tool.is-locked .toolbar__art {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+
+/* Corner badge, not an overlay. Centring the padlock hid the tool beneath
+ * it, so every locked slot looked identical and the rack stopped telling
+ * you WHICH tool was still to come. */
+.toolbar__lock {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  padding: 1px;
+  background: #080b1c;
+  border: 2px solid var(--panel-border);
+  image-rendering: pixelated;
+}
+
+/* Charge count, tucked into the corner so it never covers the icon. */
 .toolbar__count {
-  min-width: 14px;
-  padding: 1px 4px;
-  background: rgba(0, 0, 0, 0.45);
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  min-width: 17px;
+  padding: 1px 3px;
+  background: #080b1c;
+  border: 2px solid var(--mr-accent);
+  font-family: var(--font-display);
+  font-size: 9px;
+  line-height: 1.3;
   color: var(--mr-accent);
 }
 
-.toolbar__tool.is-active .toolbar__count {
-  background: rgba(0, 0, 0, 0.3);
-  color: #eaffff;
+.toolbar__tool.is-spent .toolbar__count {
+  border-color: var(--panel-border);
+  color: var(--mr-muted);
 }
 
-/* Always present, even when empty — see the note in ToolBar.tsx: letting it
- * appear and vanish would shift the board every time a tool is armed. */
+/* Always present, even when empty — letting it appear and vanish would
+ * shift the board every time a tool is armed. */
 .toolbar__prompt {
-  margin: 8px 0 0;
+  margin: 12px 0 0;
   min-height: 14px;
   font-family: var(--font-display);
   font-size: 9px;
@@ -1345,11 +1386,17 @@ body {
     align-items: center;
   }
 
+  /* Raised to sit level with the two score badges rather than centred in
+   * the row, so the bar reads as the span between those two numbers — 0 at
+   * the Pretender's badge on the left, 100 at the King's on the right —
+   * instead of floating between two heads. The offset is the badge's own
+   * half-height, which is what puts the bar through the middle of them. */
   .duel-progress {
     display: block;
     grid-area: progress;
     width: 100%;
-    align-self: center;
+    align-self: start;
+    margin-top: 2px;
   }
 
   .board-wrap {
@@ -1427,21 +1474,17 @@ body {
     margin: 12px 0 0;
   }
 
+  /* 10px, not the tighter spacing a phone row invites: the charge count and
+   * the padlock overhang their button by 4-5px, so a 6px gap left them
+   * almost touching the neighbouring button. 4x48 + 3x10 still clears the
+   * 354px board width. */
   .toolbar__row {
-    gap: 6px;
+    gap: 10px;
   }
 
   .toolbar__tool {
-    padding: 8px 9px;
-    font-size: 8px;
-    gap: 5px;
-  }
-
-  /* Names are dropped at phone width — the icon plus the charge count is
-   * enough once you have met the tool, and four labelled buttons do not fit
-   * one row at 320px. */
-  .toolbar__name {
-    display: none;
+    width: 48px;
+    height: 48px;
   }
 
   .toolbar__prompt {

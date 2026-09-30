@@ -1,37 +1,47 @@
-import { Eye, Hammer, RefreshCw, Repeat } from "lucide-react";
-import type { ComponentType } from "react";
-import { hasCharge, TOOLS, unlockedAt } from "../game/tools";
+import {
+  DICE_PALETTE,
+  DICE_ROWS,
+  FLASK_PALETTE,
+  FLASK_ROWS,
+  HAMMER_PALETTE,
+  HAMMER_ROWS,
+  LOCK_PALETTE,
+  LOCK_ROWS,
+  ORB_PALETTE,
+  ORB_ROWS,
+} from "../game/sprites/tools";
+import { hasCharge, isUnlocked, TOOLS, unlockedAt } from "../game/tools";
 import type { ToolCharges, ToolId } from "../game/tools";
+import type { PixelPalette } from "./PixelArt";
+import { PixelArt } from "./PixelArt";
 
 interface ToolBarProps {
   levelIndex: number;
   charges: ToolCharges;
   activeTool: ToolId | null;
-  /** True once the first of two swap picks is made — the prompt changes. */
+  /** True once the first of two flask picks is made — the prompt changes. */
   awaitingSecondPick: boolean;
-  /** Board-targeting tools: arm, then tap the board. */
   onArm: (id: ToolId) => void;
-  /** Tools that need no target and fire immediately. */
   onUse: (id: ToolId) => void;
 }
 
-const ICONS: Record<ToolId, ComponentType<{ size?: number; className?: string; "aria-hidden"?: boolean }>> = {
-  hammer: Hammer,
-  swap: Repeat,
-  reroll: RefreshCw,
-  foresight: Eye,
+const ART: Record<ToolId, { rows: string[]; palette: PixelPalette }> = {
+  hammer: { rows: HAMMER_ROWS, palette: HAMMER_PALETTE },
+  swap: { rows: FLASK_ROWS, palette: FLASK_PALETTE },
+  reroll: { rows: DICE_ROWS, palette: DICE_PALETTE },
+  foresight: { rows: ORB_ROWS, palette: ORB_PALETTE },
 };
 
-/** Which tools need a board target. The rest resolve the moment they're
- * tapped, so arming them would be a pointless extra step. */
+/** Which tools need a board target. The rest resolve on tap, so arming them
+ * would be a pointless extra step. */
 const TARGETED: ReadonlySet<ToolId> = new Set<ToolId>(["hammer", "swap"]);
 
-/** The tool rack. Renders nothing at all in round 1, where no tool has
- * unlocked yet — an empty rack would just be a strip of dead space with
- * nothing to explain it. */
+/** The tool rack. Icons only — each tool is a recognisable object, so a
+ * label underneath would be repeating what the picture already says, and
+ * four labelled buttons don't fit one phone row anyway. The name still
+ * reaches screen readers and the tooltip. */
 export function ToolBar({ levelIndex, charges, activeTool, awaitingSecondPick, onArm, onUse }: ToolBarProps) {
-  const available = unlockedAt(levelIndex);
-  if (available.length === 0) return null;
+  if (unlockedAt(levelIndex).length === 0) return null;
 
   const prompt = activeTool
     ? activeTool === "swap"
@@ -45,38 +55,41 @@ export function ToolBar({ levelIndex, charges, activeTool, awaitingSecondPick, o
     <div className="toolbar">
       <div className="toolbar__row">
         {TOOLS.map((tool) => {
-          const unlocked = available.includes(tool);
-          const Icon = ICONS[tool.id];
+          const unlocked = isUnlocked(tool, levelIndex);
           const count = charges[tool.id] ?? 0;
           const usable = unlocked && hasCharge(charges, tool.id);
-          const classes = ["toolbar__tool"];
+          const art = ART[tool.id];
+          const classes = ["btn3d", "toolbar__tool"];
           if (activeTool === tool.id) classes.push("is-active");
-          if (!usable) classes.push("is-spent");
+          if (!unlocked) classes.push("is-locked");
+          else if (!usable) classes.push("is-spent");
 
           return (
             <button
               key={tool.id}
               type="button"
               className={classes.join(" ")}
-              // Locked tools stay visible but inert, so the rack's shape
-              // doesn't jump every time a round unlocks something — you can
-              // see what's coming.
               disabled={!usable}
-              title={unlocked ? `${tool.name} — ${tool.description}` : `Unlocks in round ${tool.unlocksAt + 1}`}
-              aria-label={`${tool.name}, ${count} left`}
+              title={unlocked ? `${tool.name} — ${tool.description}` : `${tool.name} unlocks in round ${tool.unlocksAt + 1}`}
+              aria-label={unlocked ? `${tool.name}, ${count} left` : `${tool.name}, locked until round ${tool.unlocksAt + 1}`}
               aria-pressed={activeTool === tool.id}
               onClick={() => (TARGETED.has(tool.id) ? onArm(tool.id) : onUse(tool.id))}
             >
-              <Icon size={15} aria-hidden={true} />
-              <span className="toolbar__name">{tool.name}</span>
-              <span className="toolbar__count">{unlocked ? count : "—"}</span>
+              <PixelArt rows={art.rows} palette={art.palette} pixelSize={3} className="toolbar__art" />
+              {/* Locked tools keep their silhouette underneath rather than
+                  being swapped for a lock, so you can see what is coming. */}
+              {unlocked ? (
+                <span className="toolbar__count">{count}</span>
+              ) : (
+                <PixelArt rows={LOCK_ROWS} palette={LOCK_PALETTE} pixelSize={2} className="toolbar__lock" />
+              )}
             </button>
           );
         })}
       </div>
-      {/* Reserved whether or not a tool is armed, so arming one doesn't
-          shove the board down a line. */}
-      <p className="toolbar__prompt">{prompt ?? " "}</p>
+      {/* Reserved whether or not a tool is armed, so arming one doesn't shove
+          the board up a line. */}
+      <p className="toolbar__prompt">{prompt ?? " "}</p>
     </div>
   );
 }
