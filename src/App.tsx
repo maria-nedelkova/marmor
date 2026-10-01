@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playButtonClick, setMuted } from "./audio/sound";
 import { Board } from "./components/Board";
 import type { BoardHandle } from "./components/Board";
@@ -95,6 +95,17 @@ export function App() {
     [game.roundsCleared, game.partialPoints, game.moves, game.runScore],
   );
 
+  // Flattened to a cell-keyed lookup once per reveal rather than per cell,
+  // so the 81 Cells can each ask about themselves without a scan.
+  const foreseenColors = useMemo(() => {
+    const map = new Map<string, number>();
+    game.foreseen?.cells.forEach((cell, i) => {
+      const color = game.foreseen!.colors[i];
+      if (color !== undefined) map.set(`${cell.r},${cell.c}`, color);
+    });
+    return map;
+  }, [game.foreseen]);
+
   // Keyed by the run's own outcome so each finished run gets a fresh prompt
   // rather than inheriting the previous one's "already submitted" state.
   const runPrompt = runOver ? (
@@ -147,6 +158,7 @@ export function App() {
               reachable={game.reachable}
               poppingKeys={game.poppingKeys}
               spawningKeys={game.spawningKeys}
+              foreseenColors={foreseenColors}
               onCellClick={game.handleCellClick}
             />
             <GameOverOverlay
@@ -190,6 +202,7 @@ export function App() {
           <TopBar
             nextQueue={game.nextQueue}
             muted={muted}
+            pulseToken={game.queuePulse}
             onToggleMute={toggleMute}
             onOpenMenu={() => setMenuOpen(true)}
           />

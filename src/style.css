@@ -476,6 +476,33 @@ body {
   animation: spawn 320ms steps(4, end);
 }
 
+/* A marble the crystal ball says is coming to this cell. Half the size and
+ * see-through, with the solid-marble drop shadow and highlight stripped
+ * off, so it can never be mistaken for a marble that is actually there and
+ * movable — the cell underneath is still empty and still a legal move
+ * target. The slow pulse is what separates it from a rendering artefact. */
+.marble.foreseen {
+  width: 38%;
+  height: 38%;
+  opacity: 0.75;
+  outline: 2px solid rgba(255, 255, 255, 0.45);
+  box-shadow: none;
+  pointer-events: none;
+  animation: foreseen-pulse 1.4s steps(2, end) infinite;
+}
+
+.marble.foreseen::after {
+  display: none;
+}
+
+/* Floor at 0.5, not lower: opacity fades the white ring along with the
+ * fill, and the dark colours (wine, blue) go nearly invisible against the
+ * board below that. */
+@keyframes foreseen-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.5; }
+}
+
 .marble::after {
   content: "";
   position: absolute;
@@ -597,6 +624,48 @@ body {
 .next-preview {
   display: flex;
   gap: 8px;
+}
+
+/* Flash fired by the dice. Rerolling three random colours for three other
+ * random colours is easy to miss — you can even draw some of the same ones
+ * back — so the zone itself announces that something happened, rather than
+ * leaving the player to diff two sets of marbles from memory. Restarted
+ * imperatively on each reroll (see TopBar), since re-adding a class that is
+ * already present won't replay an animation. */
+.topbar__next.is-rerolled {
+  animation: queue-reroll 520ms ease-out;
+}
+
+@keyframes queue-reroll {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  25% {
+    transform: scale(1.14);
+    filter: brightness(2.1);
+  }
+  60% {
+    transform: scale(0.98);
+    filter: brightness(1.25);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* The flash is pure decoration; anyone who asked not to be moved keeps the
+ * brightness cue without the scale bounce. */
+@media (prefers-reduced-motion: reduce) {
+  .topbar__next.is-rerolled {
+    animation: queue-reroll-flat 520ms ease-out;
+  }
+
+  @keyframes queue-reroll-flat {
+    0%, 100% { filter: brightness(1); }
+    25% { filter: brightness(2.1); }
+  }
 }
 
 .next-preview .marble {
@@ -1694,6 +1763,19 @@ body {
   .next-preview .marble {
     width: 16px;
     height: 16px;
+  }
+
+  /* Six tools don't fit this width at the 48px size: 6x48 + 5x10 is 338
+   * against a 300px board. 6x42 + 5x8 = 292 does, and keeps the 8px gap the
+   * charge badges need — they overhang their button by 5px, so anything
+   * tighter has them touching the neighbour. */
+  .toolbar__tool {
+    width: 42px;
+    height: 42px;
+  }
+
+  .toolbar__row {
+    gap: 8px;
   }
 }
 

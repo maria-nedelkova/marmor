@@ -64,9 +64,25 @@ increase, and nothing else**:
 | 7 · Standing Room Only | the board starts crowded |
 | 8 · The Coronation | clearing a line no longer buys a free turn |
 
-Rounds 2-5 each also unlock a **tool** — hammer, swap, reroll, foresight —
-with one use per round. Once all four are unlocked, unused charges start
-stacking up, so saving one through round 6 pays for round 8.
+Rounds 2-7 each also unlock a **tool**, one use per round:
+
+| Tool | Round | What it does |
+| --- | --- | --- |
+| Hammer | 2 | smashes any one marble |
+| Flask | 3 | exchanges two marbles' colours |
+| Dice | 4 | re-rolls the "Next up" queue |
+| Pouch | 5 | redistributes every colour already on the board |
+| Bomb | 6 | clears a marble and the eight around it |
+| Crystal Ball | 7 | shows where this turn's marbles will land |
+
+They run small to large — one marble, two marbles, the queue, the whole
+board, nine at once, then information instead of force. From round 6 unused
+charges start stacking up, so saving one through an easy round pays for a
+hard one.
+
+The crystal ball's forecast is binding, not a guess: using it decides the
+spawn then and there, and the spawn that follows honours it. Only a marble
+whose cell you took with your own move gets re-homed.
 
 The whole ladder is data in [`src/game/levels.ts`](./src/game/levels.ts);
 tuning it means editing that file, not the engine. `levels.test.ts` enforces

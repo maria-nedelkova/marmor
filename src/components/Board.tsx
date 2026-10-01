@@ -14,6 +14,9 @@ interface BoardProps {
   reachable: Set<string>;
   poppingKeys: Set<string>;
   spawningKeys: Set<string>;
+  /** Cell key -> colour that will land there, once the crystal ball has
+   * committed this turn's spawn. Empty the rest of the time. */
+  foreseenColors: Map<string, ColorIndex>;
   onCellClick: (r: number, c: number) => void;
 }
 
@@ -26,7 +29,7 @@ const STEP_PX = CELL_SIZE_PX + CELL_GAP_PX;
  * the animation look like it eased in: early steps were still waiting on a
  * previous render to finish. Direct DOM writes have no such cost. */
 export const Board = forwardRef<BoardHandle, BoardProps>(function Board(
-  { board, selected, reachable, poppingKeys, spawningKeys, onCellClick },
+  { board, selected, reachable, poppingKeys, spawningKeys, foreseenColors, onCellClick },
   ref,
 ) {
   const gridRef = useRef<HTMLDivElement>(null);
@@ -95,6 +98,7 @@ export const Board = forwardRef<BoardHandle, BoardProps>(function Board(
           reachable={reachable.has(key)}
           popping={poppingKeys.has(key)}
           spawning={spawningKeys.has(key)}
+          foreseen={foreseenColors.get(key) ?? null}
           onClick={onCellClick}
         />,
       );

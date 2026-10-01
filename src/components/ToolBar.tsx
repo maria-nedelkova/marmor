@@ -1,4 +1,6 @@
 import {
+  BOMB_PALETTE,
+  BOMB_ROWS,
   DICE_PALETTE,
   DICE_ROWS,
   FLASK_PALETTE,
@@ -9,6 +11,8 @@ import {
   LOCK_ROWS,
   ORB_PALETTE,
   ORB_ROWS,
+  POUCH_PALETTE,
+  POUCH_ROWS,
 } from "../game/sprites/tools";
 import { hasCharge, isUnlocked, TOOLS, unlockedAt } from "../game/tools";
 import type { ToolCharges, ToolId } from "../game/tools";
@@ -29,12 +33,22 @@ const ART: Record<ToolId, { rows: string[]; palette: PixelPalette }> = {
   hammer: { rows: HAMMER_ROWS, palette: HAMMER_PALETTE },
   swap: { rows: FLASK_ROWS, palette: FLASK_PALETTE },
   reroll: { rows: DICE_ROWS, palette: DICE_PALETTE },
+  shuffle: { rows: POUCH_ROWS, palette: POUCH_PALETTE },
+  bomb: { rows: BOMB_ROWS, palette: BOMB_PALETTE },
   foresight: { rows: ORB_ROWS, palette: ORB_PALETTE },
 };
 
 /** Which tools need a board target. The rest resolve on tap, so arming them
  * would be a pointless extra step. */
-const TARGETED: ReadonlySet<ToolId> = new Set<ToolId>(["hammer", "swap"]);
+const TARGETED: ReadonlySet<ToolId> = new Set<ToolId>(["hammer", "swap", "bomb"]);
+
+/** What the board is waiting for while each targeted tool is armed. */
+const PROMPTS: Record<string, string> = {
+  hammer: "Tap a marble to smash it.",
+  bomb: "Tap anywhere to blow a hole.",
+  swap: "Tap the first of two marbles to swap.",
+  "swap:second": "Now tap the marble to swap it with.",
+};
 
 /** The tool rack. Icons only — each tool is a recognisable object, so a
  * label underneath would be repeating what the picture already says, and
@@ -44,11 +58,7 @@ export function ToolBar({ levelIndex, charges, activeTool, awaitingSecondPick, o
   if (unlockedAt(levelIndex).length === 0) return null;
 
   const prompt = activeTool
-    ? activeTool === "swap"
-      ? awaitingSecondPick
-        ? "Now tap the marble to swap it with."
-        : "Tap the first of two marbles to swap."
-      : "Tap a marble to smash it."
+    ? (PROMPTS[activeTool === "swap" && awaitingSecondPick ? "swap:second" : activeTool] ?? null)
     : null;
 
   return (

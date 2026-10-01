@@ -121,6 +121,60 @@ export const ORB_PALETTE: PixelPalette = {
   c: "#5b6480", // stand shadow
 };
 
+/** Drawstring pouch: the bag the marbles came out of, so shaking it is an
+ * obvious way to say "same marbles, new arrangement". Narrow gathered neck
+ * over a round body, which is what separates it from the flask's straight
+ * stopper at this size. */
+export const POUCH_ROWS: string[] = [
+  row(W, ".", [[4, 7, "t"]]),
+  row(W, ".", [[4, 4, "t"], [7, 7, "t"]]),
+  row(W, ".", [[3, 8, "n"]]),
+  row(W, ".", [[2, 9, "g"], [3, 8, "n"]]),
+  row(W, ".", [[2, 9, "g"], [3, 5, "i"]]),
+  row(W, ".", [[1, 10, "g"], [2, 4, "i"]]),
+  row(W, ".", [[1, 10, "g"], [2, 3, "i"]]),
+  row(W, ".", [[1, 10, "g"], [8, 10, "k"]]),
+  row(W, ".", [[1, 10, "g"], [7, 10, "k"]]),
+  row(W, ".", [[1, 10, "g"], [7, 10, "k"]]),
+  row(W, ".", [[2, 9, "g"], [6, 9, "k"]]),
+  row(W, ".", [[3, 8, "k"]]),
+];
+
+export const POUCH_PALETTE: PixelPalette = {
+  g: "#a8703c", // leather
+  i: "#d9a063", // lit side
+  k: "#6b4320", // shadow side
+  n: "#7a4e24", // gathered neck
+  t: "#d8cdb4", // drawstring
+};
+
+/** Bomb: black sphere, lit fuse, single spark. The most-drawn object in
+ * pixel art for "this removes a lot at once", and the silhouette survives
+ * being greyed out behind a padlock. */
+export const BOMB_ROWS: string[] = [
+  row(W, ".", [[9, 10, "r"]]),
+  row(W, ".", [[8, 8, "v"], [10, 10, "r"]]),
+  row(W, ".", [[7, 7, "v"]]),
+  row(W, ".", [[5, 6, "x"], [7, 7, "v"]]),
+  row(W, ".", [[3, 8, "b"], [5, 6, "x"]]),
+  row(W, ".", [[2, 9, "b"], [3, 4, "h"]]),
+  row(W, ".", [[1, 10, "b"], [2, 3, "h"]]),
+  row(W, ".", [[1, 10, "b"], [2, 2, "h"]]),
+  row(W, ".", [[1, 10, "b"]]),
+  row(W, ".", [[1, 10, "b"], [8, 10, "d"]]),
+  row(W, ".", [[2, 9, "b"], [7, 9, "d"]]),
+  row(W, ".", [[3, 8, "b"], [5, 8, "d"]]),
+];
+
+export const BOMB_PALETTE: PixelPalette = {
+  b: "#2e3350", // casing
+  h: "#7d87ad", // highlight
+  d: "#161a2e", // shadow
+  x: "#4a4030", // collar
+  v: "#c08a3e", // fuse
+  r: "#ffd34d", // spark
+};
+
 /** Padlock, drawn over a tool that hasn't unlocked yet. */
 export const LOCK_ROWS: string[] = [
   row(W, ".", [[4, 7, "a"]]),

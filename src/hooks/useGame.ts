@@ -13,6 +13,7 @@ import {
 import type { BoardHandle } from "../components/Board";
 import {
   assignSpawnCells,
+  bombAt,
   cloneBoard,
   createEmptyBoard,
   emptyCells,
@@ -21,12 +22,13 @@ import {
   randomColors,
   reachableFrom,
   scoreForClear,
+  shuffleBoardColors,
   smashMarble,
   swapMarbleColors,
   weightedRandomColor,
   weightedRandomColors,
 } from "../game/engine";
-import { KING_SCORE } from "../game/constants";
+import { KING_SCORE, SIZE } from "../game/constants";
 import { getLevel, isFinalLevel, LEVEL_COUNT } from "../game/levels";
 import type { LevelConfig } from "../game/levels";
 import { clearRun, loadRun, saveRun } from "../game/progress";
@@ -112,6 +114,25 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
   const [activeTool, setActiveTool] = useState<ToolId | null>(null);
   /** Swap's first pick, held until the second tap lands. */
   const [swapFirst, setSwapFirst] = useState<Cell | null>(null);
+  /** This turn's spawn, once the crystal ball has committed it: the cells
+   * the marbles will land on and the colours that will land there. Null
+   * whenever the spawn is still undecided, which is every turn the tool
+   * isn't used. Deliberately NOT part of the persisted snapshot — it is a
+   * single turn's hint, and carrying it through a crash restore would mean
+   * validating board coordinates on the way back in for something the
+   * player is about to consume anyway. */
+  const foreseenRef = useRef<{ cells: Cell[]; colors: ColorIndex[] } | null>(null);
+  const [foreseen, setForeseen] = useState<{ cells: Cell[]; colors: ColorIndex[] } | null>(null);
+  /** Bumped whenever the dice rewrite the queue, so the Next up strip can
+   * flash. Without it the reroll is invisible on a bad draw — swapping
+   * three random colours for three other random colours can easily look
+   * like nothing happened at all. */
+  const [queuePulse, setQueuePulse] = useState(0);
+
+  const clearForeseen = useCallback(() => {
+    foreseenRef.current = null;
+    setForeseen(null);
+  }, []);
 
   /** Writes the current run to sessionStorage. Called only from settled
    * states — after a completed turn and after a round transition — never
@@ -217,30 +238,72 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       const { colors: colorCount, colorAffinity, previewCount, blockProbability, blockMinRunLength } = levelRef.current;
       const free = emptyCells(boardRef.current);
       const toPlace = Math.min(count, free.length);
-      // Only the first `previewCount` colors were announced in "Next up";
-      // anything past that is rolled fresh here, so later levels can spawn
-      // more marbles than they show (see `previewCount` in levels.ts).
-      const colors = isInitial
-        ? weightedRandomColors(boardRef.current, toPlace, colorCount, colorAffinity)
-        : Array.from(
-            { length: toPlace },
-            (_, i) => nextQueueRef.current[i] ?? weightedRandomColor(boardRef.current, colorCount, colorAffinity),
-          );
-      // Cells aren't picked uniformly at random — each turn has a flat,
-      // per-level chance of the board looking for the player's near-complete
-      // lines and dropping a mismatched color right on top of one, instead
-      // of anywhere empty. Rolled through `rng`, not Math.random, for the
-      // reason given in game/rng.ts.
-      const canBlock = !isInitial && rng.random() < blockProbability;
-      const { cells: placedCells } = assignSpawnCells(boardRef.current, colors, {
-        minBlockLength: blockMinRunLength,
-        enableBlocking: canBlock,
-        colorCount,
-      });
 
-      placedCells.forEach((cell, i) => {
-        boardRef.current[cell.r]![cell.c] = colors[i]!;
-      });
+      // The crystal ball commits this turn's spawn when it's used, so if one
+      // is held, honour it instead of rolling a new one — a prediction the
+      // game then ignores is worse than no prediction. The player still had
+      // a move to make after looking, though, and that move can land on a
+      // cell the reveal had claimed: those marbles (and only those) get
+      // re-homed, so the rest of the forecast stays true.
+      const foreseenSpawn = isInitial ? null : foreseenRef.current;
+      let colors: ColorIndex[];
+      let placedCells: Cell[];
+
+      if (foreseenSpawn) {
+        const keptCells: Cell[] = [];
+        const keptColors: ColorIndex[] = [];
+        const displaced: ColorIndex[] = [];
+        foreseenSpawn.cells.forEach((cell, i) => {
+          const color = foreseenSpawn.colors[i]!;
+          if (boardRef.current[cell.r]![cell.c] === null) {
+            keptCells.push(cell);
+            keptColors.push(color);
+          } else {
+            displaced.push(color);
+          }
+        });
+        // Written before the displaced ones are assigned, so the kept cells
+        // are already occupied and can't be handed out a second time.
+        keptCells.forEach((cell, i) => {
+          boardRef.current[cell.r]![cell.c] = keptColors[i]!;
+        });
+        const { cells: spillCells } = assignSpawnCells(boardRef.current, displaced, {
+          minBlockLength: blockMinRunLength,
+          enableBlocking: false,
+          colorCount,
+        });
+        spillCells.forEach((cell, i) => {
+          boardRef.current[cell.r]![cell.c] = displaced[i]!;
+        });
+        placedCells = [...keptCells, ...spillCells];
+        colors = [...keptColors, ...displaced.slice(0, spillCells.length)];
+        clearForeseen();
+      } else {
+        // Only the first `previewCount` colors were announced in "Next up";
+        // anything past that is rolled fresh here, so later levels can spawn
+        // more marbles than they show (see `previewCount` in levels.ts).
+        colors = isInitial
+          ? weightedRandomColors(boardRef.current, toPlace, colorCount, colorAffinity)
+          : Array.from(
+              { length: toPlace },
+              (_, i) => nextQueueRef.current[i] ?? weightedRandomColor(boardRef.current, colorCount, colorAffinity),
+            );
+        // Cells aren't picked uniformly at random — each turn has a flat,
+        // per-level chance of the board looking for the player's near-complete
+        // lines and dropping a mismatched color right on top of one, instead
+        // of anywhere empty. Rolled through `rng`, not Math.random, for the
+        // reason given in game/rng.ts.
+        const canBlock = !isInitial && rng.random() < blockProbability;
+        placedCells = assignSpawnCells(boardRef.current, colors, {
+          minBlockLength: blockMinRunLength,
+          enableBlocking: canBlock,
+          colorCount,
+        }).cells;
+
+        placedCells.forEach((cell, i) => {
+          boardRef.current[cell.r]![cell.c] = colors[i]!;
+        });
+      }
       sync();
       if (placedCells.length > 0) {
         playPlace();
@@ -283,7 +346,7 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       // this turn.
       persist();
     },
-    [clearCells, persist, sync],
+    [clearCells, clearForeseen, persist, sync],
   );
 
   const animateMove = useCallback(
@@ -378,6 +441,7 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       setCharges(chargesRef.current);
       setActiveTool(null);
       setSwapFirst(null);
+      clearForeseen();
 
       boardRef.current = createEmptyBoard();
       scoreRef.current = 0;
@@ -399,7 +463,7 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       if (mode === "restart") clearRun();
       void spawnBalls(nextLevel.startCount, true);
     },
-    [spawnBalls],
+    [boardHandleRef, clearForeseen, spawnBalls],
   );
 
   const advanceLevel = useCallback(() => startLevel(levelIndexRef.current + 1, "advance"), [startLevel]);
@@ -466,39 +530,83 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
 
   /** Tools that don't target the board fire straight from the tool bar.
    *
-   * Reroll replaces the queue outright. Foresight extends it to the full
-   * spawn: spawnBalls already reads `nextQueueRef[i] ?? <fresh roll>` for
-   * every marble it places, so simply making the queue as long as the spawn
-   * both reveals the hidden marble and commits it — the preview can't then
-   * disagree with what lands. */
+   * Dice rewrites the queue. Pouch rearranges the colours already down, and
+   * can complete lines doing it, so it resolves them like any other move.
+   * Crystal ball doesn't change the board at all — it decides this turn's
+   * spawn early and shows it, and spawnBalls then honours that decision
+   * rather than rolling its own. */
   const useInstantTool = useCallback(
-    (id: ToolId) => {
+    async (id: ToolId) => {
       if (busy || gameOver || cleared || !hasCharge(chargesRef.current, id)) return;
       primeAudio();
-      const { previewCount, spawnCount, colors: colorCount, colorAffinity } = levelRef.current;
+      const {
+        previewCount,
+        spawnCount,
+        colors: colorCount,
+        colorAffinity,
+        blockProbability,
+        blockMinRunLength,
+      } = levelRef.current;
 
       if (id === "reroll") {
         nextQueueRef.current = weightedRandomColors(boardRef.current, previewCount, colorCount, colorAffinity);
+        setNextQueue(nextQueueRef.current);
+        setQueuePulse((t) => t + 1);
+      } else if (id === "shuffle") {
+        // Refuses on a board it can't actually rearrange, so the charge
+        // isn't burnt on a no-op (see shuffleBoardColors).
+        if (!shuffleBoardColors(boardRef.current)) return;
+        sync();
+        setShakeToken((t) => t + 1);
+        // A stir can complete lines anywhere, so every marble is a
+        // candidate rather than just the ones a move touched.
+        const matched = new Map<string, Cell>();
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            if (boardRef.current[r]![c] === null) continue;
+            findLinesThrough(boardRef.current, { r, c }).forEach((m) => matched.set(cellKey(m.r, m.c), m));
+          }
+        }
+        spend(id);
+        disarmTool();
+        playPlace();
+        if (matched.size > 0) {
+          setBusy(true);
+          await clearCells([...matched.values()]);
+          setBusy(false);
+        }
+        persist();
+        return;
       } else if (id === "foresight") {
-        if (nextQueueRef.current.length >= spawnCount) return; // nothing hidden to reveal
-        const extra = weightedRandomColors(
-          boardRef.current,
-          spawnCount - nextQueueRef.current.length,
-          colorCount,
-          colorAffinity,
+        if (foreseenRef.current) return; // already revealed this turn
+        const freeCells = emptyCells(boardRef.current);
+        const toPlace = Math.min(spawnCount, freeCells.length);
+        if (toPlace === 0) return;
+        // Built exactly the way spawnBalls would build it, including the
+        // blocking roll — this IS the spawn, just decided early. Rolling it
+        // here and storing it is what makes the prediction binding.
+        const spawnColors = Array.from(
+          { length: toPlace },
+          (_, i) => nextQueueRef.current[i] ?? weightedRandomColor(boardRef.current, colorCount, colorAffinity),
         );
-        nextQueueRef.current = [...nextQueueRef.current, ...extra];
+        const { cells } = assignSpawnCells(boardRef.current, spawnColors, {
+          minBlockLength: blockMinRunLength,
+          enableBlocking: rng.random() < blockProbability,
+          colorCount,
+        });
+        if (cells.length === 0) return;
+        foreseenRef.current = { cells, colors: spawnColors.slice(0, cells.length) };
+        setForeseen(foreseenRef.current);
       } else {
         return;
       }
 
-      setNextQueue(nextQueueRef.current);
       spend(id);
       disarmTool();
       playSelect();
       persist();
     },
-    [busy, cleared, disarmTool, gameOver, persist, spend],
+    [busy, cleared, clearCells, disarmTool, gameOver, persist, spend, sync],
   );
 
   /** Applies a board-targeting tool to a cell. Hammer resolves on one tap;
@@ -514,6 +622,21 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
         spend("hammer");
         disarmTool();
         playClear(1);
+        setShakeToken((t) => t + 1);
+        persist();
+        return;
+      }
+
+      if (tool === "bomb") {
+        // Aimed at any cell, not just an occupied one — the blast is a 3x3
+        // patch and the useful aim point is often the gap in the middle of
+        // a clump. Only a patch that is entirely empty is refused.
+        const removed = bombAt(boardRef.current, cell);
+        if (removed === 0) return;
+        sync();
+        spend("bomb");
+        disarmTool();
+        playClear(removed);
         setShakeToken((t) => t + 1);
         persist();
         return;
@@ -627,6 +750,10 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
     levelCount: LEVEL_COUNT,
     isFinal: isFinalLevel(levelIndex),
     nextQueue,
+    /** Bumped on every dice reroll, for the Next up flash. */
+    queuePulse,
+    /** This turn's committed spawn once the crystal ball has shown it. */
+    foreseen,
     gameOver,
     cleared,
     busy,

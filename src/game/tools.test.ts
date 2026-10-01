@@ -10,84 +10,96 @@ import {
   toolUnlockedAt,
   unlockedAt,
 } from "./tools";
+import type { ToolCharges } from "./tools";
+
+/** Spread over NO_CHARGES so these cases name only the tools they care
+ * about and adding a seventh tool doesn't rewrite the file. */
+const charges = (partial: Partial<ToolCharges>): ToolCharges => ({ ...NO_CHARGES, ...partial });
 
 describe("unlock schedule", () => {
-  test("one tool per round across rounds 2-5, none before or after", () => {
+  test("one tool per round across rounds 2-7, none in round 1 or round 8", () => {
     const byRound = Array.from({ length: LEVEL_COUNT }, (_, i) => toolUnlockedAt(i)?.id ?? null);
-    expect(byRound).toEqual([null, "hammer", "swap", "reroll", "foresight", null, null, null]);
+    expect(byRound).toEqual([null, "hammer", "swap", "reroll", "shuffle", "bomb", "foresight", null]);
   });
 
-  test("round 1 has no tools, and the set is complete from round 5", () => {
+  test("round 1 has no tools, and the set is complete for the final round", () => {
     expect(unlockedAt(0)).toHaveLength(0);
-    expect(unlockedAt(4)).toHaveLength(TOOLS.length);
     expect(unlockedAt(LEVEL_COUNT - 1)).toHaveLength(TOOLS.length);
   });
 
-  test("accumulation starts the round after the last unlock", () => {
-    const lastUnlock = Math.max(...TOOLS.map((t) => t.unlocksAt));
-    expect(ACCUMULATE_FROM_ROUND).toBe(lastUnlock + 1);
+  test("the rack only ever grows", () => {
+    for (let round = 1; round < LEVEL_COUNT; round++) {
+      expect(unlockedAt(round).length).toBeGreaterThanOrEqual(unlockedAt(round - 1).length);
+    }
   });
 });
 
-describe("grantCharges — reset phase (rounds 2-5)", () => {
+describe("grantCharges — reset phase", () => {
   test("gives exactly one of each unlocked tool", () => {
-    expect(grantCharges(NO_CHARGES, 1)).toEqual({ hammer: 1, swap: 0, reroll: 0, foresight: 0 });
-    expect(grantCharges(NO_CHARGES, 3)).toEqual({ hammer: 1, swap: 1, reroll: 1, foresight: 0 });
+    expect(grantCharges(NO_CHARGES, 1)).toEqual(charges({ hammer: 1 }));
+    expect(grantCharges(NO_CHARGES, 3)).toEqual(charges({ hammer: 1, swap: 1, reroll: 1 }));
   });
 
   test("discards anything unspent — saving through these rounds gains nothing", () => {
-    const hoarded = { hammer: 1, swap: 1, reroll: 0, foresight: 0 };
-    expect(grantCharges(hoarded, 3)).toEqual({ hammer: 1, swap: 1, reroll: 1, foresight: 0 });
+    const hoarded = charges({ hammer: 1, swap: 1 });
+    expect(grantCharges(hoarded, 3)).toEqual(charges({ hammer: 1, swap: 1, reroll: 1 }));
   });
 
   test("a locked tool stays at zero even if a stale value says otherwise", () => {
-    const bogus = { hammer: 1, swap: 0, reroll: 5, foresight: 9 };
-    expect(grantCharges(bogus, 1)).toEqual({ hammer: 1, swap: 0, reroll: 0, foresight: 0 });
+    const bogus = charges({ hammer: 1, reroll: 5, foresight: 9 });
+    expect(grantCharges(bogus, 1)).toEqual(charges({ hammer: 1 }));
   });
 });
 
-describe("grantCharges — accumulating phase (round 6 on)", () => {
+describe("grantCharges — accumulating phase", () => {
   test("adds this round's grant to what survived", () => {
-    const leftover = { hammer: 1, swap: 0, reroll: 2, foresight: 1 };
-    expect(grantCharges(leftover, ACCUMULATE_FROM_ROUND)).toEqual({
-      hammer: 2,
-      swap: 1,
-      reroll: 3,
-      foresight: 2,
-    });
+    const leftover = charges({ hammer: 1, reroll: 2, shuffle: 1 });
+    expect(grantCharges(leftover, ACCUMULATE_FROM_ROUND)).toEqual(
+      charges({ hammer: 2, swap: 1, reroll: 3, shuffle: 2, bomb: 1 }),
+    );
   });
 
-  test("banking across the last three rounds is worth doing", () => {
-    // Never spending from round 6 to round 8 should leave three of each.
-    let charges = grantCharges({ hammer: 0, swap: 0, reroll: 0, foresight: 0 }, ACCUMULATE_FROM_ROUND);
+  test("banking across the accumulating rounds is worth doing", () => {
+    let held = grantCharges(NO_CHARGES, ACCUMULATE_FROM_ROUND);
     for (let round = ACCUMULATE_FROM_ROUND + 1; round < LEVEL_COUNT; round++) {
-      charges = grantCharges(charges, round);
+      held = grantCharges(held, round);
     }
-    expect(charges.hammer).toBe(LEVEL_COUNT - ACCUMULATE_FROM_ROUND);
+    expect(held.hammer).toBe(LEVEL_COUNT - ACCUMULATE_FROM_ROUND);
   });
 
   test("spending keeps the ceiling down — the reward is for saving, not for idling", () => {
-    let charges = grantCharges(NO_CHARGES, ACCUMULATE_FROM_ROUND);
-    charges = spendCharge(charges, "hammer");
-    charges = grantCharges(charges, ACCUMULATE_FROM_ROUND + 1);
-    expect(charges.hammer).toBe(1);
+    let held = grantCharges(NO_CHARGES, ACCUMULATE_FROM_ROUND);
+    held = spendCharge(held, "hammer");
+    held = grantCharges(held, ACCUMULATE_FROM_ROUND + 1);
+    expect(held.hammer).toBe(1);
+  });
+
+  // The two phases overlap now: bomb and crystal ball unlock at or after
+  // ACCUMULATE_FROM_ROUND, so they never see a reset round. They must still
+  // show up holding exactly one, which they do only because grantCharges
+  // adds to a previous balance of zero.
+  test("a tool unlocking inside the accumulating phase still arrives with one", () => {
+    for (const tool of TOOLS) {
+      if (tool.unlocksAt < ACCUMULATE_FROM_ROUND) continue;
+      expect(grantCharges(NO_CHARGES, tool.unlocksAt)[tool.id]).toBe(1);
+    }
   });
 });
 
 describe("spendCharge", () => {
   test("decrements only the tool used", () => {
-    const after = spendCharge({ hammer: 2, swap: 1, reroll: 0, foresight: 0 }, "hammer");
-    expect(after).toEqual({ hammer: 1, swap: 1, reroll: 0, foresight: 0 });
+    const after = spendCharge(charges({ hammer: 2, swap: 1 }), "hammer");
+    expect(after).toEqual(charges({ hammer: 1, swap: 1 }));
   });
 
   test("never goes negative, and leaves the object untouched at zero", () => {
-    const empty = { hammer: 0, swap: 1, reroll: 0, foresight: 0 };
+    const empty = charges({ swap: 1 });
     expect(spendCharge(empty, "hammer")).toEqual(empty);
   });
 
   test("hasCharge gates use", () => {
-    expect(hasCharge({ hammer: 1, swap: 0, reroll: 0, foresight: 0 }, "hammer")).toBe(true);
-    expect(hasCharge({ hammer: 0, swap: 0, reroll: 0, foresight: 0 }, "hammer")).toBe(false);
+    expect(hasCharge(charges({ hammer: 1 }), "hammer")).toBe(true);
+    expect(hasCharge(NO_CHARGES, "hammer")).toBe(false);
   });
 });
 
@@ -101,5 +113,9 @@ describe("every tool is described", () => {
       expect(tool.unlocksAt).toBeLessThan(LEVEL_COUNT);
     }
     expect(new Set(TOOLS.map((t) => t.id)).size).toBe(TOOLS.length);
+  });
+
+  test("NO_CHARGES covers every tool, so a grant can't leave one undefined", () => {
+    expect(Object.keys(NO_CHARGES).sort()).toEqual(TOOLS.map((t) => t.id).sort());
   });
 });

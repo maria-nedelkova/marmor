@@ -1,17 +1,22 @@
 // Tools: the player's answer to the ladder's escalation.
 //
-// Each round from 2 to 5 unlocks one, and each unlock answers the pressure
+// Each round from 2 to 7 unlocks one, and each unlock answers the pressure
 // that same round introduces — the round hands you a problem and the means
-// to deal with it. Rounds 6 to 8 unlock nothing and are pure escalation, so
-// the endgame is about using what you hold well rather than learning new
-// buttons.
+// to deal with it. Only round 8 unlocks nothing, so the finale is about
+// using what you hold well rather than learning one more button.
+//
+// The six run small-to-large on purpose: hammer (one marble), flask (two
+// marbles), dice (the queue), pouch (every marble on the board), bomb (nine
+// marbles at once), crystal ball (information rather than force). A player
+// arriving at round 7 has a strictly bigger toolkit than one at round 3,
+// which is what keeps the late rounds survivable without flattening them.
 //
 // Charges are not bought. A currency would mean an economy, a shop, and a
 // second balance surface, and it would make a puzzle game feel
 // free-to-play; unlocking by progress gets the same "something new each
 // round" for none of that.
 
-export type ToolId = "hammer" | "swap" | "reroll" | "foresight";
+export type ToolId = "hammer" | "swap" | "reroll" | "shuffle" | "bomb" | "foresight";
 
 export interface ToolDef {
   id: ToolId;
@@ -47,24 +52,46 @@ export const TOOLS: ToolDef[] = [
     answers: "Round 4 drops four marbles a turn, so a bad queue costs more.",
   },
   {
+    id: "shuffle",
+    name: "Pouch",
+    unlocksAt: 4,
+    description: "Stir the bag: redistribute every colour on the board.",
+    answers:
+      "Round 5 lands one of the four unannounced, so the board drifts into arrangements you never chose. " +
+      "The pouch is the big sibling of the dice — that one re-rolls what is coming, this one re-rolls what is already down.",
+  },
+  {
+    id: "bomb",
+    name: "Bomb",
+    unlocksAt: 5,
+    description: "Blow a hole: clear a marble and the eight around it.",
+    answers: "Round 6 makes like colours clump together; nine cells at once is what breaks a clump open.",
+  },
+  {
     id: "foresight",
     name: "Crystal Ball",
-    unlocksAt: 4,
-    description: "See ahead: reveal the whole of this turn's spawn.",
-    answers: "Round 5 hides one of the four; foresight buys the hidden one back for a turn.",
+    unlocksAt: 6,
+    description: "See ahead: reveal where this turn's marbles will land.",
+    answers:
+      "Round 7 starts you nine marbles down, and on a crowded board it is WHERE the next ones land, " +
+      "not what colour they are, that decides whether you had a move.",
   },
 ];
 
 /** Zero-based round index from which unused charges carry over instead of
- * resetting. It is the round after the last unlock, deliberately: while
- * tools are still arriving, one use each keeps them being tried rather than
- * hoarded, and once the set is complete, banking them is what makes the
- * final rounds survivable. */
+ * resetting.
+ *
+ * It used to be the round after the last unlock. With six tools the unlocks
+ * now run to round 7, and waiting for them to finish would leave
+ * accumulation as a single-round footnote — so it stays at round 6 and the
+ * two phases overlap. A tool that unlocks at or after this round still
+ * arrives with exactly one charge, because `grantCharges` adds to a
+ * previous balance of zero; it simply never has a refresh phase. */
 export const ACCUMULATE_FROM_ROUND = 5;
 
 export type ToolCharges = Record<ToolId, number>;
 
-export const NO_CHARGES: ToolCharges = { hammer: 0, swap: 0, reroll: 0, foresight: 0 };
+export const NO_CHARGES: ToolCharges = { hammer: 0, swap: 0, reroll: 0, shuffle: 0, bomb: 0, foresight: 0 };
 
 export function isUnlocked(tool: ToolDef, levelIndex: number): boolean {
   return levelIndex >= tool.unlocksAt;

@@ -305,6 +305,77 @@ export function swapMarbleColors(board: Board, a: Cell, b: Cell): boolean {
   return true;
 }
 
+/** Clears a cell and all eight around it — up to nine marbles, fewer at an
+ * edge or corner. Returns how many were actually removed so the caller can
+ * decline to spend a charge on an empty patch.
+ *
+ * Deliberately scores nothing, like the hammer: the bomb's job is to open
+ * space on a board that has closed up, and paying points for it would turn
+ * it into a scoring move you'd fire on a healthy board. */
+export function bombAt(board: Board, { r, c }: Cell): number {
+  let removed = 0;
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      const rr = r + dr;
+      const cc = c + dc;
+      if (!inBounds(rr, cc) || board[rr]![cc] === null) continue;
+      board[rr]![cc] = null;
+      removed++;
+    }
+  }
+  return removed;
+}
+
+/** Redistributes the colors already on the board across the cells they
+ * already occupy — same marbles, same count, new arrangement. Returns false
+ * when the shuffle could not change anything, so the caller can decline to
+ * spend a charge: fewer than two marbles, or every marble the same color.
+ *
+ * Occupancy is preserved rather than re-scattered. Moving the marbles to
+ * different CELLS would also redraw the free space the player has been
+ * working with all turn, which reads as the board being replaced rather
+ * than stirred — and it would let the tool manufacture open lanes, which is
+ * a much bigger effect than the "my colors are in the wrong places" problem
+ * it exists to solve.
+ *
+ * Any lines the new arrangement happens to complete are the caller's to
+ * resolve; this function only rearranges. */
+export function shuffleBoardColors(board: Board): boolean {
+  const cells: Cell[] = [];
+  const colors: ColorIndex[] = [];
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const color = board[r]![c];
+      if (color === null || color === undefined) continue;
+      cells.push({ r, c });
+      colors.push(color);
+    }
+  }
+  if (cells.length < 2) return false;
+  if (colors.every((color) => color === colors[0])) return false;
+
+  // Retry rather than accept a shuffle that happened to land back on the
+  // original arrangement — on a board with few marbles that is likely
+  // enough to be worth guarding, and it would look like the tool silently
+  // did nothing. The loop is bounded because a `false` here costs the
+  // player a charge for no visible effect either way.
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const shuffled = colors.slice();
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(rng.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+    }
+    if (shuffled.some((color, i) => color !== colors[i])) {
+      shuffled.forEach((color, i) => {
+        const { r, c } = cells[i]!;
+        board[r]![c] = color;
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
 export interface SpawnOptions {
   /** How long an existing run must be before blocking it is worthwhile. */
   minBlockLength?: number;

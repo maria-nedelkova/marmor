@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { COLORS, SIZE } from "./constants";
 import {
   assignSpawnCells,
+  bombAt,
   COLOR_SMOOTHING,
   colorCounts,
   createEmptyBoard,
@@ -11,6 +12,7 @@ import {
   longestRunThrough,
   reachableFrom,
   scoreForClear,
+  shuffleBoardColors,
   smashMarble,
   swapMarbleColors,
   weightedRandomColor,
@@ -517,5 +519,97 @@ describe("swapMarbleColors", () => {
     const before = board.flat().filter((c) => c !== null).length;
     swapMarbleColors(board, { r: 1, c: 1 }, { r: 5, c: 5 });
     expect(board.flat().filter((c) => c !== null).length).toBe(before);
+  });
+});
+
+describe("bombAt", () => {
+  test("clears the target and all eight neighbours", () => {
+    const board = createEmptyBoard();
+    for (let r = 3; r <= 5; r++) for (let c = 3; c <= 5; c++) board[r]![c] = 1;
+    expect(bombAt(board, { r: 4, c: 4 })).toBe(9);
+    expect(board.flat().filter((cell) => cell !== null)).toHaveLength(0);
+  });
+
+  test("leaves everything outside the 3x3 alone", () => {
+    const board = createEmptyBoard();
+    place(board, [[4, 4]], 1);
+    place(board, [[4, 6], [6, 4], [2, 2]], 2);
+    expect(bombAt(board, { r: 4, c: 4 })).toBe(1);
+    expect(board[4]![6]).toBe(2);
+    expect(board[6]![4]).toBe(2);
+    expect(board[2]![2]).toBe(2);
+  });
+
+  test("clips at a corner instead of running off the board", () => {
+    const board = createEmptyBoard();
+    for (let r = 0; r <= 1; r++) for (let c = 0; c <= 1; c++) board[r]![c] = 3;
+    expect(bombAt(board, { r: 0, c: 0 })).toBe(4);
+  });
+
+  test("reports zero on an empty patch, so the caller can refuse the charge", () => {
+    const board = createEmptyBoard();
+    place(board, [[8, 8]], 1);
+    expect(bombAt(board, { r: 2, c: 2 })).toBe(0);
+    expect(board[8]![8]).toBe(1);
+  });
+
+  test("an empty centre still clears the ring around it", () => {
+    const board = createEmptyBoard();
+    place(board, [[3, 3], [3, 4], [3, 5], [4, 3], [4, 5]], 2);
+    expect(bombAt(board, { r: 4, c: 4 })).toBe(5);
+  });
+});
+
+describe("shuffleBoardColors", () => {
+  test("keeps every cell occupied and every colour count identical", () => {
+    const board = createEmptyBoard();
+    place(board, [[0, 0], [0, 1], [3, 4]], 1);
+    place(board, [[2, 2], [5, 5]], 4);
+    place(board, [[7, 1]], 6);
+    const occupiedBefore = board.flat().filter((cell) => cell !== null).length;
+    const countsBefore = colorCounts(board);
+
+    expect(shuffleBoardColors(board)).toBe(true);
+
+    expect(board.flat().filter((cell) => cell !== null).length).toBe(occupiedBefore);
+    expect(colorCounts(board)).toEqual(countsBefore);
+  });
+
+  test("occupancy is preserved exactly — the same cells, never different ones", () => {
+    const board = createEmptyBoard();
+    const cells: [number, number][] = [[0, 0], [1, 5], [4, 4], [8, 2], [6, 7]];
+    cells.forEach(([r, c], i) => (board[r]![c] = i % 3));
+    shuffleBoardColors(board);
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const shouldHold = cells.some(([cr, cc]) => cr === r && cc === c);
+        expect(board[r]![c] !== null).toBe(shouldHold);
+      }
+    }
+  });
+
+  test("actually rearranges rather than returning the same board", () => {
+    const board = createEmptyBoard();
+    // Eight cells over two colours: the odds of a shuffle reproducing this
+    // exact arrangement by chance are low, and the retry loop exists to
+    // make a false negative here impossible rather than merely unlikely.
+    place(board, [[0, 0], [0, 1], [0, 2], [0, 3]], 1);
+    place(board, [[1, 0], [1, 1], [1, 2], [1, 3]], 5);
+    const before = board.flat();
+    expect(shuffleBoardColors(board)).toBe(true);
+    expect(board.flat()).not.toEqual(before);
+  });
+
+  test("refuses a board it cannot change, so no charge is burnt", () => {
+    const empty = createEmptyBoard();
+    expect(shuffleBoardColors(empty)).toBe(false);
+
+    const single = createEmptyBoard();
+    place(single, [[4, 4]], 2);
+    expect(shuffleBoardColors(single)).toBe(false);
+
+    const monochrome = createEmptyBoard();
+    place(monochrome, [[0, 0], [3, 3], [8, 8]], 2);
+    expect(shuffleBoardColors(monochrome)).toBe(false);
   });
 });
