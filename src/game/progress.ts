@@ -17,7 +17,7 @@ import { LEVEL_COUNT } from "./levels";
 import { SIZE } from "./constants";
 import { NO_CHARGES } from "./tools";
 import type { ToolCharges, ToolId } from "./tools";
-import type { Board, ColorIndex } from "./types";
+import type { Board, Cell, ColorIndex } from "./types";
 
 const KEY = "marmor.progress.v1";
 
@@ -37,8 +37,20 @@ export interface RunSnapshot {
   /** Unspent tool charges. Persisted so a recovered tab resumes with what
    * the player actually had left, rather than silently refunding a hammer. */
   charges: ToolCharges;
+  /** This turn's committed spawn, if the crystal ball has been used and not
+   * yet consumed. Null the rest of the time. Without it a tab evicted
+   * between using the tool and making the move would charge for the
+   * forecast and then throw it away — the charge is already spent by the
+   * time the snapshot is written, so dropping this is strictly worse than
+   * not persisting at all. */
+  foreseen: ForeseenSpawn | null;
   /** Epoch ms of the save, for the freshness check. */
   at: number;
+}
+
+export interface ForeseenSpawn {
+  cells: Cell[];
+  colors: ColorIndex[];
 }
 
 /** Every read is treated as hostile — Safari private mode throws on the
@@ -89,10 +101,36 @@ function isSnapshot(value: unknown): value is RunSnapshot {
   if ((s.levelIndex as number) < 0 || (s.levelIndex as number) >= LEVEL_COUNT) return false;
   if (!Array.isArray(s.nextQueue) || !s.nextQueue.every((c) => typeof c === "number")) return false;
   if (!isCharges(s.charges)) return false;
+  if (!isForeseen(s.foreseen)) return false;
   if (!Array.isArray(s.board) || s.board.length !== SIZE) return false;
   return (s.board as unknown[]).every(
     (row) => Array.isArray(row) && row.length === SIZE && row.every((cell) => cell === null || typeof cell === "number"),
   );
+}
+
+/** Absent, null, or a well-formed forecast — anything else rejects the whole
+ * snapshot. Absent counts as valid so a snapshot written by a build from
+ * before this field existed still loads.
+ *
+ * The equal-lengths check is the one that matters: the spawn path pairs
+ * `cells[i]` with `colors[i]`, so a short `colors` array would write
+ * undefined straight into the board and corrupt it somewhere far from here.
+ * Coordinates are bounds-checked for the same reason. */
+function isForeseen(value: unknown): value is ForeseenSpawn | null {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== "object") return false;
+  const f = value as Record<string, unknown>;
+  if (!Array.isArray(f.cells) || !Array.isArray(f.colors)) return false;
+  if (f.cells.length !== f.colors.length) return false;
+  // A spawn can't exceed the board. Bounding by area rather than by a
+  // level's spawnCount keeps this file independent of the ladder.
+  if (f.cells.length > SIZE * SIZE) return false;
+  if (!f.colors.every((c) => typeof c === "number" && Number.isInteger(c) && c >= 0)) return false;
+  return f.cells.every((cell) => {
+    if (typeof cell !== "object" || cell === null) return false;
+    const { r, c } = cell as Record<string, unknown>;
+    return [r, c].every((n) => typeof n === "number" && Number.isInteger(n) && n >= 0 && n < SIZE);
+  });
 }
 
 /** Charges are rejected outright rather than clamped if anything is off:

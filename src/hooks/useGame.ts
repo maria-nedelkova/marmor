@@ -32,7 +32,7 @@ import { KING_SCORE, SIZE } from "../game/constants";
 import { getLevel, isFinalLevel, LEVEL_COUNT } from "../game/levels";
 import type { LevelConfig } from "../game/levels";
 import { clearRun, loadRun, saveRun } from "../game/progress";
-import type { RunSnapshot } from "../game/progress";
+import type { ForeseenSpawn, RunSnapshot } from "../game/progress";
 import { rng } from "../game/rng";
 import {
   grantCharges,
@@ -117,12 +117,11 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
   /** This turn's spawn, once the crystal ball has committed it: the cells
    * the marbles will land on and the colours that will land there. Null
    * whenever the spawn is still undecided, which is every turn the tool
-   * isn't used. Deliberately NOT part of the persisted snapshot — it is a
-   * single turn's hint, and carrying it through a crash restore would mean
-   * validating board coordinates on the way back in for something the
-   * player is about to consume anyway. */
-  const foreseenRef = useRef<{ cells: Cell[]; colors: ColorIndex[] } | null>(null);
-  const [foreseen, setForeseen] = useState<{ cells: Cell[]; colors: ColorIndex[] } | null>(null);
+   * isn't used. Persisted with the rest of the run — the charge is spent the
+   * moment it's used, so an evicted tab that dropped this would bill the
+   * player for a forecast and then not show it. */
+  const foreseenRef = useRef<ForeseenSpawn | null>(null);
+  const [foreseen, setForeseen] = useState<ForeseenSpawn | null>(null);
   /** Bumped whenever the dice rewrite the queue, so the Next up strip can
    * flash. Without it the reroll is invisible on a bad draw — swapping
    * three random colours for three other random colours can easily look
@@ -148,6 +147,7 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
       moves: movesRef.current,
       roundsCleared: roundsClearedRef.current,
       charges: chargesRef.current,
+      foreseen: foreseenRef.current,
     });
   }, []);
 
@@ -171,6 +171,11 @@ export function useGame(boardHandleRef: RefObject<BoardHandle | null>) {
     // charge every time a tab was evicted.
     chargesRef.current = snapshot.charges;
     setCharges(snapshot.charges);
+    // Same reasoning as the charges: the crystal ball was paid for before
+    // the tab died, so the forecast it bought comes back with it. `?? null`
+    // because a snapshot written before this field existed simply omits it.
+    foreseenRef.current = snapshot.foreseen ?? null;
+    setForeseen(foreseenRef.current);
 
     setBoard(cloneBoard(boardRef.current));
     setScore(snapshot.score);
