@@ -1407,15 +1407,29 @@ body {
    * gone (it is the menu banner now), and a fixed margin here would be
    * added on top of .layout's auto margins, making the gap above the
    * board permanently larger than the one below it. */
+  /* The game's name is dead weight on a phone — you know what you opened,
+   * and the row it cost was the difference between the board sitting
+   * comfortably and the controls crowding it.
+   *
+   * Clipped rather than `display: none` because this is the page's only
+   * <h1>: display:none would take it out of the accessibility tree too and
+   * leave the document with no heading at all. Absolute positioning is what
+   * actually frees the space — it takes the element out of the flex flow,
+   * so .layout's auto margins get the whole viewport to centre in. */
   .titlebar {
-    order: 1;
-    margin-bottom: 0;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
+  /* Nothing is painting it; don't keep a looping animation alive for it. */
   .titlebar__title {
-    font-size: 16px;
-    letter-spacing: 2px;
-    margin-bottom: 0;
+    animation: none;
   }
 
   .level-dialog__next-label {
@@ -1466,18 +1480,15 @@ body {
     height: 18px;
   }
 
-  /* The King/progress/Pretender row now comes first, board second — see
-   * the .titlebar/.layout/.topbar `order` above for why. */
   .layout {
-    order: 2;
     /* auto on BOTH sides, so the leftover vertical space is split equally
-     * above and below this group: title pinned at the top, controls pinned
-     * at the bottom, board + mascots centred evenly between them.
+     * above and below rather than piling up in one gap. With the title
+     * clipped out of flow this is now the only thing in the column, so the
+     * two autos simply centre it in the viewport.
      *
      * margin-top alone (what this used to be) dumped all the slack into one
-     * gap — measured 262px of dead space under the title against 16px above
-     * the controls, which is the "too much space between the game name and
-     * mascots" that made the bottom row look cropped. */
+     * gap — measured 262px of dead space above against 16px below, which is
+     * what used to make the bottom row look cropped. */
     margin-top: auto;
     margin-bottom: auto;
     display: grid;
