@@ -755,6 +755,56 @@ body {
   color: var(--text);
 }
 
+/* The newly unlocked tool. Deliberately louder than the .level-dialog__next
+ * panel above it — an accent border and the icon at twice the rack's size —
+ * because the round summary is read every round and this appears six times
+ * in a run. Looking the same as the block above it would be the same as not
+ * announcing it. */
+.level-dialog__unlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0;
+  padding: 10px 12px;
+  border: 2px solid var(--mr-accent);
+  background: rgba(41, 241, 255, 0.07);
+}
+
+.level-dialog__unlock-art {
+  flex: none;
+  image-rendering: pixelated;
+}
+
+/* Left-aligned, against the dialog's centred default: the icon sits hard
+ * left, and centring the text beside it leaves a ragged gap on one side of
+ * every line. */
+.level-dialog__unlock-text {
+  min-width: 0;
+  text-align: left;
+}
+
+.level-dialog__unlock-label {
+  margin: 0 0 5px;
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--mr-accent);
+}
+
+.level-dialog__unlock-name {
+  margin: 0 0 5px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--text);
+}
+
+.level-dialog__unlock-desc {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--mr-muted);
+}
+
 /* A .btn3d sized for a dialog footer. Declared after .btn3d so its --btn-*
  * overrides win (see ARCHITECTURE.md on that ordering). */
 .dialog-btn {

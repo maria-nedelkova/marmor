@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 import type { LevelConfig } from "../game/levels";
 import { rng } from "../game/rng";
+import { TOOL_ART } from "../game/sprites/tools";
+import { toolUnlockedAt } from "../game/tools";
 import { Button3D } from "./Button3D";
+import { PixelArt } from "./PixelArt";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
 interface LevelClearedOverlayProps {
@@ -35,6 +38,11 @@ export function LevelClearedOverlay({
 }: LevelClearedOverlayProps) {
   const quip = useMemo(() => QUIPS[Math.floor(rng.random() * QUIPS.length)]!, [visible]);
 
+  // The tool the round you're about to start hands you, if any. Rounds 1
+  // and 8 unlock nothing, so this is null for those two transitions and the
+  // block simply isn't rendered — the dialog doesn't reserve space for it.
+  const newTool = toolUnlockedAt(nextRoundNumber - 1);
+
   return (
     <Dialog open={visible}>
       <DialogContent showCloseButton={false} className="game-dialog level-dialog">
@@ -54,6 +62,25 @@ export function LevelClearedOverlay({
               100 every round, so printing it would only imply it varies. */}
           <p className="level-dialog__target">Run total {runScore}</p>
         </div>
+
+        {/* A new tool used to appear in the rack unannounced, which meant
+            the one round that handed you an answer to its own difficulty
+            was the round you were least likely to notice it. */}
+        {newTool ? (
+          <div className="level-dialog__unlock">
+            <PixelArt
+              rows={TOOL_ART[newTool.id].rows}
+              palette={TOOL_ART[newTool.id].palette}
+              pixelSize={4}
+              className="level-dialog__unlock-art"
+            />
+            <div className="level-dialog__unlock-text">
+              <p className="level-dialog__unlock-label">New tool unlocked</p>
+              <p className="level-dialog__unlock-name">{newTool.name}</p>
+              <p className="level-dialog__unlock-desc">{newTool.description}</p>
+            </div>
+          </div>
+        ) : null}
 
         <DialogFooter>
           <Button3D className="dialog-btn" onClick={onNext}>

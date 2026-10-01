@@ -1,22 +1,6 @@
-import {
-  BOMB_PALETTE,
-  BOMB_ROWS,
-  DICE_PALETTE,
-  DICE_ROWS,
-  FLASK_PALETTE,
-  FLASK_ROWS,
-  HAMMER_PALETTE,
-  HAMMER_ROWS,
-  LOCK_PALETTE,
-  LOCK_ROWS,
-  ORB_PALETTE,
-  ORB_ROWS,
-  POUCH_PALETTE,
-  POUCH_ROWS,
-} from "../game/sprites/tools";
+import { LOCK_PALETTE, LOCK_ROWS, TOOL_ART } from "../game/sprites/tools";
 import { hasCharge, isUnlocked, TOOLS, unlockedAt } from "../game/tools";
 import type { ToolCharges, ToolId } from "../game/tools";
-import type { PixelPalette } from "./PixelArt";
 import { PixelArt } from "./PixelArt";
 
 interface ToolBarProps {
@@ -28,15 +12,6 @@ interface ToolBarProps {
   onArm: (id: ToolId) => void;
   onUse: (id: ToolId) => void;
 }
-
-const ART: Record<ToolId, { rows: string[]; palette: PixelPalette }> = {
-  hammer: { rows: HAMMER_ROWS, palette: HAMMER_PALETTE },
-  swap: { rows: FLASK_ROWS, palette: FLASK_PALETTE },
-  reroll: { rows: DICE_ROWS, palette: DICE_PALETTE },
-  shuffle: { rows: POUCH_ROWS, palette: POUCH_PALETTE },
-  bomb: { rows: BOMB_ROWS, palette: BOMB_PALETTE },
-  foresight: { rows: ORB_ROWS, palette: ORB_PALETTE },
-};
 
 /** Which tools need a board target. The rest resolve on tap, so arming them
  * would be a pointless extra step. */
@@ -68,7 +43,7 @@ export function ToolBar({ levelIndex, charges, activeTool, awaitingSecondPick, o
           const unlocked = isUnlocked(tool, levelIndex);
           const count = charges[tool.id] ?? 0;
           const usable = unlocked && hasCharge(charges, tool.id);
-          const art = ART[tool.id];
+          const art = TOOL_ART[tool.id];
           const classes = ["btn3d", "toolbar__tool"];
           if (activeTool === tool.id) classes.push("is-active");
           if (!unlocked) classes.push("is-locked");

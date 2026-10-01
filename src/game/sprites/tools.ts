@@ -1,5 +1,6 @@
 import { row } from "./pixelRow";
 import type { PixelPalette } from "../../components/PixelArt";
+import type { ToolId } from "../tools";
 
 // Tool icons, hand-authored the same way as the mascots (see king.ts) rather
 // than drawn from an icon font. A lucide glyph next to this game's sprites
@@ -195,4 +196,18 @@ export const LOCK_PALETTE: PixelPalette = {
   a: "#7c8ab8", // shackle
   y: "#4a5578", // body
   z: "#1b2244", // keyhole
+};
+
+/** Every tool's sprite, keyed by id. Lives here rather than in the ToolBar
+ * because the round-cleared screen announces a newly unlocked tool with the
+ * same icon, and two copies of this map would drift the moment a seventh
+ * tool arrives. Typed as Record<ToolId, ...> so adding one fails the build
+ * here instead of rendering a blank button. */
+export const TOOL_ART: Record<ToolId, { rows: string[]; palette: PixelPalette }> = {
+  hammer: { rows: HAMMER_ROWS, palette: HAMMER_PALETTE },
+  swap: { rows: FLASK_ROWS, palette: FLASK_PALETTE },
+  reroll: { rows: DICE_ROWS, palette: DICE_PALETTE },
+  shuffle: { rows: POUCH_ROWS, palette: POUCH_PALETTE },
+  bomb: { rows: BOMB_ROWS, palette: BOMB_PALETTE },
+  foresight: { rows: ORB_ROWS, palette: ORB_PALETTE },
 };
