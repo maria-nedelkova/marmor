@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { LEVELS } from "../game/levels";
+import { THEMES } from "../themes/themes";
+import type { ThemeId } from "../themes/themes";
 
 interface DevPanelProps {
   levelIndex: number;
+  themeId: ThemeId;
   onJump: (index: number) => void;
   onWinRound: () => void;
   onFillBoard: () => void;
+  onSetTheme: (id: ThemeId) => void;
 }
 
 /** Only ever true on a local dev server, or when `?dev` is explicitly in the
@@ -33,7 +37,7 @@ function syncRoundParam(index: number) {
  * loss, without playing the rounds in between. Both end states are otherwise
  * slow to reach on purpose, which makes the transitions around them (the
  * round-cleared dialog, the retry flow) the least-tested part of the game. */
-export function DevPanel({ levelIndex, onJump, onWinRound, onFillBoard }: DevPanelProps) {
+export function DevPanel({ levelIndex, themeId, onJump, onWinRound, onFillBoard, onSetTheme }: DevPanelProps) {
   const [open, setOpen] = useState(true);
 
   const jump = (index: number) => {
@@ -105,6 +109,23 @@ export function DevPanel({ levelIndex, onJump, onWinRound, onFillBoard }: DevPan
         <button type="button" className="devpanel__action" onClick={onFillBoard}>
           Fill board
         </button>
+      </div>
+
+      {/* Themes live here rather than in the pause menu on purpose: they are
+          a thing being tried, not yet a thing being offered. Promote this
+          into the real menu once a look is settled on. */}
+      <div className="devpanel__themes">
+        {THEMES.map((theme) => (
+          <button
+            key={theme.id}
+            type="button"
+            className={`devpanel__action${theme.id === themeId ? " is-active" : ""}`}
+            onClick={() => onSetTheme(theme.id)}
+            title={theme.blurb}
+          >
+            {theme.label}
+          </button>
+        ))}
       </div>
 
       <p className="devpanel__keys">1–8 round · [ ] prev/next · w win · f lose · ` hide</p>

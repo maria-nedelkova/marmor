@@ -1384,9 +1384,20 @@ body {
   font-size: 8px;
 }
 
-.devpanel__actions {
+.devpanel__actions,
+.devpanel__themes {
   display: flex;
   gap: 4px;
+}
+
+.devpanel__themes {
+  margin-top: 4px;
+}
+
+.devpanel__action.is-active {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: #0a0e20;
 }
 
 .devpanel__action {
@@ -1418,7 +1429,21 @@ body {
  * size change via DuelMascot's `compact` prop — their score badge has real
  * text in it, and shrinking that via transform would make it illegible
  * rather than just smaller. */
-@media (max-width: 640px) {
+/* The vertical layout — one column, mascots flanking a progress bar, board
+ * below, controls between them.
+ *
+ * Scoped to an attribute rather than `@media (max-width: 640px)` because it
+ * is no longer only a phone layout: a theme can ask for it at any width (see
+ * themes/themes.ts), and the throne theme does, running the game in a narrow
+ * strip down the middle of a desktop screen. App.tsx owns the one place that
+ * decides — viewport OR theme — and writes it here, which also keeps it in
+ * step with the `compact` prop the mascots read, something a media query
+ * could never do on its own.
+ *
+ * Written with CSS nesting so the diff from the old media query is one line;
+ * a bare selector inside a style rule is a descendant selector, so every rule
+ * below reads as `:root[data-layout="vertical"] <selector>`. */
+:root[data-layout="vertical"] {
   .table {
     width: 100%;
     max-width: 420px;
@@ -1643,8 +1668,10 @@ body {
     display: none;
   }
 
+  /* No !important, and no inline style to fight: DuelMascot stops writing a
+   * `bottom` once it's compact, precisely so this can be a plain rule. */
   .duel-mascot--compact .duel-mascot__figure {
-    bottom: 0 !important;
+    bottom: 0;
   }
 
   .duel-mascot--compact .duel-mascot__stage {
@@ -1779,7 +1806,13 @@ body {
  * into this SECOND query too since 375 <= 400, and being declared later it
  * silently won over the bigger 640px-tier sizing above. 370px keeps this
  * tier for genuinely narrower phones only. */
+/* Narrow phones. Scoped to the vertical layout like the block above it, and
+ * that is load-bearing rather than tidiness: these rules exist to override
+ * that block, and once it gained a `:root[data-layout]` prefix a bare
+ * `.board-wrap` here no longer outranked it — small phones silently kept the
+ * 354px board and overflowed by 34px. Same scope, declared later, wins. */
 @media (max-width: 370px) {
+  :root[data-layout="vertical"] {
   .board-wrap {
     width: 300px; /* 536px unscaled footprint * 0.56 */
     height: 300px;
@@ -1840,3 +1873,4 @@ body {
   }
 }
 
+}

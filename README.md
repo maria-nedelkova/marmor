@@ -110,6 +110,34 @@ Neither fakes its end state — they drive the same functions real play does.
 Keyboard shortcuts need the page focused, so click the page once after a
 reload; the buttons always work.
 
+## Themes
+
+A way to try a new look without throwing the old one away. Switch with the
+buttons in the dev panel, or with `?theme=<id>` in the URL — handy for
+opening a theme on a real phone without disturbing your own saved choice.
+
+| Theme | What it is |
+| --- | --- |
+| `classic` | Neon on black. Wide on desktop, one column on a phone. The default. |
+| `throne` | The game plays out in a 430px portrait strip down the middle of the king's hall, at every width. |
+
+A theme is an id on `document.documentElement.dataset.theme` plus a
+stylesheet of `[data-theme="<id>"]` rules. **The base styles in `style.css`
+carry no theme selector at all** — they *are* `classic` — so adding a theme
+cannot change how classic looks, and deleting a theme's stylesheet plus its
+entry in `src/themes/themes.ts` removes it completely.
+
+The one structural choice a theme gets is `vertical`, which forces the
+one-column layout at every width instead of only on a phone. It has to live
+in JS rather than CSS because the mascots take a `compact` prop and no media
+query can set a React prop: `App.tsx` combines the viewport and the theme
+into `data-layout="vertical" | "wide"` on the root, and both the stylesheet
+and the mascots read that one decision. Everything else a theme wants is CSS.
+
+The throne theme is a first pass — the backdrop and the shape of the stage
+only. The panels, buttons and mascots are still the classic ones sitting on
+top of the room, and several of them need work before they belong in it.
+
 ## Architecture
 
 - `src/game/engine.ts` — pure, DOM-free game logic: BFS pathfinding, line

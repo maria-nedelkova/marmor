@@ -69,7 +69,16 @@ export function DuelMascot({ name, rows, palette, score, accent, side, heightRat
           className={`duel-mascot__figure${falling ? " duel-mascot__figure--falling" : ""}`}
           style={
             {
-              bottom: pedestalHeight,
+              // Compact hides the pedestal entirely, so the figure stands on
+              // the ground and has no offset to write. Emitting one anyway
+              // and having the stylesheet shout it down with `!important`
+              // was the old arrangement, and it was fragile: the override
+              // only ever applied once a layout attribute landed on the
+              // root, so the figure was briefly 51px up and then
+              // TRANSITIONED down, and a transition in flight outranks even
+              // an important declaration. Not emitting it is the fix —
+              // there is nothing to override and nothing to animate.
+              bottom: compact ? undefined : pedestalHeight,
               "--fall-distance": `${pedestalHeight}px`,
               "--fall-x": `${fallSign * 55}px`,
               "--fall-rotate": `${fallSign * 98}deg`,
