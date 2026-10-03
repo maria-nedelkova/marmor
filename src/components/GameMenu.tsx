@@ -1,5 +1,5 @@
 import { BookOpen, RotateCcw, Sparkles, Trophy } from "lucide-react";
-import { Button3D } from "./Button3D";
+import { GameButton } from "./GameButton";
 import { useEffect, useRef, useState } from "react";
 import type { LevelConfig } from "../game/levels";
 
@@ -98,32 +98,32 @@ export function GameMenu({
         {/* No icon here on purpose: it's the one action that resumes rather
             than navigates, and staying unadorned keeps it distinct from the
             four labelled options below. */}
-        <Button3D className="menu-item menu-item--wide" onClick={onClose}>
+        <GameButton className="menu-item menu-item--wide" onClick={onClose}>
           Back to game
-        </Button3D>
+        </GameButton>
 
         <div className="menu-grid">
-          <Button3D className="menu-item" onClick={onRestartRound}>
+          <GameButton className="menu-item" onClick={onRestartRound}>
             <RotateCcw className="menu-item__icon" size={16} aria-hidden="true" />
             <span>Restart round</span>
-          </Button3D>
-          <Button3D className="menu-item" onClick={onNewGame}>
+          </GameButton>
+          <GameButton className="menu-item" onClick={onNewGame}>
             <Sparkles className="menu-item__icon" size={16} aria-hidden="true" />
             <span>New game</span>
-          </Button3D>
-          <Button3D className="menu-item" onClick={() => setInfoOpen(true)}>
+          </GameButton>
+          <GameButton className="menu-item" onClick={() => setInfoOpen(true)}>
             <BookOpen className="menu-item__icon" size={16} aria-hidden="true" />
             <span>How to play</span>
-          </Button3D>
+          </GameButton>
           {/* Shortened from "Hall of Pretenders", which wrapped to two lines
               and left this cell taller and busier than its three neighbours.
               The dialog it opens is still titled in full, so the flavour name
               isn't lost — and the joke arguably lands better cropped: a whole
               hall of people who each insist they're the rightful king. */}
-          <Button3D className="menu-item" onClick={onOpenLeaderboard}>
+          <GameButton className="menu-item" onClick={onOpenLeaderboard}>
             <Trophy className="menu-item__icon" size={16} aria-hidden="true" />
             <span>Pretenders</span>
-          </Button3D>
+          </GameButton>
         </div>
       </div>
 
@@ -155,9 +155,9 @@ function InfoCard({ onClose }: { onClose: () => void }) {
           <li>Hit 100 to win the round. Fill the board and you lose it.</li>
           <li>Rounds 2&ndash;5 each unlock a tool. One use each per round — then they start stacking up.</li>
         </ul>
-        <Button3D className="menu-item menu-item--wide" onClick={onClose}>
+        <GameButton className="menu-item menu-item--wide" onClick={onClose}>
           Got it
-        </Button3D>
+        </GameButton>
       </div>
     </div>
   );

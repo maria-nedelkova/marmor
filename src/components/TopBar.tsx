@@ -1,8 +1,21 @@
 import { useEffect, useRef } from "react";
 import { Menu, Volume2, VolumeX } from "lucide-react";
+import {
+  COIN_PALETTE,
+  COIN_ROWS,
+  HEART_PALETTE,
+  HEART_ROWS,
+  SPARKLE_PALETTE,
+  SPARKLE_ROWS,
+  STAR_CYAN_PALETTE,
+  STAR_GOLD_PALETTE,
+  STAR_ROWS,
+} from "../game/sprites/ornaments";
 import type { ColorIndex } from "../game/types";
-import { Button3D } from "./Button3D";
+import { GameButton } from "./GameButton";
 import { NextPreview } from "./NextPreview";
+import type { PixelPalette } from "./PixelArt";
+import { PixelArt } from "./PixelArt";
 
 interface TopBarProps {
   nextQueue: ColorIndex[];
@@ -15,10 +28,23 @@ interface TopBarProps {
   onOpenMenu: () => void;
 }
 
-/** Three zones, grouped tight around "Next up" rather than spread across the
- * bar. Next up is the only thing here read every turn, so Menu and Sound sit
- * beside it as satellites instead of being pushed to the far edges where
- * they read as three equally-important controls. */
+/** Decoration only, so it is hidden from assistive tech outright — the queue
+ * beside it is the content. */
+function Ornament({ rows, palette, className }: { rows: string[]; palette: PixelPalette; className?: string }) {
+  return (
+    <span aria-hidden="true" className={className ? `topbar__ornament ${className}` : "topbar__ornament"}>
+      <PixelArt rows={rows} palette={palette} pixelSize={2} />
+    </span>
+  );
+}
+
+/** The control panel: a menu key, the queue, a sound key.
+ *
+ * Icon-only keys with no captions, and the queue flanked by pixel ornaments
+ * — an arcade panel rather than a labelled toolbar. The names are still
+ * rendered for assistive tech (.topbar__label clips them rather than hiding
+ * them), so dropping the captions costs the two buttons nothing in
+ * accessible naming. */
 export function TopBar({ nextQueue, muted, pulseToken, onToggleMute, onOpenMenu }: TopBarProps) {
   const nextRef = useRef<HTMLDivElement>(null);
 
@@ -37,25 +63,45 @@ export function TopBar({ nextQueue, muted, pulseToken, onToggleMute, onOpenMenu 
 
   return (
     <div className="topbar">
-      <Button3D className="topbar__btn" onClick={onOpenMenu} title="Open menu">
-        <Menu size={16} aria-hidden="true" />
+      <GameButton className="topbar__key" onClick={onOpenMenu} title="Open menu">
+        <Menu size={18} aria-hidden="true" />
         <span className="topbar__label">Menu</span>
-      </Button3D>
+      </GameButton>
 
+      {/* The queue is the one thing in here read every turn, so it is what
+          sits dead centre. The sparkle and heart hang off its corners
+          absolutely rather than sitting beside it in flow — in flow they
+          are two more items in the row, and they push the marbles off the
+          panel's centre line. */}
       <div ref={nextRef} className="topbar__zone topbar__next">
-        <span className="topbar__next-label">Next up</span>
+        <Ornament rows={SPARKLE_ROWS} palette={SPARKLE_PALETTE} className="topbar__ornament--tl" />
         <NextPreview colors={nextQueue} />
+        <Ornament rows={HEART_ROWS} palette={HEART_PALETTE} className="topbar__ornament--tr" />
       </div>
 
-      <Button3D
-        className="topbar__btn"
+      <GameButton
+        className="topbar__key"
         onClick={onToggleMute}
         aria-pressed={muted}
         title={muted ? "Unmute" : "Mute"}
       >
-        {muted ? <VolumeX size={16} aria-hidden="true" /> : <Volume2 size={16} aria-hidden="true" />}
+        {muted ? <VolumeX size={18} aria-hidden="true" /> : <Volume2 size={18} aria-hidden="true" />}
         <span className="topbar__label">Sound</span>
-      </Button3D>
+      </GameButton>
+
+      {/* Straddles the panel's bottom edge, breaking the border behind it —
+          the trinkets are set INTO the frame rather than sitting inside it.
+          A direct child of .topbar, not of the queue, because it positions
+          against the panel. */}
+      <div className="topbar__trinkets">
+        <span className="topbar__stud" />
+        <Ornament rows={STAR_ROWS} palette={STAR_CYAN_PALETTE} />
+        <span className="topbar__stud" />
+        <Ornament rows={COIN_ROWS} palette={COIN_PALETTE} />
+        <span className="topbar__stud" />
+        <Ornament rows={STAR_ROWS} palette={STAR_GOLD_PALETTE} />
+        <span className="topbar__stud" />
+      </div>
     </div>
   );
 }

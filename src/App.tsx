@@ -61,7 +61,7 @@ export function App() {
     const next = !muted;
     setMutedState(next);
     setMuted(next);
-    // Unmuting needs its own confirmation click: Button3D plays the press
+    // Unmuting needs its own confirmation click: GameButton plays the press
     // sound on pointerdown, which is still inside the muted window, so
     // turning sound back on would otherwise be the one button in the UI
     // that never makes a noise. (Computed outside the state updater rather

@@ -44,7 +44,7 @@ export function ToolBar({ levelIndex, charges, activeTool, awaitingSecondPick, o
           const count = charges[tool.id] ?? 0;
           const usable = unlocked && hasCharge(charges, tool.id);
           const art = TOOL_ART[tool.id];
-          const classes = ["btn3d", "toolbar__tool"];
+          const classes = ["btn-key", "toolbar__tool"];
           if (activeTool === tool.id) classes.push("is-active");
           if (!unlocked) classes.push("is-locked");
           else if (!usable) classes.push("is-spent");

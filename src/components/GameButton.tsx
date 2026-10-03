@@ -1,12 +1,12 @@
 import type { ButtonHTMLAttributes } from "react";
 import { playButtonClick, primeAudio } from "../audio/sound";
 
-interface Button3DProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Extra classes on top of `btn3d` — e.g. `menu-item`, `topbar__btn`. */
+interface GameButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Extra classes on top of `btn-key` — e.g. `menu-item`, `topbar__btn`. */
   className?: string;
 }
 
-/** A button wearing the shared `.btn3d` bevel, with the press sound attached.
+/** A button wearing the shared `.btn-key` bevel, with the press sound attached.
  *
  * It exists so the click sound is wired once rather than on every call site;
  * a forgotten handler on one button out of eight is exactly the kind of
@@ -17,11 +17,11 @@ interface Button3DProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * clack from the button moving. Keyboard activation doesn't produce pointer
  * events at all, so Enter/Space are handled separately — without that, the
  * menu would be silent for anyone navigating it by keyboard. */
-export function Button3D({ className, onPointerDown, onKeyDown, ...rest }: Button3DProps) {
+export function GameButton({ className, onPointerDown, onKeyDown, ...rest }: GameButtonProps) {
   return (
     <button
       type="button"
-      className={className ? `btn3d ${className}` : "btn3d"}
+      className={className ? `btn-key ${className}` : "btn-key"}
       onPointerDown={(e) => {
         // Also the first user gesture in many sessions (the menu can be
         // opened before a single marble is touched), and an AudioContext

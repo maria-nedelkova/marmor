@@ -3,7 +3,7 @@ import type { LevelConfig } from "../game/levels";
 import { rng } from "../game/rng";
 import { TOOL_ART } from "../game/sprites/tools";
 import { toolUnlockedAt } from "../game/tools";
-import { Button3D } from "./Button3D";
+import { GameButton } from "./GameButton";
 import { PixelArt } from "./PixelArt";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
@@ -83,9 +83,9 @@ export function LevelClearedOverlay({
         ) : null}
 
         <DialogFooter>
-          <Button3D className="dialog-btn" onClick={onNext}>
+          <GameButton className="dialog-btn" onClick={onNext}>
             Round {nextRoundNumber}
-          </Button3D>
+          </GameButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

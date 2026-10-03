@@ -317,7 +317,7 @@
  * Controls — flat where classic is bevelled
  * ------------------------------------------------------------------------ */
 
-:root[data-theme="pixelart"][data-layout="vertical"] .btn3d {
+:root[data-theme="pixelart"][data-layout="vertical"] .btn-key {
   --btn-face: var(--px-panel);
   --btn-light: transparent;
   --btn-dark: transparent;
@@ -329,14 +329,14 @@
   color: var(--px-text);
 }
 
-:root[data-theme="pixelart"][data-layout="vertical"] .btn3d:hover {
+:root[data-theme="pixelart"][data-layout="vertical"] .btn-key:hover {
   --btn-face: rgba(255, 255, 255, 0.12);
   border-color: var(--px-line-strong);
 }
 
 /* The bevel is what classic's pressed state inverts; with no bevel the press
  * has to say something else, so it brightens and stays put. */
-:root[data-theme="pixelart"][data-layout="vertical"] .btn3d:active {
+:root[data-theme="pixelart"][data-layout="vertical"] .btn-key:active {
   transform: none;
   box-shadow: none;
   --btn-face: rgba(255, 255, 255, 0.2);
@@ -357,8 +357,8 @@
   color: var(--px-dim);
 }
 
-:root[data-theme="pixelart"][data-layout="vertical"] .topbar__next-label {
-  color: var(--px-dim);
+:root[data-theme="pixelart"][data-layout="vertical"] .topbar__ornament {
+  opacity: 0.85;
 }
 
 /* The controls strip sits over the throne, where pixel-art detail runs

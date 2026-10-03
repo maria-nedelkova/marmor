@@ -1,7 +1,7 @@
 import { LEVEL_COUNT } from "../game/levels";
 import { isFinisher, reachedLabel } from "../game/score";
 import type { RunEntry } from "../game/score";
-import { Button3D } from "./Button3D";
+import { GameButton } from "./GameButton";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
 interface LeaderboardProps {
@@ -79,9 +79,9 @@ export function Leaderboard({ open, entries, playerId, onClose }: LeaderboardPro
         )}
 
         <DialogFooter>
-          <Button3D className="dialog-btn" onClick={onClose}>
+          <GameButton className="dialog-btn" onClick={onClose}>
             Close
-          </Button3D>
+          </GameButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

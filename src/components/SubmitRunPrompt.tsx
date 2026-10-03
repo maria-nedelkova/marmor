@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MAX_NAME_LENGTH, sanitizeName } from "../leaderboard/store";
-import { Button3D } from "./Button3D";
+import { GameButton } from "./GameButton";
 
 interface SubmitRunPromptProps {
   defaultName: string;
@@ -56,9 +56,9 @@ export function SubmitRunPrompt({ defaultName, onSubmit }: SubmitRunPromptProps)
           spellCheck={false}
           onChange={(e) => setName(e.target.value)}
         />
-        <Button3D className="dialog-btn" type="submit">
+        <GameButton className="dialog-btn" type="submit">
           Submit
-        </Button3D>
+        </GameButton>
       </div>
       <button type="button" className="submit-run__skip" onClick={() => setDismissed(true)}>
         skip

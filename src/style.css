@@ -49,47 +49,44 @@
   box-sizing: border-box;
 }
 
-/* Shared 3D bevel, used by the menu items and the top bar's buttons. The
- * four colours and the two sizes are custom properties, so a caller only
- * overrides what differs — the recipe itself lives in exactly one place.
- * --btn-bevel is the inset edge thickness, --btn-drop the lift off the
- * background (and therefore also the press distance). */
-.btn3d {
-  --btn-face: #2b3566;
-  --btn-light: #6675cc;
-  --btn-dark: #151b3c;
-  --btn-edge: #080b1c;
-  --btn-bevel: 4px;
-  --btn-drop: 6px;
+/* The shared button: a lit key. Every button in the game wears this — menu
+ * items, dialog actions, the tool rack, the control panel — so the recipe
+ * lives in exactly one place and callers override only the two colours.
+ *
+ * This replaced a 3D bevel. The bevel was a different visual language from
+ * the neon the rest of the screen now speaks, and a raised plastic key next
+ * to a glowing board read as a control panel borrowed from another game.
+ * --btn-line is the outline and --btn-glow its halo; --btn-face is the fill.
+ */
+.btn-key {
+  --btn-face: rgba(8, 13, 34, 0.9);
+  --btn-line: var(--mr-accent);
+  --btn-glow: rgba(41, 241, 255, 0.4);
 
   position: relative;
-  border: none;
-  border-radius: 0;
+  border: 2px solid var(--btn-line);
+  border-radius: 7px;
   background: var(--btn-face);
   box-shadow:
-    inset var(--btn-bevel) var(--btn-bevel) 0 var(--btn-light),
-    inset calc(-1 * var(--btn-bevel)) calc(-1 * var(--btn-bevel)) 0 var(--btn-dark),
-    0 0 0 3px var(--btn-edge),
-    var(--btn-drop) var(--btn-drop) 0 rgba(0, 0, 0, 0.5);
+    0 0 10px var(--btn-glow),
+    inset 0 0 10px rgba(255, 255, 255, 0.05);
   font-family: var(--font-display);
   color: var(--text);
 }
 
-.btn3d:hover {
-  --btn-face: #3a478a;
-  --btn-light: #8592e0;
+.btn-key:hover {
+  --btn-face: rgba(26, 40, 86, 0.95);
+  --btn-glow: rgba(41, 241, 255, 0.75);
   color: #fff;
 }
 
-/* Pressed: the bevel inverts (light along the bottom/right now) and the face
- * moves onto its own drop shadow, so it reads as physically pushed in rather
- * than just recoloured. */
-.btn3d:active {
-  transform: translate(var(--btn-drop), var(--btn-drop));
-  box-shadow:
-    inset calc(-1 * var(--btn-bevel)) calc(-1 * var(--btn-bevel)) 0 var(--btn-light),
-    inset var(--btn-bevel) var(--btn-bevel) 0 var(--btn-dark),
-    0 0 0 3px var(--btn-edge);
+/* Pressed: there is no bevel left to invert and nothing to move onto a drop
+ * shadow, so the key lights instead — the outline goes white and the halo
+ * opens up. Staying put also means a press never nudges the layout. */
+.btn-key:active {
+  --btn-line: #fff;
+  --btn-glow: rgba(41, 241, 255, 0.95);
+  --btn-face: rgba(40, 62, 124, 0.95);
 }
 
 
@@ -656,14 +653,26 @@ body {
  * as putting the controls on the same lit-sign footing as the score chips
  * and the board. */
 .topbar {
-  max-width: 860px;
+  /* Hugs its three zones rather than stretching to a fixed width. A wide
+   * panel with everything clustered dead centre reads as an empty bar with
+   * some controls dropped in it; the reference's is the size of its
+   * contents. */
+  position: relative;
+  width: max-content;
+  max-width: 100%;
   margin: 20px auto 0;
-  padding: 10px 16px;
-  border: 2px solid var(--mr-accent);
-  background: rgba(10, 14, 32, 0.72);
+  padding: 10px 18px;
+  /* Double-lined: a magenta edge with a cyan line standing off it. One
+   * border plus an offset ring, rather than two nested elements — the ring
+   * is the second of the two box-shadow spreads below. */
+  border: 2px solid var(--neon-edge);
+  border-radius: 12px;
+  background: rgba(10, 8, 26, 0.82);
   box-shadow:
-    0 0 12px rgba(41, 241, 255, 0.35),
-    inset 0 0 14px rgba(41, 241, 255, 0.1);
+    0 0 14px var(--neon-glow),
+    0 0 0 2px rgba(6, 8, 24, 0.9),
+    0 0 0 4px rgba(120, 190, 255, 0.5),
+    inset 0 0 16px rgba(255, 82, 200, 0.12);
   display: flex;
   align-items: center;
   /* Grouped tight in the centre rather than spread edge-to-edge: Next up is
@@ -678,39 +687,96 @@ body {
   flex: 0 0 auto;
 }
 
-/* Same bevel as the menu items (.btn3d), scaled down: these are chrome
- * sitting next to the board, so a thinner edge and a shorter lift keep them
- * from competing with it. */
-.topbar__btn {
-  --btn-bevel: 3px;
-  --btn-drop: 4px;
-
+/* A square key. Icon only — the panel reads as a control deck rather than a
+ * toolbar, and two captions are two more things competing with the queue
+ * between them. */
+.topbar__key {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  font-size: 10px;
-  letter-spacing: 0.5px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
 }
 
+/* Relative, so the two corner ornaments hang off the queue itself and the
+ * marbles keep the panel's centre line. */
 .topbar__next {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
 }
 
-.topbar__next-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--mr-muted);
+.topbar__ornament {
+  display: block;
+  line-height: 0;
 }
 
-/* Hidden only in the compact mobile topbar (see the max-width: 640px
- * block) — on desktop the New game/Sound buttons keep their text. */
+/* Out at the corners and overlapping, the way scattered decoration sits.
+ * Absolute so they cost the row no width — in flow they shifted the
+ * marbles off centre by half their own size. */
+.topbar__ornament--tl,
+.topbar__ornament--tr {
+  position: absolute;
+  pointer-events: none;
+}
+
+.topbar__ornament--tl {
+  top: -8px;
+  left: -16px;
+}
+
+.topbar__ornament--tr {
+  bottom: -8px;
+  right: -16px;
+}
+
+/* The trinkets sit ON the panel's bottom edge, not inside it: centred on
+ * the border and carrying the page colour behind them, which is what
+ * breaks the line rather than merely covering it. The horizontal padding
+ * is the size of the break. */
+.topbar__trinkets {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  /* Opaque only across the border band, transparent above and below it.
+   * Filling the whole strip read as a dark box sitting on the panel; this
+   * covers just the ~6px of border and rings, so the panel's interior and
+   * the page show through either side of the break untouched. The colour
+   * splits the difference between the two — they are within a few values of
+   * each other, so one tone blends into both. */
+  background: linear-gradient(
+    to bottom,
+    transparent 0 calc(50% - 4px),
+    #0a0818 calc(50% - 4px) calc(50% + 4px),
+    transparent calc(50% + 4px) 100%
+  );
+}
+
+
+/* The small square studs the reference runs between its trinkets. */
+.topbar__stud {
+  width: 3px;
+  height: 3px;
+  background: rgba(236, 226, 255, 0.55);
+}
+
+/* The captions are off the panel, but the names are not: clipped rather
+ * than display:none keeps them as the buttons' accessible names, where
+ * display:none would leave two icon buttons called nothing at all. */
 .topbar__label {
-  display: inline;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .next-preview {
@@ -897,12 +963,9 @@ body {
   color: var(--mr-muted);
 }
 
-/* A .btn3d sized for a dialog footer. Declared after .btn3d so its --btn-*
+/* A .btn-key sized for a dialog footer. Declared after .btn-key so its --btn-*
  * overrides win (see ARCHITECTURE.md on that ordering). */
 .dialog-btn {
-  --btn-bevel: 3px;
-  --btn-drop: 5px;
-
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -914,18 +977,17 @@ body {
 /* Secondary action: a dimmer face and a shallower bevel, so it reads as
  * available rather than recommended next to the primary button. */
 .dialog-btn--ghost {
-  --btn-face: #1b2244;
-  --btn-light: #3a4680;
-  --btn-dark: #0b0f22;
-  --btn-bevel: 2px;
-  --btn-drop: 4px;
+  --btn-face: rgba(12, 18, 44, 0.85);
+  --btn-line: #3a4680;
+  --btn-glow: rgba(58, 70, 128, 0.35);
 
   color: var(--mr-muted);
 }
 
 .dialog-btn--ghost:hover {
-  --btn-face: #262f5c;
-  --btn-light: #4a5799;
+  --btn-face: rgba(26, 36, 80, 0.9);
+  --btn-line: #5a68b0;
+  --btn-glow: rgba(90, 104, 176, 0.5);
   color: var(--text);
 }
 
@@ -1103,7 +1165,7 @@ body {
  * growing under the player's hands — and the locked silhouette shows what's
  * coming.
  *
- * The drop shadow on .btn3d hangs 5px below the buttons, so the visual gap
+ * The drop shadow on .btn-key hangs 5px below the buttons, so the visual gap
  * to the board is larger than this margin reads. */
 .toolbar {
   margin: 0 auto 10px;
@@ -1118,12 +1180,9 @@ body {
 }
 
 /* Square, so the icon is the whole button — no label to balance against.
- * Sits on the shared .btn3d bevel (declared earlier in this file, which is
+ * Sits on the shared .btn-key bevel (declared earlier in this file, which is
  * what lets these overrides win; see ARCHITECTURE.md on that ordering). */
 .toolbar__tool {
-  --btn-bevel: 3px;
-  --btn-drop: 5px;
-
   position: relative;
   display: flex;
   align-items: center;
@@ -1142,10 +1201,9 @@ body {
 /* Armed: the board is now waiting for a target, and this is the only cue
  * that the next tap won't move a marble. */
 .toolbar__tool.is-active {
-  --btn-face: #0f7d8e;
-  --btn-light: #4fd2e6;
-  --btn-dark: #053b45;
-  --btn-edge: #01181d;
+  --btn-face: rgba(15, 125, 142, 0.85);
+  --btn-line: #7ff0ff;
+  --btn-glow: rgba(79, 210, 230, 0.85);
 }
 
 /* Out of charges but unlocked: dimmed, still legible as itself. */
@@ -1157,9 +1215,9 @@ body {
  * sitting over it. grayscale keeps the object's shape readable, so the rack
  * reads as "four tools, two of them still locked" at a glance. */
 .toolbar__tool.is-locked {
-  --btn-face: #171c33;
-  --btn-light: #2c3350;
-  --btn-dark: #0a0d1c;
+  --btn-face: rgba(14, 18, 40, 0.75);
+  --btn-line: #2c3350;
+  --btn-glow: transparent;
 }
 
 .toolbar__tool.is-locked .toolbar__art {
@@ -1334,10 +1392,9 @@ body {
 /* The resume action, in the game's cyan rather than the neutral blue of the
  * options below it — it's the one button you reach for without reading. */
 .menu-item--wide {
-  --btn-face: #0f7d8e;
-  --btn-light: #4fd2e6;
-  --btn-dark: #053b45;
-  --btn-edge: #01181d;
+  --btn-face: rgba(15, 125, 142, 0.85);
+  --btn-line: #7ff0ff;
+  --btn-glow: rgba(79, 210, 230, 0.6);
 
   grid-column: 1 / -1;
   font-size: 12px;
@@ -1346,8 +1403,9 @@ body {
 }
 
 .menu-item--wide:hover {
-  --btn-face: #139db2;
-  --btn-light: #7ff0ff;
+  --btn-face: rgba(19, 157, 178, 0.92);
+  --btn-line: #dffbff;
+  --btn-glow: rgba(127, 240, 255, 0.9);
 }
 
 /* The rules card, layered above the menu it was opened from. */
@@ -1619,15 +1677,18 @@ body {
     flex-shrink: 0;
   }
 
-  .topbar__label {
-    display: none;
-  }
+.topbar__next {
+  gap: 4px;
+}
 
-  .topbar__next {
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
+/* The corner ornaments go on a phone. The panel's internal gap is 8px here
+ * and an ornament is 14px wide, so there is nowhere for them to sit that
+ * isn't on top of a key — they are decoration, and the trinkets set into
+ * the bottom edge carry that job on their own at this size. */
+.topbar__ornament--tl,
+.topbar__ornament--tr {
+  display: none;
+}
 
   /* Sized for FOUR marbles, not three. The strip between the mascots is a
    * fixed width, so the queue has to fit its longest case or the bar wraps
@@ -1943,7 +2004,9 @@ body {
     column-gap: 4px;
   }
 
-  .topbar__next-label {
+  /* The trinket row is the first thing to go: the panel at this width has
+   * no room for decoration, and it carries nothing. */
+  .topbar__trinkets {
     display: none;
   }
 

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { ReactNode } from "react";
 import { rng } from "../game/rng";
-import { Button3D } from "./Button3D";
+import { GameButton } from "./GameButton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/8bit/dialog";
 
 interface WinOverlayProps {
@@ -40,9 +40,9 @@ export function WinOverlay({ visible, score, runScore, rounds, onRestart, childr
         </p>
         {children}
         <DialogFooter>
-          <Button3D className="dialog-btn" onClick={onRestart}>
+          <GameButton className="dialog-btn" onClick={onRestart}>
             New game
-          </Button3D>
+          </GameButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
