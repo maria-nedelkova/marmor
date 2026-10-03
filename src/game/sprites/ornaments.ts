@@ -88,3 +88,36 @@ export const COIN_PALETTE: PixelPalette = {
   m: "#f0b429",
   d: "#9a6a12",
 };
+
+// Smaller 5x5 cuts of the sparkle and heart, for the four corners of the
+// queue. The 7x7 versions are the size the trinkets set into the panel's
+// edge want; beside the marbles that reads as a fifth object in the row
+// rather than as decoration, so the corners get their own smaller art
+// instead of the same sprite at a fractional pixel size (which would blur
+// the one thing pixel art cannot afford to blur).
+
+const S = 5;
+
+export const SPARKLE_SM_ROWS: string[] = [
+  row(S, ".", [[2, 2, "m"]]),
+  row(S, ".", [[2, 2, "l"]]),
+  row(S, ".", [[0, 4, "m"], [1, 3, "l"]]),
+  row(S, ".", [[2, 2, "l"]]),
+  row(S, ".", [[2, 2, "m"]]),
+];
+
+export const HEART_SM_ROWS: string[] = [
+  row(S, ".", [[0, 1, "m"], [3, 4, "m"]]),
+  row(S, ".", [[0, 4, "m"], [1, 1, "l"]]),
+  row(S, ".", [[0, 4, "m"]]),
+  row(S, ".", [[1, 3, "m"]]),
+  row(S, ".", [[2, 2, "d"]]),
+];
+
+/** The reference's lower-right sparkle is cyan where the upper-left one is
+ * gold — the two diagonals are told apart by colour as well as by shape. */
+export const SPARKLE_CYAN_PALETTE: PixelPalette = {
+  l: "#eafdff",
+  m: "#8fe6f5",
+  d: "#3f9fb4",
+};

@@ -661,13 +661,17 @@ body {
   width: max-content;
   max-width: 100%;
   margin: 20px auto 0;
-  padding: 10px 18px;
+  /* Tight at the sides and generous in the middle, so the two keys sit out
+   * on the panel's edges rather than hugging the queue. */
+  padding: 10px 10px;
   /* Double-lined: a magenta edge with a cyan line standing off it. One
    * border plus an offset ring, rather than two nested elements — the ring
    * is the second of the two box-shadow spreads below. */
   border: 2px solid var(--neon-edge);
   border-radius: 12px;
-  background: rgba(10, 8, 26, 0.82);
+  /* Opaque, not translucent: the trinket strip has to repaint this exact
+   * colour to break the frame, and it can only match a colour it knows. */
+  background: #0b0920;
   box-shadow:
     0 0 14px var(--neon-glow),
     0 0 0 2px rgba(6, 8, 24, 0.9),
@@ -679,7 +683,7 @@ body {
    * the zone that matters during play, and Menu/Sound read better as things
    * flanking it than as two far-apart controls of equal weight. */
   justify-content: center;
-  gap: 18px;
+  gap: 30px;
   flex-wrap: wrap;
 }
 
@@ -713,23 +717,35 @@ body {
   line-height: 0;
 }
 
-/* Out at the corners and overlapping, the way scattered decoration sits.
- * Absolute so they cost the row no width — in flow they shifted the
- * marbles off centre by half their own size. */
+/* Out at the four corners. Absolute so they cost the row no width — in
+ * flow they shift the marbles off the panel's centre by half their own
+ * size. */
 .topbar__ornament--tl,
-.topbar__ornament--tr {
+.topbar__ornament--tr,
+.topbar__ornament--bl,
+.topbar__ornament--br {
   position: absolute;
   pointer-events: none;
 }
 
 .topbar__ornament--tl {
-  top: -8px;
-  left: -16px;
+  top: -9px;
+  left: -15px;
+}
+
+.topbar__ornament--bl {
+  bottom: -9px;
+  left: -15px;
 }
 
 .topbar__ornament--tr {
-  bottom: -8px;
-  right: -16px;
+  top: -9px;
+  right: -15px;
+}
+
+.topbar__ornament--br {
+  bottom: -9px;
+  right: -15px;
 }
 
 /* The trinkets sit ON the panel's bottom edge, not inside it: centred on
@@ -744,18 +760,30 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
+  /* A fixed height so the break band below can be stated in px against a
+   * known box: the strip is centred on the panel's edge, so that edge is
+   * exactly halfway down it. */
+  height: 24px;
   padding: 0 10px;
-  /* Opaque only across the border band, transparent above and below it.
-   * Filling the whole strip read as a dark box sitting on the panel; this
-   * covers just the ~6px of border and rings, so the panel's interior and
-   * the page show through either side of the break untouched. The colour
-   * splits the difference between the two — they are within a few values of
-   * each other, so one tone blends into both. */
+  /* Opaque only across the frame, transparent above and below. Filling the
+   * whole strip read as a dark box sitting on the panel.
+   *
+   * The band runs 5px either side of the edge because the frame is not just
+   * the 2px border — there is a cyan ring standing 2-4px outside it, drawn
+   * as a box-shadow spread. A band sized to the border alone left that ring
+   * running straight through the trinkets. */
+  /* Split at the panel's edge, which sits exactly halfway down this 24px
+   * strip. Above it, the panel's own fill — invisible against the interior.
+   * Below it, the page colour for the 5px that the cyan ring occupies, then
+   * transparent so the page shows through untouched.
+   *
+   * One flat colour cannot do this: it straddles two different backgrounds,
+   * so whichever it matched, it read as a plate against the other. */
   background: linear-gradient(
     to bottom,
-    transparent 0 calc(50% - 4px),
-    #0a0818 calc(50% - 4px) calc(50% + 4px),
-    transparent calc(50% + 4px) 100%
+    #0b0920 0 12px,
+    var(--bg) 12px 17px,
+    transparent 17px 100%
   );
 }
 

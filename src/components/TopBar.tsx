@@ -4,9 +4,10 @@ import {
   COIN_PALETTE,
   COIN_ROWS,
   HEART_PALETTE,
-  HEART_ROWS,
+  HEART_SM_ROWS,
+  SPARKLE_CYAN_PALETTE,
   SPARKLE_PALETTE,
-  SPARKLE_ROWS,
+  SPARKLE_SM_ROWS,
   STAR_CYAN_PALETTE,
   STAR_GOLD_PALETTE,
   STAR_ROWS,
@@ -69,14 +70,21 @@ export function TopBar({ nextQueue, muted, pulseToken, onToggleMute, onOpenMenu 
       </GameButton>
 
       {/* The queue is the one thing in here read every turn, so it is what
-          sits dead centre. The sparkle and heart hang off its corners
-          absolutely rather than sitting beside it in flow — in flow they
-          are two more items in the row, and they push the marbles off the
-          panel's centre line. */}
+          sits dead centre. The ornaments hang off its corners absolutely
+          rather than sitting beside it in flow — in flow they are four more
+          items in the row, and they push the marbles off the panel's centre
+          line.
+
+          Two diagonals, the way the reference arranges them: sparkles on
+          one (top-left, bottom-right) and hearts on the other (bottom-left,
+          top-right). Scattered across a diagonal rather than mirrored in
+          pairs is what stops them reading as a row of UI. */}
       <div ref={nextRef} className="topbar__zone topbar__next">
-        <Ornament rows={SPARKLE_ROWS} palette={SPARKLE_PALETTE} className="topbar__ornament--tl" />
+        <Ornament rows={SPARKLE_SM_ROWS} palette={SPARKLE_PALETTE} className="topbar__ornament--tl" />
+        <Ornament rows={HEART_SM_ROWS} palette={HEART_PALETTE} className="topbar__ornament--bl" />
         <NextPreview colors={nextQueue} />
-        <Ornament rows={HEART_ROWS} palette={HEART_PALETTE} className="topbar__ornament--tr" />
+        <Ornament rows={HEART_SM_ROWS} palette={HEART_PALETTE} className="topbar__ornament--tr" />
+        <Ornament rows={SPARKLE_SM_ROWS} palette={SPARKLE_CYAN_PALETTE} className="topbar__ornament--br" />
       </div>
 
       <GameButton
