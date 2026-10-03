@@ -132,34 +132,79 @@
 
 /* The figure IS the frame. It is absolutely positioned inside the stage
  * normally — that is how the pedestal mechanic raises the sprite — so it
- * goes back into flow here and becomes the card: a bordered box holding the
- * score strip above the portrait, which is how the references frame theirs.
+ * goes back into flow here and becomes the card.
  *
- * --px-frame is set per side below, so each duellist's frame carries their
- * own colour the way the score chip already does. */
+ * Built the way the reference's frames are: a band of worked metal holding
+ * two sunken panels, a score plaque above the portrait, with the metal
+ * showing between and around them. The metal is a gradient rather than a
+ * flat colour because that is most of what makes it read as metal, and the
+ * four corner studs stand in for the reference's cast scrollwork — the
+ * scrollwork itself is not something CSS can draw at a 64px card, but the
+ * corner accents carry the same "this is a cast frame, not a box" signal.
+ *
+ * Per-duellist metal is set on the two side rules below. */
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__figure {
-  position: static;
+  /* relative, not static — the crest below is positioned against this. That
+   * makes the base rule's `left: 50%` live again (on a static box it is
+   * ignored), and it was only ever there to be cancelled by the
+   * translateX(-50%) this rule also drops. Left as-is it shifts the whole
+   * card half its own width to the right, which pushed the King's frame
+   * 26px off the edge of the strip. */
+  position: relative;
+  left: auto;
   width: 100%;
   height: 100%;
-  gap: 0;
-  padding: 2px;
-  border: 2px solid var(--px-frame, var(--px-line-strong));
-  background: rgba(8, 6, 14, 0.72);
-  backdrop-filter: blur(3px);
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--px-metal-lo);
+  background-image:
+    radial-gradient(circle at 3px 3px, var(--px-metal-hi) 0 1.4px, transparent 1.6px),
+    radial-gradient(circle at calc(100% - 3px) 3px, var(--px-metal-hi) 0 1.4px, transparent 1.6px),
+    radial-gradient(circle at 3px calc(100% - 3px), var(--px-metal-hi) 0 1.4px, transparent 1.6px),
+    radial-gradient(circle at calc(100% - 3px) calc(100% - 3px), var(--px-metal-hi) 0 1.4px, transparent 1.6px),
+    linear-gradient(158deg, var(--px-metal-hi) 0%, var(--px-metal) 42%, var(--px-metal-lo) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 2px 0 rgba(0, 0, 0, 0.45);
   transform: none;
   transition: none;
 }
 
+/* The crest over the top edge. A rotated square rather than any attempt at
+ * the reference's finial: at this size the finial is four pixels of
+ * silhouette, and a clean diamond reads as deliberate where a blurry
+ * approximation of filigree would just read as a smudge. */
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__figure::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  transform: translateX(-50%) rotate(45deg);
+  background: linear-gradient(135deg, var(--px-metal-hi), var(--px-metal) 55%, var(--px-metal-lo));
+  border: 1px solid var(--px-metal-lo);
+}
+
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--left .duel-mascot__figure {
-  --px-frame: var(--px-king);
+  --px-metal: #d9af3c;
+  --px-metal-hi: #ffeeab;
+  --px-metal-lo: #6d5212;
+  --px-plaque: #241a07;
+  --px-backdrop: #3a1414;
 }
 
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--right .duel-mascot__figure {
-  --px-frame: var(--px-pretender);
+  --px-metal: #99a1c2;
+  --px-metal-hi: #e8edff;
+  --px-metal-lo: #434a6b;
+  --px-plaque: #16121f;
+  --px-backdrop: #241a33;
 }
 
-/* contain, not cover: the brief is the WHOLE figure in the frame, and cover
- * crops whichever axis overflows — which on a standing figure is the legs. */
+/* The lower sunken panel. contain, not cover: the brief is the WHOLE figure
+ * in the frame, and cover crops whichever axis overflows — which on a
+ * standing figure is the legs. */
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__portrait {
   flex: 1;
   width: 100%;
@@ -167,11 +212,14 @@
   object-fit: contain;
   object-position: 50% 100%;
   display: block;
+  background: var(--px-backdrop);
+  box-shadow: inset 0 0 0 1px var(--px-metal-lo);
   user-select: none;
 }
 
-/* The score sits inside the frame as its top strip, separated by a rule —
- * the reference's gold plaque, flattened to this theme's language. */
+/* The upper sunken panel — the reference's score plaque: its own recessed
+ * box with the metal's colour for the numerals, not a label floating on the
+ * frame. */
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__score {
   width: 100%;
   min-width: 0;
@@ -180,15 +228,16 @@
   min-height: 0;
   height: auto;
   line-height: 1;
-  padding: 2px 0 3px !important;
+  padding: 3px 0 4px !important;
   font-size: 9px !important;
   text-align: center;
   justify-content: center;
-  background: transparent !important;
+  background: var(--px-plaque) !important;
   border: none !important;
-  border-bottom: 1px solid var(--px-frame, var(--px-line)) !important;
+  box-shadow: inset 0 0 0 1px var(--px-metal-lo);
   border-radius: 0;
-  color: var(--px-frame, var(--px-text)) !important;
+  color: var(--px-metal-hi) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.8);
 }
 
 /* Beaten: the card drains of colour and dims instead of toppling. The
