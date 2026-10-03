@@ -426,3 +426,10 @@
   border: none !important;
   color: inherit !important;
 }
+
+/* Classic paints a star field over its board (see .board::before). This
+ * theme's board has a throne room behind it; stars on top of that read as
+ * dirt on the screen rather than as sky. */
+:root[data-theme="pixelart"][data-layout="vertical"] .board::before {
+  display: none;
+}

@@ -1,7 +1,10 @@
 :root {
   --bg: #05060f;
-  --table: #0c1024;
-  --grid-line: #1b2244;
+  --table: #080a20;
+  --grid-line: #6b3bd6;
+  /* The neon edge-and-glow pair every panel in this look shares. */
+  --neon-edge: #ff52c8;
+  --neon-glow: rgba(255, 82, 200, 0.45);
   --panel: #0a0e20;
   --panel-border: #2a3568;
   /* Namespaced --mr-* because src/tailwind.css declares an UNLAYERED :root
@@ -184,18 +187,33 @@ body {
   }
 }
 
+/* The game's name is gone from the screen at every width now, not just on a
+ * phone. It was a banner over a board that already says what it is, and the
+ * room it took is better spent on the board.
+ *
+ * Clipped rather than `display: none` because this is the page's only <h1>:
+ * display:none takes it out of the accessibility tree too and leaves the
+ * document with no heading. Absolute positioning is what actually frees the
+ * space — it takes the element out of flow. */
 .titlebar {
-  text-align: center;
-  margin-bottom: 28px;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
+/* Nothing paints it; don't keep a looping animation alive for it. */
 .titlebar__title {
   font-family: var(--font-display);
   font-size: 32px;
   letter-spacing: 6px;
-  margin: 0 0 12px;
+  margin: 0;
   color: var(--mr-accent);
-  animation: flicker 4.5s ease-in-out infinite;
+  animation: none;
 }
 
 @keyframes flicker {
@@ -268,10 +286,31 @@ body {
   width: 120px;
 }
 
+/* A lit sign rather than a label. currentColor is doing the work: DuelMascot
+ * sets `color` inline to each duellist's accent, so the halo takes that
+ * colour without the accent having to be duplicated into CSS. */
 .duel-mascot__score {
   font-size: 16px !important;
   padding: 4px 14px !important;
   background: var(--panel) !important;
+  box-shadow:
+    0 0 10px currentColor,
+    inset 0 0 10px rgba(255, 255, 255, 0.08);
+}
+
+/* Bracketed, the way a score reads on an arcade cabinet. Decoration, so it
+ * goes on the badge rather than into the number the component renders —
+ * which keeps the accessible name a plain figure. */
+.duel-mascot__score [data-slot="badge"]::before {
+  content: "[";
+  margin-right: 2px;
+  opacity: 0.75;
+}
+
+.duel-mascot__score [data-slot="badge"]::after {
+  content: "]";
+  margin-left: 2px;
+  opacity: 0.75;
 }
 
 /* The 8bit Badge draws decorative pixel bars flanking the badge; they render
@@ -391,11 +430,46 @@ body {
    * max-content forces .board to size from its own tracks always. */
   width: max-content;
   height: max-content;
+  /* The gap IS the grid line: .board's own background shows through it. Kept
+   * at 3px because the glide overlay positions itself from CELL_GAP_PX in
+   * game/constants.ts — changing it here alone would desync the animation
+   * from the cells it's stepping between. */
   gap: 3px;
   background: var(--grid-line);
   padding: 10px;
-  border: 3px solid var(--panel-border);
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--neon-edge);
+  box-shadow:
+    0 0 14px var(--neon-glow),
+    inset 0 0 18px rgba(123, 61, 240, 0.25);
+}
+
+/* The starfield, over the cells rather than behind them. Behind would mean
+ * painting it on .board, where the cells would cover all but the 3px gaps;
+ * a layer on top shows across the whole board the way the reference's does.
+ * Marbles sit above it (see .marble's z-index).
+ *
+ * Twelve hand-placed gradients rather than a repeating tile: a tile at cell
+ * size repeats 81 times and reads as a pattern, which is the one thing a
+ * star field must not do. */
+.board::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    radial-gradient(circle at 12% 8%, #fff 0 1px, transparent 1.5px),
+    radial-gradient(circle at 31% 22%, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 68% 13%, #d6e6ff 0 1.2px, transparent 1.7px),
+    radial-gradient(circle at 88% 29%, rgba(255, 255, 255, 0.55) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 7% 44%, #ffe9a8 0 1.2px, transparent 1.7px),
+    radial-gradient(circle at 44% 38%, rgba(255, 255, 255, 0.6) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 77% 52%, #fff 0 1px, transparent 1.5px),
+    radial-gradient(circle at 19% 63%, rgba(214, 230, 255, 0.7) 0 1.1px, transparent 1.6px),
+    radial-gradient(circle at 58% 71%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 92% 78%, #ffe9a8 0 1.1px, transparent 1.6px),
+    radial-gradient(circle at 26% 88%, rgba(255, 255, 255, 0.65) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 71% 93%, rgba(214, 230, 255, 0.6) 0 1.1px, transparent 1.6px);
 }
 
 /* Positioned imperatively (translate() in px, see Board.tsx) rather than via
@@ -463,13 +537,21 @@ body {
   box-shadow: inset 0 0 0 3px var(--mr-accent);
 }
 
+/* z-index so the marbles clear the star layer painted over the cells. */
 .marble {
   width: 74%;
   height: 74%;
   border-radius: 50%;
   position: relative;
+  z-index: 2;
   outline: 2px solid rgba(0, 0, 0, 0.55);
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55), inset -8px -8px 0 rgba(0, 0, 0, 0.22);
+  box-shadow: 
+    2px 2px 0 rgba(0, 0, 0, 0.55),
+    inset -8px -8px 0 rgba(0, 0, 0, 0.22),
+    /* The halo. --glow is already set per colour on the .cN classes (it was
+     * only feeding the burst ring before), so each marble lights the board
+     * in its own colour. */
+    0 0 12px var(--glow, transparent);
 }
 
 .marble.spawning {
@@ -568,10 +650,20 @@ body {
 /* No panel, border or shadow — the controls sit directly on the backdrop.
  * Once the row shrank to three tight-grouped zones there was nothing left
  * for a frame to organise, and the box just added weight beside the board. */
+/* A lit panel again, where it used to be bare. The earlier note here said a
+ * frame had nothing left to organise once the row shrank to three zones —
+ * true of a plain box, but a neon outline isn't organising the row so much
+ * as putting the controls on the same lit-sign footing as the score chips
+ * and the board. */
 .topbar {
   max-width: 860px;
   margin: 20px auto 0;
   padding: 10px 16px;
+  border: 2px solid var(--mr-accent);
+  background: rgba(10, 14, 32, 0.72);
+  box-shadow:
+    0 0 12px rgba(41, 241, 255, 0.35),
+    inset 0 0 14px rgba(41, 241, 255, 0.1);
   display: flex;
   align-items: center;
   /* Grouped tight in the centre rather than spread edge-to-edge: Next up is
@@ -1682,7 +1774,19 @@ body {
 
   .duel-mascot--compact .duel-mascot__score {
     font-size: 10px !important;
-    padding: 2px 8px !important;
+    /* Tighter than it was: the brackets added ~37px, which pushed the chip
+     * 17px past its own 74px column and off the edge of the viewport. */
+    padding: 2px 4px !important;
+  }
+
+  /* No brackets in the compact layout. They add two characters to a chip
+   * that sits in a 74px column, and this display font is ~19px per
+   * character at the compact size — five characters cannot fit however the
+   * padding is tuned, and the overhang ran off the edge of a 320px screen.
+   * The desktop chip has the room and keeps them. */
+  .duel-mascot--compact .duel-mascot__score [data-slot="badge"]::before,
+  .duel-mascot--compact .duel-mascot__score [data-slot="badge"]::after {
+    content: none;
   }
 
   /* The King/Pretender name labels are redundant once the mascots are
