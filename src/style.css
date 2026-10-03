@@ -1,7 +1,7 @@
 :root {
   --bg: #05060f;
   --table: #080a20;
-  --grid-line: #6b3bd6;
+  --grid-line: #8a4ff5;
   /* The neon edge-and-glow pair every panel in this look shares. */
   --neon-edge: #ff52c8;
   --neon-glow: rgba(255, 82, 200, 0.45);
@@ -434,10 +434,18 @@ body {
   gap: 3px;
   background: var(--grid-line);
   padding: 10px;
-  border: 2px solid var(--neon-edge);
+  /* A neon tube, not a coloured border: a 1px near-white core with the hue
+   * carried entirely by halos stacked around it, tight to wide. A thick
+   * saturated border reads as a painted frame — what makes a line look lit
+   * is that its centre is brighter than its colour, and that the colour
+   * falls off into the dark around it. */
+  border: 1px solid #ffbbe8;
   box-shadow:
-    0 0 14px var(--neon-glow),
-    inset 0 0 18px rgba(123, 61, 240, 0.25);
+    0 0 2px #ff52c8,
+    0 0 7px rgba(255, 82, 200, 0.85),
+    0 0 18px rgba(255, 82, 200, 0.5),
+    0 0 36px rgba(255, 82, 200, 0.25),
+    inset 0 0 14px rgba(255, 82, 200, 0.14);
 }
 
 /* The starfield, over the cells rather than behind them. Behind would mean
@@ -494,6 +502,13 @@ body {
   width: var(--cell-size, 54px);
   height: var(--cell-size, 54px);
   background: var(--table);
+  /* Lights the grid. The 3px gap between cells IS the grid line (it is
+   * .board's background showing through), and a flat fill there reads as
+   * painted-on next to a glowing border — so each cell casts a violet halo
+   * into the gap around it, and the line ends up brightest along its middle
+   * where two halos meet. The gap itself can't change: the glide overlay
+   * positions from CELL_GAP_PX in game/constants.ts. */
+  box-shadow: 0 0 6px rgba(138, 79, 245, 0.5);
   position: relative;
   display: flex;
   align-items: center;
@@ -757,6 +772,12 @@ body {
   left: 50%;
   bottom: 0;
   transform: translate(-50%, 50%);
+  /* Explicitly above the frame it interrupts. Tree order alone was not
+   * enough — other elements inside this panel carry their own z-index (the
+   * queue marbles sit at 2 so they clear the board's star layer), and an
+   * auto-stacked strip lost to them, which left the cyan ring drawing
+   * straight back over the break. */
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -778,12 +799,19 @@ body {
    * transparent so the page shows through untouched.
    *
    * One flat colour cannot do this: it straddles two different backgrounds,
-   * so whichever it matched, it read as a plate against the other. */
+   * so whichever it matched, it read as a plate against the other.
+   *
+   * The 20px is measured, not guessed. `bottom: 0` puts this strip against
+   * the panel's PADDING box, so with translateY(50%) its 12px mark is the
+   * padding-box edge. From there the frame runs: border 0-2px, dark ring
+   * 2-4px, cyan ring 2-6px — i.e. to the strip's 18px mark. A band stopping
+   * at 17px left exactly one pixel of the cyan ring showing through the
+   * break. 20px clears it with margin. */
   background: linear-gradient(
     to bottom,
     #0b0920 0 12px,
-    var(--bg) 12px 17px,
-    transparent 17px 100%
+    var(--bg) 12px 20px,
+    transparent 20px 100%
   );
 }
 
@@ -1697,11 +1725,16 @@ body {
    * bar rather than in a row of its own. That strip is ~190px wide, which
    * the three zones only just fit once the labels are dropped — hence the
    * tighter gap and padding here. */
+  /* The panel needs real padding here, or the keys' own borders sit flush
+   * against the panel's and the two lines read as one thick smear. The room
+   * for it comes off the queue, not off the keys: 44px is the smallest a
+   * tap target should be, and the marbles beside it are only being looked
+   * at. */
   .topbar {
     max-width: none;
     margin: 8px 0 0;
-    padding: 0;
-    gap: 8px;
+    padding: 5px 6px;
+    gap: 6px;
     flex-shrink: 0;
   }
 
@@ -1727,13 +1760,13 @@ body {
    * buttons sideways mid-turn. */
   .next-preview {
     gap: 4px;
-    min-width: 84px; /* 4x18 + 3x4 */
+    min-width: 76px; /* 4x16 + 3x4 */
     justify-content: center;
   }
 
   .next-preview .marble {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 
   .layout {
@@ -2041,8 +2074,16 @@ body {
   /* Still over at 320px after the three rules above, so the bar's own gap
    * and the queue marbles come down again: 44 + 76 + 44 + 2x4 = 172 into a
    * 176px strip, with the queue again reserving all four slots. */
+  /* 40 + 4 + 76 + 4 + 40, plus 6px of padding and 4px of border, is 174
+   * into the 176px strip this width leaves between the mascots. */
   .topbar {
+    padding: 4px 3px;
     gap: 4px;
+  }
+
+  .topbar__key {
+    width: 40px;
+    height: 40px;
   }
 
   .next-preview {

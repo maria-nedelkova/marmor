@@ -300,6 +300,10 @@
 
 :root[data-theme="pixelart"][data-layout="vertical"] .cell {
   background: var(--px-board-fill);
+  /* Classic lights its grid lines by having each cell cast a violet halo
+   * into the gap (see .cell). This board's gaps show a room, not a neon
+   * grid, and a halo over that reads as a smudge. */
+  box-shadow: none;
   /* Softens the room directly under the board only. The art stays visible
    * and recognisable, but its detail stops competing with the marbles for
    * the one area the player has to read precisely. */
@@ -367,10 +371,12 @@
 :root[data-theme="pixelart"][data-layout="vertical"] .topbar {
   background: var(--px-panel);
   border: 1px solid var(--px-line);
-  /* Vertical padding only. The strip between the two cards is barely wider
-   * than the bar's three zones, so any horizontal padding here is enough to
-   * wrap Sound onto a second line. */
-  padding: 5px 0;
+  /* The horizontal padding was zero here, because the bar's three zones
+   * only just fit the strip between the cards and anything more wrapped
+   * Sound onto a second line. The queue has since given 8px back (smaller
+   * marbles), which buys enough to keep the keys' borders off the panel's
+   * — flush, the two lines read as one thick smear. */
+  padding: 5px 6px;
   /* And a tighter gap than classic's 8px, because this theme's 1px button
    * borders widen each zone by 2px — enough on their own to tip the row
    * over the strip's width. */
