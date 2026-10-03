@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import "./tailwind.generated.css";
 import "./style.css";
-import "./themes/throne.css";
+import "./themes/pixelart.css";
 
 const container = document.getElementById("root");
 if (!container) throw new Error("#root element not found");

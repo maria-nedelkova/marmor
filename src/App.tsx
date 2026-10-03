@@ -18,6 +18,8 @@ import { KING_SCORE } from "./game/constants";
 import { getLevel } from "./game/levels";
 import type { RunEntry } from "./game/score";
 import { getPlayerId, localLeaderboard } from "./leaderboard/store";
+import kingPortrait from "./assets/king-portrait.png";
+import pretenderPortrait from "./assets/pretender-portrait.png";
 import { KING_PALETTE, KING_ROWS } from "./game/sprites/king";
 import { PRETENDER_PALETTE, PRETENDER_ROWS } from "./game/sprites/pretender";
 import { useGame } from "./hooks/useGame";
@@ -149,6 +151,7 @@ export function App() {
           heightRatio={1}
           falling={game.cleared}
           compact={isVertical}
+          portrait={theme.portraits ? kingPortrait : undefined}
         />
 
         {/* Tools above the board on desktop. On mobile the rack goes below
@@ -234,6 +237,7 @@ export function App() {
           heightRatio={game.score / KING_SCORE}
           falling={game.gameOver}
           compact={isVertical}
+          portrait={theme.portraits ? pretenderPortrait : undefined}
         />
       </main>
 

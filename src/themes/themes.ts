@@ -11,7 +11,7 @@
 // that choice has to be made in JS (the mascots take a `compact` prop, and no
 // media query can set a React prop). Everything else a theme wants is CSS.
 
-export type ThemeId = "classic" | "throne";
+export type ThemeId = "classic" | "pixelart";
 
 export interface ThemeDef {
   id: ThemeId;
@@ -23,6 +23,10 @@ export interface ThemeDef {
    * A theme built around a portrait backdrop needs the game to stay in a
    * portrait column on a desktop monitor too. */
   vertical: boolean;
+  /** Show the duellists as drawn portraits in a card rather than as the
+   * hand-authored sprites on their pedestals. Like `vertical`, this has to
+   * be a flag rather than CSS, because it changes what DuelMascot renders. */
+  portraits: boolean;
 }
 
 export const THEMES: ThemeDef[] = [
@@ -31,12 +35,14 @@ export const THEMES: ThemeDef[] = [
     label: "Classic",
     blurb: "Neon on black. Wide on desktop, one column on a phone.",
     vertical: false,
+    portraits: false,
   },
   {
-    id: "throne",
-    label: "Throne room",
-    blurb: "The game plays out in a strip down the middle of the king's hall.",
+    id: "pixelart",
+    label: "Pixel art",
+    blurb: "A pixel-art hall behind a minimal, mostly-transparent board.",
     vertical: true,
+    portraits: true,
   },
 ];
 

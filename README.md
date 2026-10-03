@@ -119,7 +119,7 @@ opening a theme on a real phone without disturbing your own saved choice.
 | Theme | What it is |
 | --- | --- |
 | `classic` | Neon on black. Wide on desktop, one column on a phone. The default. |
-| `throne` | The game plays out in a 430px portrait strip down the middle of the king's hall, at every width. |
+| `pixelart` | A pixel-art hall and drawn character portraits, under a flat, mostly-transparent UI. Runs in a 430px portrait strip at every width. |
 
 A theme is an id on `document.documentElement.dataset.theme` plus a
 stylesheet of `[data-theme="<id>"]` rules. **The base styles in `style.css`
@@ -127,16 +127,31 @@ carry no theme selector at all** — they *are* `classic` — so adding a theme
 cannot change how classic looks, and deleting a theme's stylesheet plus its
 entry in `src/themes/themes.ts` removes it completely.
 
-The one structural choice a theme gets is `vertical`, which forces the
-one-column layout at every width instead of only on a phone. It has to live
-in JS rather than CSS because the mascots take a `compact` prop and no media
-query can set a React prop: `App.tsx` combines the viewport and the theme
-into `data-layout="vertical" | "wide"` on the root, and both the stylesheet
-and the mascots read that one decision. Everything else a theme wants is CSS.
+Two structural choices live on the theme rather than in CSS, because each
+one changes what React renders and no media query can set a prop:
 
-The throne theme is a first pass — the backdrop and the shape of the stage
-only. The panels, buttons and mascots are still the classic ones sitting on
-top of the room, and several of them need work before they belong in it.
+- `vertical` — force the one-column layout at every width instead of only on
+  a phone. `App.tsx` combines the viewport and the theme into
+  `data-layout="vertical" | "wide"` on the root, and both the stylesheet and
+  the mascots' `compact` prop read that single decision.
+- `portraits` — draw the duellists as portrait cards instead of the
+  hand-authored sprites on pedestals.
+
+Everything else a theme wants is CSS.
+
+Theme rules are scoped `[data-theme="x"][data-layout="vertical"]`, not on the
+theme alone. The vertical layout styles many of the same elements at exactly
+the same specificity, so with one attribute the two files won or lost on
+stylesheet order — which silently cost the pixelart theme its column width
+and its card sizes. Two attributes make the theme genuinely more specific,
+and cost nothing while every theme that restyles layout is also vertical.
+
+`src/assets/` holds the pixelart theme's art. The character portraits were
+cut out of the generated source images by a throwaway script (crop, then
+flood-fill the flat backdrop to transparent from the border inwards); the
+King keys cleanly, the Pretender's backdrop is a dark room rather than a flat
+colour, so that one keeps its own dark surround and the card supplies the
+same dark behind both.
 
 ## Architecture
 

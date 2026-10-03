@@ -1,0 +1,343 @@
+/* Pixel art theme.
+ *
+ * Two visual languages on purpose: a pixel-art hall as the backdrop and the
+ * drawn characters, with everything the player actually operates — board,
+ * cards, bar, buttons — flat, thin-lined and mostly transparent on top of it.
+ * The room supplies the atmosphere; the UI stays out of its way.
+ *
+ * Everything here is scoped to [data-theme="pixelart"], so this file can only
+ * ever add to the classic look, never alter it. Deleting the file (and the
+ * entry in themes.ts) would leave the game exactly as it was.
+ *
+ * Tunables are custom properties on the root block below, so the two things
+ * most likely to need taste-tuning — how much of the room shows through the
+ * board, and how heavy the UI's lines are — are a one-line change.
+ */
+
+:root[data-theme="pixelart"] {
+  /* The board's own fill. "70% transparent" per the brief, i.e. 0.3 alpha.
+   * Raise toward 0.6 if the marbles need a calmer backing. */
+  --px-board-fill: rgba(10, 8, 16, 0.3);
+  /* Everything the player operates shares one translucent panel colour, which
+   * is what keeps the UI reading as a single layer above the room. */
+  --px-panel: rgba(14, 12, 22, 0.55);
+  --px-line: rgba(236, 226, 255, 0.22);
+  --px-line-strong: rgba(236, 226, 255, 0.38);
+  --px-text: #f2ecff;
+  --px-dim: rgba(242, 236, 255, 0.55);
+  --px-king: #e8c14a;
+  --px-pretender: #b98cf5;
+}
+
+/* The hall itself is dark, so the neon gradient that lights the classic
+ * backdrop would fight it. Replaced with a flat near-black, which also gives
+ * the strip's edges something to sit against on a wide screen. */
+:root[data-theme="pixelart"][data-layout="vertical"] body {
+  background: #07060a;
+  /* Top-aligned rather than centred: the column is a full viewport tall, and
+   * centring a full-height element is a no-op that only risks a half-pixel
+   * offset blurring the backdrop. */
+  align-items: flex-start;
+}
+
+/* The stage. A portrait strip down the middle of whatever screen it's on —
+ * on a phone that's the whole width, on a desktop monitor it's a column with
+ * the hall's walls running down both sides of it. At 430px the game inside
+ * is laid out exactly as it is on a large phone whatever the window is doing.
+ *
+ * Scoped on BOTH attributes, not just the theme. The vertical layout styles
+ * this same element as `:root[data-layout="vertical"] .table`, which is the
+ * identical specificity — so with the theme alone these rules won or lost on
+ * stylesheet order, and the column silently came out at the layout's 420px
+ * instead of this one's width. Matching the second attribute settles it by
+ * being genuinely more specific, and costs nothing: this theme is always
+ * vertical (see themes.ts). */
+:root[data-theme="pixelart"][data-layout="vertical"] .table {
+  position: relative;
+  /* A fixed width clamped by a VIEWPORT unit, not a percentage. .table is a
+   * flex item of body, and every percentage form was resolved against
+   * something other than the viewport: `width: 100%` collapsed to the
+   * content's own size (the strip hugged the board at 368px instead of being
+   * the width it was asked for) and `max-width: 100%` failed to clamp at all,
+   * overflowing a 390px phone by 40px. 100vw has no such ambiguity. */
+  width: 430px;
+  max-width: 100vw;
+  min-height: 100dvh;
+  flex: 0 0 auto;
+  /* Opt out of the classic zoom tiers. They scale the 880px wide layout up to
+   * fill a large monitor; applied to a portrait strip they made it taller
+   * than the viewport and put the whole game on a scrollbar. A deliberate
+   * scale for big screens is a later iteration's call. */
+  zoom: 1;
+}
+
+/* The backdrop is a ::before layer rather than a background on .table itself
+ * so it can be positioned and scaled independently of the content, and so a
+ * future iteration can slide a scrim between it and the game by adding one
+ * more layer rather than restructuring. */
+:root[data-theme="pixelart"][data-layout="vertical"] .table::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url("../assets/throne-room.jpg");
+  /* cover, anchored to the top: the throne and its banners are the half worth
+   * keeping, and on a window taller than the image's ratio it's the floor
+   * that should run off the bottom, not the crown off the top. */
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  /* The art is pixel art; let it scale in hard squares rather than being
+   * smoothed into mush on a high-DPR phone. */
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* Everything the game renders sits above the backdrop. Applied to .table's
+ * children as a group rather than to each component, so a component added
+ * later is above the room by default instead of silently disappearing
+ * behind it. */
+:root[data-theme="pixelart"][data-layout="vertical"] .table > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The dialogs portal out of .table to the body, so the rule above doesn't
+ * reach them. They are already fixed-position overlays; this only makes sure
+ * they clear the strip. */
+:root[data-theme="pixelart"][data-layout="vertical"] .game-dialog {
+  z-index: 2;
+}
+
+/* ---------------------------------------------------------------------------
+ * Character cards
+ *
+ * The layout references all do the same thing: a framed portrait pinned in
+ * each top corner with its score attached, and the board below spanning the
+ * full width. That is already where the vertical layout puts the mascots, so
+ * this is a restyle rather than a re-placement — the sprite-on-a-pedestal
+ * becomes a portrait in a card.
+ * ------------------------------------------------------------------------ */
+
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait {
+  width: 80px;
+}
+
+/* Score chip on top, portrait below — the order both the references and the
+ * existing layout already use, and the reason the progress bar can run level
+ * with the two scores (that alignment is deliberate: the bar reads as the
+ * span between those two numbers).
+ *
+ * The stage is a fixed height because it is what the row's height comes from;
+ * the portrait takes whatever the chip leaves. */
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__stage {
+  height: 110px;
+}
+
+/* The figure is absolutely positioned inside the stage — that is how the
+ * pedestal mechanic raises the sprite. There is no pedestal here, so it goes
+ * back into normal flow and simply fills the card. */
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__figure {
+  position: static;
+  width: 100%;
+  height: 100%;
+  gap: 5px;
+  transform: none;
+  transition: none;
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__portrait {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  object-fit: cover;
+  /* Top-anchored: these are busts, and a centred crop cuts the crown off. */
+  object-position: 50% 6%;
+  display: block;
+  border: 1px solid var(--px-line);
+  background: var(--px-panel);
+  user-select: none;
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__score {
+  min-width: 46px;
+  padding: 3px 9px !important;
+  font-size: 10px !important;
+  background: #0b0912 !important;
+  border-width: 1px !important;
+  border-radius: 0;
+}
+
+/* Beaten: the card drains of colour and dims instead of toppling. The
+ * pedestal fall has nothing to fall off here. */
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__figure--falling {
+  animation: none;
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
+/* ---------------------------------------------------------------------------
+ * Progress bar
+ * ------------------------------------------------------------------------ */
+
+/* A hairline track spanning the gap between the two cards, level with their
+ * score chips. The 8bit Progress draws its own chunky pixel frame, so the
+ * parts are flattened individually rather than restyled as a whole. */
+/* Left where the vertical layout puts it — level with the two score chips,
+ * so it reads as the span between them. Only the drawing changes. */
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-progress {
+  margin-top: 13px;
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-progress [data-slot="progress"] {
+  height: 6px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--px-line) !important;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-progress [data-slot="progress-indicator"] {
+  background: linear-gradient(90deg, var(--px-pretender), #e7d6ff) !important;
+  border-radius: 0;
+}
+
+/* The 8bit component flanks the bar with decorative pixel bars; they are the
+ * one piece of chunky styling that can't be flattened, so they go. */
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-progress [data-slot="progress"] > div:not([data-slot="progress-indicator"]),
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-progress .absolute {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------------------
+ * Board — the room shows through it
+ * ------------------------------------------------------------------------ */
+
+/* The grid lines, not the fill, are what make this read as a board. At 0.3
+ * alpha the cells alone left the marbles floating loose over the room with no
+ * structure behind them — `.board`'s background paints through the 1px gaps
+ * between cells, so putting the line colour there draws the whole grid for
+ * free and lets the fill stay as transparent as asked. */
+:root[data-theme="pixelart"][data-layout="vertical"] .board {
+  background: var(--px-line);
+  border: 1px solid var(--px-line-strong);
+  box-shadow: none;
+  padding: 1px;
+  gap: 1px;
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .cell {
+  background: var(--px-board-fill);
+  /* Softens the room directly under the board only. The art stays visible
+   * and recognisable, but its detail stops competing with the marbles for
+   * the one area the player has to read precisely. */
+  backdrop-filter: blur(2px);
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .cell:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* The marbles are deliberately untouched — they are the one piece of the
+ * classic look this theme keeps as-is. */
+
+/* ---------------------------------------------------------------------------
+ * Controls — flat where classic is bevelled
+ * ------------------------------------------------------------------------ */
+
+:root[data-theme="pixelart"][data-layout="vertical"] .btn3d {
+  --btn-face: var(--px-panel);
+  --btn-light: transparent;
+  --btn-dark: transparent;
+  --btn-edge: transparent;
+  --btn-drop: 0px;
+
+  border: 1px solid var(--px-line);
+  box-shadow: none;
+  color: var(--px-text);
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .btn3d:hover {
+  --btn-face: rgba(255, 255, 255, 0.12);
+  border-color: var(--px-line-strong);
+}
+
+/* The bevel is what classic's pressed state inverts; with no bevel the press
+ * has to say something else, so it brightens and stays put. */
+:root[data-theme="pixelart"][data-layout="vertical"] .btn3d:active {
+  transform: none;
+  box-shadow: none;
+  --btn-face: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .toolbar__tool.is-active {
+  --btn-face: rgba(185, 140, 245, 0.35);
+  border-color: var(--px-pretender);
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .toolbar__count {
+  background: #0b0912;
+  border: 1px solid var(--px-line-strong);
+  color: var(--px-text);
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .toolbar__prompt {
+  color: var(--px-dim);
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .topbar__next-label {
+  color: var(--px-dim);
+}
+
+/* The controls strip sits over the throne, where pixel-art detail runs
+ * straight through the text. It gets its own panel so the row reads as UI
+ * rather than as part of the room. */
+:root[data-theme="pixelart"][data-layout="vertical"] .topbar {
+  background: var(--px-panel);
+  border: 1px solid var(--px-line);
+  /* Vertical padding only. The strip between the two cards is barely wider
+   * than the bar's three zones, so any horizontal padding here is enough to
+   * wrap Sound onto a second line. */
+  padding: 5px 0;
+  /* And a tighter gap than classic's 8px, because this theme's 1px button
+   * borders widen each zone by 2px — enough on their own to tip the row
+   * over the strip's width. */
+  gap: 5px;
+  backdrop-filter: blur(3px);
+}
+
+/* Same reasoning for the bar's track: over a bright patch of the room a
+ * hairline with a translucent track vanished entirely. */
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-progress [data-slot="progress"] {
+  background: rgba(8, 6, 14, 0.75) !important;
+}
+
+/* The tool rack, likewise — the buttons are translucent panels, and without
+ * a backing the room showed through them hard enough to make the icons
+ * difficult to pick out. */
+:root[data-theme="pixelart"][data-layout="vertical"] .toolbar__tool {
+  backdrop-filter: blur(3px);
+}
+
+/* Narrow phones. The cards have to give the controls strip its width back:
+ * the bar between them needs ~190px, and at 375px two 80px cards left it 179,
+ * which wrapped Sound onto a second line. 385, not the 370 the rest of the
+ * stylesheet uses, because this theme runs out of room sooner than the base
+ * layout does — the cards are wider than the sprite mascots they replace. */
+@media (max-width: 385px) {
+  :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait {
+    width: 58px;
+  }
+
+  /* The score chip has to fit INSIDE a card this narrow; at the wider size
+   * "100" hung 3px past the edge of the strip. */
+  :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__score {
+    min-width: 0;
+    padding: 2px 5px !important;
+    font-size: 9px !important;
+  }
+
+  :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__stage {
+    height: 86px;
+  }
+}

@@ -30,6 +30,10 @@ interface DuelMascotProps {
    * constants), not a CSS transform, so the score badge's text stays crisp
    * and legible instead of shrinking past readable size. */
   compact?: boolean;
+  /** A drawn portrait to show instead of the pixel sprite. Themes that have
+   * their own character art set this (see themes.ts `portraits`); when it's
+   * absent nothing about the sprite path changes. */
+  portrait?: string;
 }
 
 // Both sprites happen to transition from head to neck/collar at the same
@@ -49,7 +53,18 @@ function stripWeaponColumns(pixelRow: string): string {
   return `.${pixelRow.slice(1, -1)}.`;
 }
 
-export function DuelMascot({ name, rows, palette, score, accent, side, heightRatio, falling, compact }: DuelMascotProps) {
+export function DuelMascot({
+  name,
+  rows,
+  palette,
+  score,
+  accent,
+  side,
+  heightRatio,
+  falling,
+  compact,
+  portrait,
+}: DuelMascotProps) {
   const displayRows = compact ? rows.slice(0, HEAD_ROWS).map(stripWeaponColumns) : rows;
   const capHeight = compact ? PEDESTAL_CAP_HEIGHT_COMPACT : PEDESTAL_CAP_HEIGHT;
   const baseHeight = compact ? PEDESTAL_BASE_HEIGHT_COMPACT : PEDESTAL_BASE_HEIGHT;
@@ -63,7 +78,11 @@ export function DuelMascot({ name, rows, palette, score, accent, side, heightRat
   const fallSign = side === "left" ? -1 : 1;
 
   return (
-    <div className={`duel-mascot duel-mascot--${side}${compact ? " duel-mascot--compact" : ""}`}>
+    <div
+      className={`duel-mascot duel-mascot--${side}${compact ? " duel-mascot--compact" : ""}${
+        portrait ? " duel-mascot--portrait" : ""
+      }`}
+    >
       <div className="duel-mascot__stage">
         <div
           className={`duel-mascot__figure${falling ? " duel-mascot__figure--falling" : ""}`}
@@ -93,7 +112,11 @@ export function DuelMascot({ name, rows, palette, score, accent, side, heightRat
           >
             {score}
           </Badge>
-          <PixelArt rows={displayRows} palette={palette} pixelSize={compact ? 4 : 6} label={name} />
+          {portrait ? (
+            <img className="duel-mascot__portrait" src={portrait} alt={name} draggable={false} />
+          ) : (
+            <PixelArt rows={displayRows} palette={palette} pixelSize={compact ? 4 : 6} label={name} />
+          )}
         </div>
         <Pedestal accent={accent} shaftHeight={shaftHeight} height={pedestalHeight} compact={compact} />
       </div>
