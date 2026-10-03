@@ -119,53 +119,76 @@
  * becomes a portrait in a card.
  * ------------------------------------------------------------------------ */
 
+/* Narrow and tall, to match the full-body art's own ~0.6 aspect. A card
+ * shaped like a bust leaves a standing figure letterboxed with dead space
+ * either side; shaped like the figure, it very nearly fills. */
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait {
-  width: 80px;
+  width: 64px;
 }
 
-/* Score chip on top, portrait below — the order both the references and the
- * existing layout already use, and the reason the progress bar can run level
- * with the two scores (that alignment is deliberate: the bar reads as the
- * span between those two numbers).
- *
- * The stage is a fixed height because it is what the row's height comes from;
- * the portrait takes whatever the chip leaves. */
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__stage {
-  height: 110px;
+  height: 116px;
 }
 
-/* The figure is absolutely positioned inside the stage — that is how the
- * pedestal mechanic raises the sprite. There is no pedestal here, so it goes
- * back into normal flow and simply fills the card. */
+/* The figure IS the frame. It is absolutely positioned inside the stage
+ * normally — that is how the pedestal mechanic raises the sprite — so it
+ * goes back into flow here and becomes the card: a bordered box holding the
+ * score strip above the portrait, which is how the references frame theirs.
+ *
+ * --px-frame is set per side below, so each duellist's frame carries their
+ * own colour the way the score chip already does. */
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__figure {
   position: static;
   width: 100%;
   height: 100%;
-  gap: 5px;
+  gap: 0;
+  padding: 2px;
+  border: 2px solid var(--px-frame, var(--px-line-strong));
+  background: rgba(8, 6, 14, 0.72);
+  backdrop-filter: blur(3px);
   transform: none;
   transition: none;
 }
 
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--left .duel-mascot__figure {
+  --px-frame: var(--px-king);
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--right .duel-mascot__figure {
+  --px-frame: var(--px-pretender);
+}
+
+/* contain, not cover: the brief is the WHOLE figure in the frame, and cover
+ * crops whichever axis overflows — which on a standing figure is the legs. */
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__portrait {
   flex: 1;
   width: 100%;
   min-height: 0;
-  object-fit: cover;
-  /* Top-anchored: these are busts, and a centred crop cuts the crown off. */
-  object-position: 50% 6%;
+  object-fit: contain;
+  object-position: 50% 100%;
   display: block;
-  border: 1px solid var(--px-line);
-  background: var(--px-panel);
   user-select: none;
 }
 
+/* The score sits inside the frame as its top strip, separated by a rule —
+ * the reference's gold plaque, flattened to this theme's language. */
 :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__score {
-  min-width: 46px;
-  padding: 3px 9px !important;
-  font-size: 10px !important;
-  background: #0b0912 !important;
-  border-width: 1px !important;
+  width: 100%;
+  min-width: 0;
+  /* The Badge brings its own min-height; without this the strip ate 30px of
+   * a 112px card and squeezed the figure. */
+  min-height: 0;
+  height: auto;
+  line-height: 1;
+  padding: 2px 0 3px !important;
+  font-size: 9px !important;
+  text-align: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--px-frame, var(--px-line)) !important;
   border-radius: 0;
+  color: var(--px-frame, var(--px-text)) !important;
 }
 
 /* Beaten: the card drains of colour and dims instead of toppling. The
@@ -326,7 +349,7 @@
  * layout does — the cards are wider than the sprite mascots they replace. */
 @media (max-width: 385px) {
   :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait {
-    width: 58px;
+    width: 52px;
   }
 
   /* The score chip has to fit INSIDE a card this narrow; at the wider size
@@ -338,6 +361,19 @@
   }
 
   :root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__stage {
-    height: 86px;
+    height: 96px;
   }
+}
+
+/* The score chip is a wrapper around the 8bit Badge; the height lives on the
+ * badge INSIDE it, so styling only the wrapper left a 30px strip eating a
+ * quarter of a 116px card. */
+:root[data-theme="pixelart"][data-layout="vertical"] .duel-mascot--portrait .duel-mascot__score > [data-slot="badge"] {
+  width: 100%;
+  min-height: 0;
+  padding: 1px 2px !important;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+  color: inherit !important;
 }
