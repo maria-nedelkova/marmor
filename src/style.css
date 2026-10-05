@@ -61,12 +61,19 @@
 .btn-key {
   --btn-face: rgba(8, 13, 34, 0.9);
   --btn-line: var(--mr-accent);
+  --btn-line-end: var(--neon-edge);
   --btn-glow: rgba(41, 241, 255, 0.4);
 
   position: relative;
-  border: 2px solid var(--btn-line);
+  /* Gradient edge, the same two-layer trick the panel and the score chips
+   * use: fill clipped to the padding box, gradient clipped to the border
+   * box and showing only through a transparent border. Variants recolour it
+   * by setting the two --btn-line-* ends. */
+  border: 2px solid transparent;
   border-radius: 7px;
-  background: var(--btn-face);
+  background:
+    linear-gradient(var(--btn-face), var(--btn-face)) padding-box,
+    linear-gradient(to bottom, var(--btn-line), var(--btn-line-end)) border-box;
   box-shadow:
     0 0 10px var(--btn-glow),
     inset 0 0 10px rgba(255, 255, 255, 0.05);
@@ -85,6 +92,7 @@
  * opens up. Staying put also means a press never nudges the layout. */
 .btn-key:active {
   --btn-line: #fff;
+  --btn-line-end: #ffd6f3;
   --btn-glow: rgba(41, 241, 255, 0.95);
   --btn-face: rgba(40, 62, 124, 0.95);
 }
@@ -197,15 +205,6 @@ body {
   margin-bottom: 18px;
 }
 
-/* The frame is the positioning context for the two stars. They cannot live
- * inside the plaque: it is clipped to its corner-cut shape, and a child
- * would be clipped away with it. */
-.titlebar__frame {
-  position: relative;
-  display: inline-block;
-  margin: 0;
-}
-
 /* Cut corners rather than rounded ones, the way the reference frames its
  * title. The outline is two stacked clipped layers, not a border: clip-path
  * cuts through everything including the border, so a bordered box would come
@@ -213,27 +212,61 @@ body {
  * the gradient, its padding is the line's thickness, and ::before is the
  * fill clipped to the same shape one step in. */
 .titlebar__plaque {
-  --plaque-cut: 13px;
+  --plaque-cut: 27px;
+  --plaque-step: calc(var(--plaque-cut) / 3);
 
   position: relative;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
   padding: 2px;
   background: linear-gradient(to bottom, var(--neon-edge), var(--mr-accent));
+  /* Stepped ends, not smooth diagonals. A 45-degree clip renders as an
+   * antialiased slope, which is the one thing that looks out of place in a
+   * game drawn entirely in hard pixels — the reference's banner steps down
+   * in a staircase instead, and so does this.
+   *
+   * Three steps per half-end, each one --plaque-step wide and a sixth of the
+   * height tall, so the ends close to a short vertical edge rather than to a
+   * mathematical point. That IS how a point is drawn in pixel art. */
   clip-path: polygon(
     var(--plaque-cut) 0,
-    calc(100% - var(--plaque-cut)) 0,
-    100% var(--plaque-cut),
-    100% calc(100% - var(--plaque-cut)),
-    calc(100% - var(--plaque-cut)) 100%,
+    calc(var(--plaque-step) * 2) 0,
+    calc(var(--plaque-step) * 2) 16.66%,
+    var(--plaque-step) 16.66%,
+    var(--plaque-step) 33.33%,
+    0 33.33%,
+    0 66.66%,
+    var(--plaque-step) 66.66%,
+    var(--plaque-step) 83.33%,
+    calc(var(--plaque-step) * 2) 83.33%,
+    calc(var(--plaque-step) * 2) 100%,
     var(--plaque-cut) 100%,
-    0 calc(100% - var(--plaque-cut)),
-    0 var(--plaque-cut)
+    calc(100% - var(--plaque-cut)) 100%,
+    calc(100% - var(--plaque-step) * 2) 100%,
+    calc(100% - var(--plaque-step) * 2) 83.33%,
+    calc(100% - var(--plaque-step)) 83.33%,
+    calc(100% - var(--plaque-step)) 66.66%,
+    100% 66.66%,
+    100% 33.33%,
+    calc(100% - var(--plaque-step)) 33.33%,
+    calc(100% - var(--plaque-step)) 16.66%,
+    calc(100% - var(--plaque-step) * 2) 16.66%,
+    calc(100% - var(--plaque-step) * 2) 0,
+    calc(100% - var(--plaque-cut)) 0
   );
-  filter: drop-shadow(0 0 7px var(--neon-glow));
+  margin: 0;
+  /* The same halo the score chips wear. drop-shadow rather than box-shadow:
+   * a box-shadow traces the element's unclipped rectangle, so it would draw
+   * a glowing box around a cut-corner plaque. Two passes — a tight bright
+   * one and a wide soft one — is what reads as lit rather than as a blur. */
+  filter:
+    drop-shadow(0 0 4px rgba(255, 82, 200, 0.9))
+    drop-shadow(0 0 12px rgba(255, 82, 200, 0.55))
+    drop-shadow(0 0 24px rgba(255, 82, 200, 0.3));
 }
+
 
 .titlebar__plaque::before {
   content: "";
@@ -253,39 +286,46 @@ body {
 }
 
 .titlebar__name {
-  margin-top: 10px;
-  padding: 0 28px;
+  margin-top: 15px;
+  /* Wide enough to clear the stepped ends and the decoration that sits
+   * inside them, so the text crowds neither. */
+  padding: 0 48px;
   font-size: 28px;
   letter-spacing: 6px;
   color: var(--mr-accent);
 }
 
 .titlebar__level {
-  margin-bottom: 10px;
-  padding: 0 28px;
+  margin-bottom: 15px;
+  padding: 0 48px;
   font-size: 20px;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: #f2f7ff;
 }
 
-/* Pinned to the plaque's ends, overlapping them — the reference sets its
- * stars into the frame rather than beside it. */
-.titlebar__star {
+/* Decoration scattered INSIDE the frame, in the margins either side of the
+ * two text lines. Absolute, so none of it affects the plaque's size, and
+ * inside the clip, so the cut corners trim anything that strays. */
+.titlebar__speck {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  z-index: 1;
   line-height: 0;
   pointer-events: none;
 }
 
-.titlebar__star--left {
-  left: -8px;
-}
+/* The two stars, one at each end. */
+.titlebar__speck--a { left: 15px; top: 50%; transform: translateY(-50%); }
+.titlebar__speck--b { right: 15px; top: 50%; transform: translateY(-50%); }
 
-.titlebar__star--right {
-  right: -8px;
-}
+/* Four sparkles at the inner corners, mirrored both ways, so the six pieces
+ * sit as a symmetric diamond around the text rather than as a cluster down
+ * each side. The two smallest take the bottom corners, which keeps the
+ * weight off the lower edge where the level line already sits. */
+.titlebar__speck--c { left: 36px; top: 10px; }
+.titlebar__speck--f { right: 36px; top: 10px; }
+.titlebar__speck--e { left: 36px; bottom: 10px; }
+.titlebar__speck--d { right: 36px; bottom: 10px; }
 
 @keyframes flicker {
   0%, 92%, 100% { opacity: 1; }
@@ -518,7 +558,13 @@ body {
    * game/constants.ts — changing it here alone would desync the animation
    * from the cells it's stepping between. */
   gap: 3px;
-  background: var(--grid-line);
+  /* The grid, as a left-to-right gradient. The 3px gaps between cells ARE
+   * the lines — they are this background showing through — so a gradient
+   * here runs across the whole grid at once: blue down the left side,
+   * through violet, to magenta on the right, which is how the reference
+   * colours its board. --grid-line stays as the flat fallback the pixelart
+   * theme overrides. */
+  background: linear-gradient(90deg, #6d8bff 0%, #a14ff0 52%, #ff52c8 100%);
   /* 3px, matching the gap. .board's background is what paints the grid
    * lines, so this padding is a band of the same violet around the outside
    * of the cells — at 10px it read as a second, purple border inside the
@@ -529,15 +575,11 @@ body {
    * saturated border reads as a painted frame — what makes a line look lit
    * is that its centre is brighter than its colour, and that the colour
    * falls off into the dark around it. */
-  /* 6px — twice the 3px grid line, which is the proportion the reference
-   * frames its board with: heavy enough to read as the board's edge rather
-   * than as one more grid line, light enough not to become a picture frame.
-   *
-   * At this width the core carries the hue on its own. A near-white band
-   * reads as a white frame with a pink glow stuck to it, and a bright inset
-   * hairline inside the frame just reads as a second, thinner border — the
-   * light has to come from the halo outside it, not from a line within. */
-  border: 6px solid #ff52c8;
+  /* 3px — the same weight as a grid line, which is how the reference frames
+   * its board: the edge is told apart from the grid by its colour and its
+   * glow, not by being heavier. An earlier 6px version read as a picture
+   * frame around the play area rather than as the last line of the grid. */
+  border: 3px solid #ff52c8;
   box-shadow:
     0 0 8px rgba(255, 82, 200, 0.8),
     0 0 20px rgba(255, 82, 200, 0.45),
@@ -605,7 +647,10 @@ body {
    * into the gap around it, and the line ends up brightest along its middle
    * where two halos meet. The gap itself can't change: the glide overlay
    * positions from CELL_GAP_PX in game/constants.ts. */
-  box-shadow: 0 0 6px rgba(138, 79, 245, 0.5);
+  /* Softer than it was: the gaps now carry a gradient of their own, and a
+   * strong single-hue halo over it flattened the blue end back to violet.
+   * This is enough to make the lines read as lit without tinting them. */
+  box-shadow: 0 0 6px rgba(150, 110, 240, 0.3);
   position: relative;
   display: flex;
   align-items: center;
@@ -1137,6 +1182,7 @@ body {
 .dialog-btn--ghost {
   --btn-face: rgba(12, 18, 44, 0.85);
   --btn-line: #3a4680;
+  --btn-line-end: #2a3160;
   --btn-glow: rgba(58, 70, 128, 0.35);
 
   color: var(--mr-muted);
@@ -1145,6 +1191,7 @@ body {
 .dialog-btn--ghost:hover {
   --btn-face: rgba(26, 36, 80, 0.9);
   --btn-line: #5a68b0;
+  --btn-line-end: #46508f;
   --btn-glow: rgba(90, 104, 176, 0.5);
   color: var(--text);
 }
@@ -1361,6 +1408,7 @@ body {
 .toolbar__tool.is-active {
   --btn-face: rgba(15, 125, 142, 0.85);
   --btn-line: #7ff0ff;
+  --btn-line-end: #2fb6d6;
   --btn-glow: rgba(79, 210, 230, 0.85);
 }
 
@@ -1375,6 +1423,7 @@ body {
 .toolbar__tool.is-locked {
   --btn-face: rgba(14, 18, 40, 0.75);
   --btn-line: #2c3350;
+  --btn-line-end: #1d2238;
   --btn-glow: transparent;
 }
 
@@ -1552,6 +1601,7 @@ body {
 .menu-item--wide {
   --btn-face: rgba(15, 125, 142, 0.85);
   --btn-line: #7ff0ff;
+  --btn-line-end: #2fb6d6;
   --btn-glow: rgba(79, 210, 230, 0.6);
 
   grid-column: 1 / -1;
@@ -1563,6 +1613,7 @@ body {
 .menu-item--wide:hover {
   --btn-face: rgba(19, 157, 178, 0.92);
   --btn-line: #dffbff;
+  --btn-line-end: #6fe6ff;
   --btn-glow: rgba(127, 240, 255, 0.9);
 }
 
@@ -1801,24 +1852,30 @@ body {
   }
 
   .titlebar__plaque {
-    --plaque-cut: 9px;
+    --plaque-cut: 18px;
 
     gap: 5px;
   }
 
   .titlebar__name {
-    margin-top: 7px;
-    padding: 0 18px;
+    margin-top: 10px;
+    padding: 0 34px;
     font-size: 16px;
     letter-spacing: 3px;
   }
 
   .titlebar__level {
-    margin-bottom: 7px;
-    padding: 0 18px;
+    margin-bottom: 10px;
+    padding: 0 34px;
     font-size: 13px;
     letter-spacing: 2px;
   }
+
+  /* The plaque is narrower here, so the corner sparkles come in with it. */
+  .titlebar__speck--c, .titlebar__speck--e { left: 25px; }
+  .titlebar__speck--d, .titlebar__speck--f { right: 25px; }
+  .titlebar__speck--a { left: 10px; }
+  .titlebar__speck--b { right: 10px; }
 
   .level-dialog__next-label {
     font-size: 9px;
