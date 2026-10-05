@@ -579,15 +579,25 @@ body {
    * saturated border reads as a painted frame — what makes a line look lit
    * is that its centre is brighter than its colour, and that the colour
    * falls off into the dark around it. */
-  /* 3px — the same weight as a grid line, which is how the reference frames
-   * its board: the edge is told apart from the grid by its colour and its
-   * glow, not by being heavier. An earlier 6px version read as a picture
-   * frame around the play area rather than as the last line of the grid. */
-  border: 3px solid #ff52c8;
+  /* A neon tube in cross-section: a near-white core with pink pressed
+   * against both of its sides, then the colour falling away into the dark.
+   * That is what makes a line read as LIT rather than as painted — the
+   * centre of a lit tube is blown out to white and only its spill carries
+   * the hue. A solid pink band of the same width had the colour but none of
+   * the effect.
+   *
+   * Built from rings rather than a thick border so the three bands can
+   * differ: 1px of border for the core, one pink ring inside it and one
+   * outside, ~3px painted in total — the weight of a grid line, which is
+   * how the reference frames its board. The rings are box-shadows, so only
+   * the 1px core counts toward layout. */
+  border: 1px solid #fff2fb;
   box-shadow:
-    0 0 8px rgba(255, 82, 200, 0.8),
-    0 0 20px rgba(255, 82, 200, 0.45),
-    0 0 40px rgba(255, 82, 200, 0.22),
+    0 0 0 1px #ff52c8,
+    inset 0 0 0 1px #ff52c8,
+    0 0 7px rgba(255, 82, 200, 0.9),
+    0 0 18px rgba(255, 82, 200, 0.55),
+    0 0 38px rgba(255, 82, 200, 0.28),
     inset 0 0 14px rgba(255, 82, 200, 0.14);
 }
 
