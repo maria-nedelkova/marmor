@@ -558,13 +558,17 @@ body {
    * game/constants.ts — changing it here alone would desync the animation
    * from the cells it's stepping between. */
   gap: 3px;
-  /* The grid, as a left-to-right gradient. The 3px gaps between cells ARE
-   * the lines — they are this background showing through — so a gradient
-   * here runs across the whole grid at once: blue down the left side,
-   * through violet, to magenta on the right, which is how the reference
-   * colours its board. --grid-line stays as the flat fallback the pixelart
-   * theme overrides. */
-  background: linear-gradient(90deg, #6d8bff 0%, #a14ff0 52%, #ff52c8 100%);
+  /* The grid, as a radial gradient: pink at the middle of the board falling
+   * to purple at its edges. The 3px gaps between cells ARE the lines — they
+   * are this background showing through — so one gradient here colours the
+   * whole grid at once, and a radial one puts the brightest hue where the
+   * play actually is.
+   *
+   * `circle` rather than the default ellipse: the board is square, so they
+   * agree here, but an ellipse would stretch with it if the board ever
+   * stopped being square, and the falloff should stay concentric.
+   * --grid-line remains the flat fallback the pixelart theme overrides. */
+  background: radial-gradient(circle, #ff5ccd 0%, #c04ce8 42%, #7b52e8 100%);
   /* 3px, matching the gap. .board's background is what paints the grid
    * lines, so this padding is a band of the same violet around the outside
    * of the cells — at 10px it read as a second, purple border inside the
