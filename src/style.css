@@ -203,6 +203,20 @@ body {
 .titlebar {
   text-align: center;
   margin-bottom: 18px;
+  /* The plaque's glow lives HERE, on its unclipped parent, not on the plaque
+   * itself. clip-path clips the output of filter — so a drop-shadow set on a
+   * clipped element has its entire halo cut away by the very shape it is
+   * meant to surround, which is why the plaque looked flat however bright
+   * the shadow was set. On the parent the filter sees the already-clipped
+   * plaque and spreads freely around it.
+   *
+   * Tight to wide: the first pass tints the white line's edge pink, the rest
+   * are the spill that makes it read as lit. */
+  filter:
+    drop-shadow(0 0 2px rgba(255, 82, 200, 0.95))
+    drop-shadow(0 0 7px rgba(255, 82, 200, 0.8))
+    drop-shadow(0 0 16px rgba(255, 82, 200, 0.5))
+    drop-shadow(0 0 32px rgba(255, 82, 200, 0.25));
 }
 
 /* Cut corners rather than rounded ones, the way the reference frames its
@@ -221,7 +235,13 @@ body {
   align-items: center;
   gap: 9px;
   padding: 2px;
-  background: linear-gradient(to bottom, var(--neon-edge), var(--mr-accent));
+  /* A near-white line, with the magenta carried entirely by the glow below
+   * — which is what the reference does, and the reason its banner reads as a
+   * lit tube rather than as a coloured outline. A magenta-to-cyan gradient
+   * here looked like a gradient; the eye reads a lit edge from the fact that
+   * its core is blown out and only the spill around it is coloured. */
+  background: linear-gradient(to bottom, #fffbfe, #efe4ff);
+
   /* Stepped ends, not smooth diagonals. A 45-degree clip renders as an
    * antialiased slope, which is the one thing that looks out of place in a
    * game drawn entirely in hard pixels — the reference's banner steps down
@@ -261,10 +281,6 @@ body {
    * a box-shadow traces the element's unclipped rectangle, so it would draw
    * a glowing box around a cut-corner plaque. Two passes — a tight bright
    * one and a wide soft one — is what reads as lit rather than as a blur. */
-  filter:
-    drop-shadow(0 0 4px rgba(255, 82, 200, 0.9))
-    drop-shadow(0 0 12px rgba(255, 82, 200, 0.55))
-    drop-shadow(0 0 24px rgba(255, 82, 200, 0.3));
 }
 
 
