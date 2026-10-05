@@ -213,10 +213,9 @@ body {
    * Tight to wide: the first pass tints the white line's edge pink, the rest
    * are the spill that makes it read as lit. */
   filter:
-    drop-shadow(0 0 2px rgba(255, 82, 200, 0.95))
-    drop-shadow(0 0 7px rgba(255, 82, 200, 0.8))
-    drop-shadow(0 0 16px rgba(255, 82, 200, 0.5))
-    drop-shadow(0 0 32px rgba(255, 82, 200, 0.25));
+    drop-shadow(0 0 2px rgba(255, 82, 200, 0.55))
+    drop-shadow(0 0 8px rgba(255, 82, 200, 0.42))
+    drop-shadow(0 0 20px rgba(255, 82, 200, 0.22));
 }
 
 /* Cut corners rather than rounded ones, the way the reference frames its
@@ -233,7 +232,7 @@ body {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 9px;
+  gap: 14px;
   padding: 2px;
   /* A near-white line, with the magenta carried entirely by the glow below
    * — which is what the reference does, and the reason its banner reads as a
@@ -1884,7 +1883,7 @@ body {
   .titlebar__plaque {
     --plaque-cut: 18px;
 
-    gap: 5px;
+    gap: 9px;
   }
 
   .titlebar__name {
@@ -1924,11 +1923,14 @@ body {
    * for it comes off the queue, not off the keys: 44px is the smallest a
    * tap target should be, and the marbles beside it are only being looked
    * at. */
+  /* Its own row at the bottom of the screen, and sized like the desktop bar
+   * rather than squeezed: it no longer has to fit the narrow strip between
+   * the two mascots, so it gets the full padding and gap back. */
   .topbar {
+    grid-area: controls;
+    align-self: end;
     max-width: none;
-    margin: 8px 0 0;
-    padding: 5px 6px;
-    gap: 6px;
+    margin: 0;
     flex-shrink: 0;
   }
 
@@ -1952,28 +1954,26 @@ body {
    * it reveals the hidden marble. min-width reserves the fourth slot even
    * while it is empty, so revealing it doesn't shunt the Menu and Sound
    * buttons sideways mid-turn. */
+  /* Bigger again: the bar is no longer squeezed into the strip between the
+   * mascots, so the queue does not have to give up width for it. */
   .next-preview {
-    gap: 4px;
-    min-width: 76px; /* 4x16 + 3x4 */
+    gap: 5px;
+    min-width: 103px; /* 4x22 + 3x5 */
     justify-content: center;
   }
 
   .next-preview .marble {
-    width: 16px;
-    height: 16px;
+    width: 22px;
+    height: 22px;
   }
 
+  /* Stretches to fill the column rather than being centred in it, so the
+   * last row can hold the controls against the bottom of the screen. The
+   * fourth track is the one that absorbs the slack; everything above it
+   * stacks under the title at its natural height. */
   .layout {
-    /* auto on BOTH sides, so the leftover vertical space is split equally
-     * above and below rather than piling up in one gap. With the title
-     * clipped out of flow this is now the only thing in the column, so the
-     * two autos simply centre it in the viewport.
-     *
-     * margin-top alone (what this used to be) dumped all the slack into one
-     * gap — measured 262px of dead space above against 16px below, which is
-     * what used to make the bottom row look cropped. */
-    margin-top: auto;
-    margin-bottom: auto;
+    flex: 1;
+    margin: 0;
     display: grid;
     grid-template-columns: auto 1fr auto;
     /* Pretender left, King right — the reverse of desktop. The progress bar
@@ -1984,16 +1984,21 @@ body {
      * that are swapped relative to them here. */
     grid-template-areas:
       "pretender mid   king"
+      "tools     tools tools"
       "board     board board"
-      "tools     tools tools";
+      "controls  controls controls";
+    grid-template-rows: auto auto auto 1fr;
     row-gap: 10px;
     column-gap: 8px;
     justify-items: center;
-    /* start, not center: the middle strip is now taller than the mascots
-     * (progress bar plus the controls under it), and centering would drop
-     * the mascots half that difference, taking their score badges out of
-     * line with the bar. */
     align-items: start;
+  }
+
+  /* Broken apart so the progress bar and the controls can take separate
+   * rows: the bar stays between the mascots, the controls go to the bottom
+   * of the screen. On desktop this wrapper is still one grid area. */
+  .duel-middle {
+    display: contents;
   }
 
   /* The strip between the two mascots carries the controls on mobile, so it
@@ -2008,10 +2013,17 @@ body {
    * at the Pretender's badge on the left, 100 at the King's on the right —
    * instead of floating between two heads. The offset is the badge's own
    * half-height, which is what puts the bar through the middle of them. */
+  /* Centred between the two mascots rather than lined up with their score
+   * chips. It used to share the strip with the controls and sat level with
+   * the numbers it spans; with the controls moved to their own row down the
+   * bottom, the strip holds only the bar, and centring it is what reads as
+   * the span between the two figures. */
   .duel-progress {
+    grid-area: mid;
+    align-self: center;
     display: block;
     width: 100%;
-    margin-top: 2px;
+    margin: 0;
   }
 
   /* Broken apart here: the desktop stack puts the rack above the board, but
@@ -2023,8 +2035,7 @@ body {
 
   .toolbar {
     grid-area: tools;
-    /* The grid's row-gap already separates it from the board; the desktop
-     * margin is for the rack sitting above one. */
+    /* The grid's row-gap does the separating here. */
     margin: 0;
   }
 
@@ -2242,15 +2253,8 @@ body {
     transform: scale(0.56);
   }
 
-  /* The controls sit in the strip between the two mascots, and below this
-   * width that strip is too narrow for the bar's three zones — measured at
-   * 320px and 360px, the row wrapped onto a second line and doubled its
-   * height. The next three rules buy the strip back the ~50px it needs:
-   * narrower mascots, a tighter column gap, and the "Next up" caption
-   * dropped so the queue is just its three marbles. The caption is the
-   * cheapest of the three to lose — it sits directly above the marbles it
-   * names, which are already the only marbles on screen outside the
-   * board. */
+  /* Narrower mascots so the progress bar between them still has a span worth
+   * showing at this width. */
   .duel-mascot--compact {
     width: 62px;
   }
@@ -2259,35 +2263,11 @@ body {
     column-gap: 4px;
   }
 
-  /* The trinket row is the first thing to go: the panel at this width has
-   * no room for decoration, and it carries nothing. */
-  .topbar__trinkets {
-    display: none;
-  }
-
-  /* Still over at 320px after the three rules above, so the bar's own gap
-   * and the queue marbles come down again: 44 + 76 + 44 + 2x4 = 172 into a
-   * 176px strip, with the queue again reserving all four slots. */
-  /* 40 + 4 + 76 + 4 + 40, plus 6px of padding and 4px of border, is 174
-   * into the 176px strip this width leaves between the mascots. */
-  .topbar {
-    padding: 4px 3px;
-    gap: 4px;
-  }
-
-  .topbar__key {
-    width: 40px;
-    height: 40px;
-  }
-
-  .next-preview {
-    min-width: 76px; /* 4x16 + 3x4 */
-  }
-
-  .next-preview .marble {
-    width: 16px;
-    height: 16px;
-  }
+  /* Everything that used to shrink the controls here is gone. It was all to
+   * fit them into the strip between the two mascots, which was ~176px wide;
+   * the bar now has its own row across the bottom of the screen, where even
+   * 320px leaves 308 against the ~275 it wants. The keys, the queue and the
+   * trinkets all keep their full size. */
 
   /* Six tools don't fit this width at the 48px size: 6x48 + 5x10 is 338
    * against a 300px board. 6x42 + 5x8 = 292 does, and keeps the 8px gap the
