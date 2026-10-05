@@ -286,28 +286,40 @@ body {
 /* A lit sign rather than a label. currentColor is doing the work: DuelMascot
  * sets `color` inline to each duellist's accent, so the halo takes that
  * colour without the accent having to be duplicated into CSS. */
+/* The same double-lined frame the control panel wears — a coloured edge with
+ * a second line standing off it — but in each duellist's own colour: gold
+ * for the King, violet for the Pretender.
+ *
+ * All of it is driven by currentColor, which DuelMascot already sets inline
+ * per mascot. That is the whole reason this needs no per-side rules: the
+ * ring is the same colour mixed down, so one declaration produces both
+ * chips, and a third duellist would arrive already styled. */
 .duel-mascot__score {
   font-size: 16px !important;
   padding: 4px 14px !important;
-  background: var(--panel) !important;
+  /* One gradient edge rather than two stacked lines: the duellist's own
+   * colour running into the game's cyan, which is how the reference draws
+   * its frames.
+   *
+   * Two background layers do it. The first is the fill, clipped to the
+   * padding box; the second is the gradient, clipped to the border box and
+   * showing only where the transparent border sits. border-image would be
+   * simpler but it cannot do rounded corners. */
+  border: 2px solid transparent !important;
+  border-radius: 9px;
+  background:
+    linear-gradient(var(--panel), var(--panel)) padding-box,
+    linear-gradient(135deg, var(--mascot-accent), var(--mr-accent)) border-box !important;
   box-shadow:
-    0 0 10px currentColor,
+    0 0 12px color-mix(in srgb, var(--mascot-accent) 70%, transparent),
     inset 0 0 10px rgba(255, 255, 255, 0.08);
 }
 
-/* Bracketed, the way a score reads on an arcade cabinet. Decoration, so it
- * goes on the badge rather than into the number the component renders —
- * which keeps the accessible name a plain figure. */
-.duel-mascot__score [data-slot="badge"]::before {
-  content: "[";
-  margin-right: 2px;
-  opacity: 0.75;
-}
-
-.duel-mascot__score [data-slot="badge"]::after {
-  content: "]";
-  margin-left: 2px;
-  opacity: 0.75;
+/* The Badge's own outline, which `variant="outline"` puts on its inner
+ * element with a square radius. Inside the rounded frame above it read as a
+ * second, squared border boxed in by the first. */
+.duel-mascot__score [data-slot="badge"] {
+  border: none !important;
 }
 
 /* The 8bit Badge draws decorative pixel bars flanking the badge; they render
@@ -433,18 +445,29 @@ body {
    * from the cells it's stepping between. */
   gap: 3px;
   background: var(--grid-line);
-  padding: 10px;
+  /* 3px, matching the gap. .board's background is what paints the grid
+   * lines, so this padding is a band of the same violet around the outside
+   * of the cells — at 10px it read as a second, purple border inside the
+   * pink one. At 3px it is simply the grid's outermost line. */
+  padding: 3px;
   /* A neon tube, not a coloured border: a 1px near-white core with the hue
    * carried entirely by halos stacked around it, tight to wide. A thick
    * saturated border reads as a painted frame — what makes a line look lit
    * is that its centre is brighter than its colour, and that the colour
    * falls off into the dark around it. */
-  border: 1px solid #ffbbe8;
+  /* 6px — twice the 3px grid line, which is the proportion the reference
+   * frames its board with: heavy enough to read as the board's edge rather
+   * than as one more grid line, light enough not to become a picture frame.
+   *
+   * At this width the core carries the hue on its own. A near-white band
+   * reads as a white frame with a pink glow stuck to it, and a bright inset
+   * hairline inside the frame just reads as a second, thinner border — the
+   * light has to come from the halo outside it, not from a line within. */
+  border: 6px solid #ff52c8;
   box-shadow:
-    0 0 2px #ff52c8,
-    0 0 7px rgba(255, 82, 200, 0.85),
-    0 0 18px rgba(255, 82, 200, 0.5),
-    0 0 36px rgba(255, 82, 200, 0.25),
+    0 0 8px rgba(255, 82, 200, 0.8),
+    0 0 20px rgba(255, 82, 200, 0.45),
+    0 0 40px rgba(255, 82, 200, 0.22),
     inset 0 0 14px rgba(255, 82, 200, 0.14);
 }
 
@@ -679,18 +702,24 @@ body {
   /* Tight at the sides and generous in the middle, so the two keys sit out
    * on the panel's edges rather than hugging the queue. */
   padding: 10px 10px;
-  /* Double-lined: a magenta edge with a cyan line standing off it. One
-   * border plus an offset ring, rather than two nested elements — the ring
-   * is the second of the two box-shadow spreads below. */
-  border: 2px solid var(--neon-edge);
+  /* A single gradient edge, magenta running into cyan, the way the
+   * reference draws it — in place of a magenta border with a cyan ring
+   * standing off it. Two background layers: fill clipped to the padding
+   * box, gradient clipped to the border box and showing only through the
+   * transparent border.
+   *
+   * It also retires the ring that kept drawing back over the trinket break:
+   * with one 2px edge there is far less frame for that strip to cover.
+   *
+   * The fill stays opaque — the trinket strip repaints this exact colour,
+   * and it can only match a colour it knows. */
+  border: 2px solid transparent;
   border-radius: 12px;
-  /* Opaque, not translucent: the trinket strip has to repaint this exact
-   * colour to break the frame, and it can only match a colour it knows. */
-  background: #0b0920;
+  background:
+    linear-gradient(#0b0920, #0b0920) padding-box,
+    linear-gradient(135deg, var(--neon-edge), var(--mr-accent)) border-box;
   box-shadow:
     0 0 14px var(--neon-glow),
-    0 0 0 2px rgba(6, 8, 24, 0.9),
-    0 0 0 4px rgba(120, 190, 255, 0.5),
     inset 0 0 16px rgba(255, 82, 200, 0.12);
   display: flex;
   align-items: center;
@@ -801,12 +830,11 @@ body {
    * One flat colour cannot do this: it straddles two different backgrounds,
    * so whichever it matched, it read as a plate against the other.
    *
-   * The 20px is measured, not guessed. `bottom: 0` puts this strip against
-   * the panel's PADDING box, so with translateY(50%) its 12px mark is the
-   * padding-box edge. From there the frame runs: border 0-2px, dark ring
-   * 2-4px, cyan ring 2-6px — i.e. to the strip's 18px mark. A band stopping
-   * at 17px left exactly one pixel of the cyan ring showing through the
-   * break. 20px clears it with margin. */
+   * The numbers are measured, not guessed. `bottom: 0` puts this strip
+   * against the panel's PADDING box, so with translateY(50%) its 12px mark
+   * is the padding-box edge, and the 2px border runs from there to 14px.
+   * The band clears it with margin. It used to need to reach 18px, back
+   * when a cyan ring stood off the border; the gradient edge retired it. */
   background: linear-gradient(
     to bottom,
     #0b0920 0 12px,
@@ -1836,7 +1864,7 @@ body {
 
   .board-wrap {
     grid-area: board;
-    width: 354px; /* 536px unscaled footprint * 0.66 */
+    width: 354px; /* 528px unscaled footprint * 0.66, rounded up */
     height: 354px;
   }
 
@@ -2040,7 +2068,7 @@ body {
 @media (max-width: 370px) {
   :root[data-layout="vertical"] {
   .board-wrap {
-    width: 300px; /* 536px unscaled footprint * 0.56 */
+    width: 300px; /* 528px unscaled footprint * 0.56, rounded up */
     height: 300px;
   }
 

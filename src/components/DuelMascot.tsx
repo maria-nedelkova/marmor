@@ -82,6 +82,12 @@ export function DuelMascot({
       className={`duel-mascot duel-mascot--${side}${compact ? " duel-mascot--compact" : ""}${
         portrait ? " duel-mascot--portrait" : ""
       }`}
+      /* The accent as a custom property, set on the root so it inherits to
+       * everything below. It cannot ride on the Badge: that component puts
+       * `className` on its outer element but `style` on an inner span, so a
+       * property set there lands BELOW the element the stylesheet needs it
+       * on, and custom properties only inherit downward. */
+      style={{ "--mascot-accent": accent } as CSSProperties}
     >
       <div className="duel-mascot__stage">
         <div
@@ -104,11 +110,14 @@ export function DuelMascot({
             } as CSSProperties
           }
         >
+          {/* Colour only. borderColor is gone: the chip's frame is drawn in
+              CSS from --mascot-accent now, and the component's own outline
+              sat inside that frame as a second, thinner border. */}
           <Badge
             variant="outline"
             font="retro"
             className="duel-mascot__score"
-            style={{ borderColor: accent, color: accent }}
+            style={{ color: accent }}
           >
             {score}
           </Badge>
