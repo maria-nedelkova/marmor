@@ -103,3 +103,11 @@ export const HEART_PALETTE: PixelPalette = {
   m: "#f45fc8",
   d: "#b32e92",
 };
+
+/** The reference flanks its title with a cyan star on one side and a pink
+ * one on the other. */
+export const STAR_PINK_PALETTE: PixelPalette = {
+  l: "#ffd9f3",
+  m: "#f45fc8",
+  d: "#a82f80",
+};

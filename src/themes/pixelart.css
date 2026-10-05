@@ -445,12 +445,24 @@
  * sign; over a pixel-art hall they read as a sticker someone left on the
  * screen. The text-shadow needs !important because MarmorTitle sets it
  * inline, per letter. */
+/* The plaque keeps its cut-corner shape — that is structure, not classic's
+ * styling — but drops the neon. It is built as two stacked clipped layers
+ * (see .titlebar__plaque), so the outline is this element's background and
+ * the fill is the pseudo-element's: swapping both is all it takes. */
 :root[data-theme="pixelart"][data-layout="vertical"] .titlebar__plaque {
-  border: 1px solid var(--px-line);
-  border-radius: 0;
+  background: var(--px-line);
+  filter: none;
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .titlebar__plaque::before {
   background: var(--px-panel);
   backdrop-filter: blur(3px);
-  box-shadow: none;
+}
+
+/* Classic's stars are a neon-arcade flourish; over the hall they read as
+ * clip art stuck to the frame. */
+:root[data-theme="pixelart"][data-layout="vertical"] .titlebar__star {
+  display: none;
 }
 
 :root[data-theme="pixelart"][data-layout="vertical"] .titlebar__name {
