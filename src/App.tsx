@@ -137,7 +137,7 @@ export function App() {
   return (
     <div className="table">
       <header className="titlebar">
-        <MarmorTitle />
+        <MarmorTitle round={game.levelIndex + 1} />
       </header>
 
       <main className="layout">

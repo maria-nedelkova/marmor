@@ -157,60 +157,80 @@ body {
  * intended cell.
  *
  * Each tier is gated on BOTH dimensions, because height is the binding
- * constraint: the page is ~768px tall at zoom 1, so zoom Z needs about
- * 768*Z of viewport height and 880*Z of width. Gating on width alone would
- * push the controls off the bottom of a wide-but-short window. */
-@media (min-width: 1050px) and (min-height: 900px) {
+ * constraint: the page is ~865px tall at zoom 1, so zoom Z needs about
+ * 865*Z of viewport height and 880*Z of width. Gating on width alone would
+ * push the controls off the bottom of a wide-but-short window.
+ *
+ * Re-measure these when anything changes the page's height. The title
+ * plaque added ~97px and every gate below was suddenly a tier too
+ * generous, which put a 1100x960 window on a scrollbar. */
+@media (min-width: 1050px) and (min-height: 1000px) {
   .table {
     zoom: 1.15;
   }
 }
 
-@media (min-width: 1200px) and (min-height: 1020px) {
+@media (min-width: 1200px) and (min-height: 1130px) {
   .table {
     zoom: 1.3;
   }
 }
 
-@media (min-width: 1340px) and (min-height: 1140px) {
+@media (min-width: 1340px) and (min-height: 1260px) {
   .table {
     zoom: 1.45;
   }
 }
 
-@media (min-width: 1600px) and (min-height: 1300px) {
+@media (min-width: 1600px) and (min-height: 1480px) {
   .table {
     zoom: 1.7;
   }
 }
 
-/* The game's name is gone from the screen at every width now, not just on a
- * phone. It was a banner over a board that already says what it is, and the
- * room it took is better spent on the board.
- *
- * Clipped rather than `display: none` because this is the page's only <h1>:
- * display:none takes it out of the accessibility tree too and leaves the
- * document with no heading. Absolute positioning is what actually frees the
- * space — it takes the element out of flow. */
+/* The title plaque: the name over the round, in the same framed panel the
+ * controls and the score chips wear. It replaced a bare banner — a plaque
+ * earns its space by carrying the round number, which was otherwise only
+ * visible inside the pause menu. */
 .titlebar {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+  text-align: center;
+  margin-bottom: 18px;
 }
 
-/* Nothing paints it; don't keep a looping animation alive for it. */
-.titlebar__title {
-  font-family: var(--font-display);
-  font-size: 32px;
-  letter-spacing: 6px;
+.titlebar__plaque {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
   margin: 0;
+  padding: 10px 28px;
+  /* Same two-layer gradient edge as .topbar — see the note there on why the
+   * fill and the gradient are separate background layers. */
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background:
+    linear-gradient(#0b0920, #0b0920) padding-box,
+    linear-gradient(to bottom, var(--neon-edge), var(--mr-accent)) border-box;
+  box-shadow:
+    0 0 14px var(--neon-glow),
+    inset 0 0 16px rgba(255, 82, 200, 0.12);
+}
+
+.titlebar__name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 6px;
+  line-height: 1;
   color: var(--mr-accent);
-  animation: none;
+}
+
+.titlebar__level {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 3px;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--mr-muted);
 }
 
 @keyframes flicker {
@@ -309,7 +329,7 @@ body {
   border-radius: 9px;
   background:
     linear-gradient(var(--panel), var(--panel)) padding-box,
-    linear-gradient(135deg, var(--mascot-accent), var(--mr-accent)) border-box !important;
+    linear-gradient(to bottom, var(--mascot-accent), var(--mr-accent)) border-box !important;
   box-shadow:
     0 0 12px color-mix(in srgb, var(--mascot-accent) 70%, transparent),
     inset 0 0 10px rgba(255, 255, 255, 0.08);
@@ -717,7 +737,7 @@ body {
   border-radius: 12px;
   background:
     linear-gradient(#0b0920, #0b0920) padding-box,
-    linear-gradient(135deg, var(--neon-edge), var(--mr-accent)) border-box;
+    linear-gradient(to bottom, var(--neon-edge), var(--mr-accent)) border-box;
   box-shadow:
     0 0 14px var(--neon-glow),
     inset 0 0 16px rgba(255, 82, 200, 0.12);
@@ -1709,36 +1729,37 @@ body {
    * the one thing that's fine to require a scroll for. Pure CSS order —
    * the DOM order (and desktop's visual order, which is unaffected since
    * order only applies inside this media query) stays the same. */
-  /* Always pinned to the very top — only the mascots/board group below it
-   * (see .layout's margin-top: auto) is pushed down into the leftover
-   * space, not the title itself. */
-  /* No bottom margin: the sub-line that used to sit under the title is
-   * gone (it is the menu banner now), and a fixed margin here would be
-   * added on top of .layout's auto margins, making the gap above the
-   * board permanently larger than the one below it. */
-  /* The game's name is dead weight on a phone — you know what you opened,
-   * and the row it cost was the difference between the board sitting
-   * comfortably and the controls crowding it.
+  /* Pinned to the very top; only the mascots/board group below it (see
+   * .layout's margin-top: auto) is pushed into the leftover space.
    *
-   * Clipped rather than `display: none` because this is the page's only
-   * <h1>: display:none would take it out of the accessibility tree too and
-   * leave the document with no heading at all. Absolute positioning is what
-   * actually frees the space — it takes the element out of the flex flow,
-   * so .layout's auto margins get the whole viewport to centre in. */
+   * The plaque is smaller here but not gone. The name on its own was dead
+   * weight on a phone — you know what you opened — but the plaque now
+   * carries the round number too, which is the one thing in it a player
+   * might actually want mid-run, and which otherwise only appears inside
+   * the pause menu. */
   .titlebar {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    /* -1, not 1. .layout lost its own `order: 2` when the mobile layout was
+     * restructured, so it sits at the default 0 — and an order of 1 put the
+     * plaque AFTER it, at the bottom of the screen. A negative order is
+     * first whatever the siblings do. */
+    order: -1;
+    margin-bottom: 8px;
   }
 
-  /* Nothing is painting it; don't keep a looping animation alive for it. */
-  .titlebar__title {
-    animation: none;
+  .titlebar__plaque {
+    gap: 5px;
+    padding: 7px 18px;
+    border-radius: 10px;
+  }
+
+  .titlebar__name {
+    font-size: 16px;
+    letter-spacing: 3px;
+  }
+
+  .titlebar__level {
+    font-size: 8px;
+    letter-spacing: 2px;
   }
 
   .level-dialog__next-label {

@@ -439,3 +439,28 @@
 :root[data-theme="pixelart"][data-layout="vertical"] .board::before {
   display: none;
 }
+
+/* The title plaque, in this theme's language rather than classic's. The neon
+ * gradient frame and the rainbow per-letter shadows are classic's arcade
+ * sign; over a pixel-art hall they read as a sticker someone left on the
+ * screen. The text-shadow needs !important because MarmorTitle sets it
+ * inline, per letter. */
+:root[data-theme="pixelart"][data-layout="vertical"] .titlebar__plaque {
+  border: 1px solid var(--px-line);
+  border-radius: 0;
+  background: var(--px-panel);
+  backdrop-filter: blur(3px);
+  box-shadow: none;
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .titlebar__name {
+  color: var(--px-text);
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .titlebar__name span {
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6) !important;
+}
+
+:root[data-theme="pixelart"][data-layout="vertical"] .titlebar__level {
+  color: var(--px-dim);
+}
