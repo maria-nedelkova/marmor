@@ -117,7 +117,46 @@ body button:not(:disabled) {
 html {
   min-height: 100%;
   margin: 0;
+  /* The page's base colour lives here rather than on body, so body's star
+   * layers can sit above it without a base of their own hiding these. */
   background: var(--bg);
+}
+
+/* The columns either side of the board. They only exist from the width where
+ * the board stops being full-bleed — below it there is no room beside the
+ * board for a star that isn't sitting in its frame's glow, which is the whole
+ * reason body's field keeps to the bands above and below. */
+@media (min-width: 900px) {
+  html {
+    background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(214,230,255)'/%3E%3C/svg%3E") 9% 38% / 11px 11px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,255,255)'/%3E%3C/svg%3E") 90% 55% / 10px 10px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,233,168)'/%3E%3C/svg%3E") 15% 72% / 8px 8px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,255,255)'/%3E%3C/svg%3E") 85% 31% / 9px 9px no-repeat,
+    radial-gradient(circle at 5% 30%, rgba(255,255,255, 0.85) 0 1.2px, transparent 1.65px),
+    radial-gradient(circle at 9% 34%, rgba(255,255,255, 0.7) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 3% 36%, rgba(214,230,255, 0.7) 0 1.0px, transparent 1.45px),
+    radial-gradient(circle at 14% 45%, rgba(255,255,255, 0.75) 0 1.1px, transparent 1.55px),
+    radial-gradient(circle at 18% 50%, rgba(214,230,255, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 11% 52%, rgba(255,233,168, 0.6) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 6% 61%, rgba(255,255,255, 0.7) 0 1.0px, transparent 1.45px),
+    radial-gradient(circle at 10% 66%, rgba(255,255,255, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 4% 69%, rgba(214,230,255, 0.75) 0 1.1px, transparent 1.55px),
+    radial-gradient(circle at 17% 81%, rgba(255,255,255, 0.6) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 12% 84%, rgba(255,233,168, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 95% 29%, rgba(255,255,255, 0.85) 0 1.2px, transparent 1.65px),
+    radial-gradient(circle at 91% 34%, rgba(214,230,255, 0.65) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 97% 37%, rgba(255,255,255, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 83% 44%, rgba(255,255,255, 0.75) 0 1.1px, transparent 1.55px),
+    radial-gradient(circle at 87% 49%, rgba(255,233,168, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 80% 52%, rgba(214,230,255, 0.6) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 94% 62%, rgba(255,255,255, 0.7) 0 1.0px, transparent 1.45px),
+    radial-gradient(circle at 98% 67%, rgba(214,230,255, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 90% 70%, rgba(255,255,255, 0.75) 0 1.1px, transparent 1.55px),
+    radial-gradient(circle at 82% 80%, rgba(255,255,255, 0.6) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 86% 85%, rgba(214,230,255, 0.55) 0 0.8px, transparent 1.25px),
+      var(--bg);
+  }
 }
 
 /* The gradient lives on body only — applying the same gradient to both html
@@ -145,60 +184,57 @@ body {
    * board's are — a tile at any size reads as a pattern, which is the one
    * thing a star field must not do. They scale with the viewport, so the
    * spread holds at any size. */
-  /* The star field. Round dots in loose constellations — several close
-   * together, then a wider gap to the next group — because an even scatter
-   * reads as noise where a clustered one reads as sky. Sizes and tints vary
-   * so no two sit at the same distance.
+  /* The star field, kept clear of the board.
    *
-   * The four-point ones are inline SVG rather than gradients: a radial
-   * gradient can only make a disc, and the rhomb shape is what gives the
-   * field its sparkle. Data URIs, so they cost no request.
+   * The board occupies y 27-85% of the viewport at every width, and on a
+   * phone it spans nearly the full width of it too — so any star in that
+   * band ends up sitting in the glow of the board's frame. These all live
+   * above 25% or below 87%, which is clear everywhere. The columns either
+   * side of the board are filled in separately, on html, and only from the
+   * width where the board stops being full-bleed (see the media query).
    *
-   * Listed before the two colour washes, since background layers paint
-   * front to back and the stars belong above them. */
+   * Round dots in loose constellations — several close together, then a
+   * wider gap — because an even scatter reads as noise where a clustered
+   * one reads as sky. The four-point ones are inline SVG: a radial gradient
+   * can only make a disc, and the rhomb is what gives the field its
+   * sparkle. Data URIs, so they cost no request.
+   *
+   * No base colour here — html carries it, so these layers and html's own
+   * side-column stars can coexist. */
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,255,255)'/%3E%3C/svg%3E") 9% 22% / 11px 11px no-repeat,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,233,168)'/%3E%3C/svg%3E") 27% 63% / 8px 8px no-repeat,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(214,230,255)'/%3E%3C/svg%3E") 41% 14% / 9px 9px no-repeat,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,255,255)'/%3E%3C/svg%3E") 58% 79% / 12px 12px no-repeat,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,233,168)'/%3E%3C/svg%3E") 73% 31% / 8px 8px no-repeat,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(214,230,255)'/%3E%3C/svg%3E") 89% 58% / 10px 10px no-repeat,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,255,255)'/%3E%3C/svg%3E") 19% 89% / 7px 7px no-repeat,
-    radial-gradient(circle at 7% 13%, rgba(255,255,255, 0.85) 0 1.2px, transparent 1.65px),
-    radial-gradient(circle at 10% 17%, rgba(255,255,255, 0.7) 0 0.9px, transparent 1.35px),
-    radial-gradient(circle at 13% 12%, rgba(214,230,255, 0.75) 0 1.0px, transparent 1.45px),
-    radial-gradient(circle at 9% 8%, rgba(255,255,255, 0.6) 0 0.8px, transparent 1.25px),
-    radial-gradient(circle at 5% 47%, rgba(255,255,255, 0.8) 0 1.1px, transparent 1.55px),
-    radial-gradient(circle at 8% 52%, rgba(214,230,255, 0.65) 0 0.9px, transparent 1.35px),
-    radial-gradient(circle at 4% 56%, rgba(255,233,168, 0.9) 0 1.3px, transparent 1.75px),
-    radial-gradient(circle at 12% 80%, rgba(255,255,255, 0.7) 0 1.0px, transparent 1.45px),
-    radial-gradient(circle at 16% 84%, rgba(214,230,255, 0.6) 0 0.8px, transparent 1.25px),
-    radial-gradient(circle at 10% 86%, rgba(255,255,255, 0.8) 0 1.1px, transparent 1.55px),
-    radial-gradient(circle at 33% 8%, rgba(255,255,255, 0.7) 0 1.0px, transparent 1.45px),
-    radial-gradient(circle at 37% 35%, rgba(214,230,255, 0.6) 0 0.9px, transparent 1.35px),
-    radial-gradient(circle at 30% 52%, rgba(255,255,255, 0.8) 0 1.2px, transparent 1.65px),
-    radial-gradient(circle at 45% 24%, rgba(255,255,255, 0.55) 0 0.8px, transparent 1.25px),
-    radial-gradient(circle at 48% 68%, rgba(255,233,168, 0.7) 0 1.0px, transparent 1.45px),
-    radial-gradient(circle at 42% 92%, rgba(214,230,255, 0.6) 0 0.9px, transparent 1.35px),
-    radial-gradient(circle at 55% 11%, rgba(255,255,255, 0.75) 0 1.1px, transparent 1.55px),
-    radial-gradient(circle at 52% 44%, rgba(255,255,255, 0.5) 0 0.8px, transparent 1.25px),
-    radial-gradient(circle at 60% 57%, rgba(214,230,255, 0.7) 0 1.0px, transparent 1.45px),
-    radial-gradient(circle at 78% 12%, rgba(255,255,255, 0.85) 0 1.2px, transparent 1.65px),
-    radial-gradient(circle at 82% 16%, rgba(214,230,255, 0.7) 0 0.9px, transparent 1.35px),
-    radial-gradient(circle at 85% 9%, rgba(255,255,255, 0.75) 0 1.0px, transparent 1.45px),
-    radial-gradient(circle at 80% 21%, rgba(255,233,168, 0.6) 0 0.8px, transparent 1.25px),
-    radial-gradient(circle at 92% 38%, rgba(255,255,255, 0.8) 0 1.1px, transparent 1.55px),
-    radial-gradient(circle at 95% 43%, rgba(214,230,255, 0.65) 0 0.9px, transparent 1.35px),
-    radial-gradient(circle at 90% 46%, rgba(255,255,255, 0.6) 0 0.8px, transparent 1.25px),
-    radial-gradient(circle at 86% 77%, rgba(255,255,255, 0.8) 0 1.2px, transparent 1.65px),
-    radial-gradient(circle at 90% 82%, rgba(255,233,168, 0.65) 0 0.9px, transparent 1.35px),
-    radial-gradient(circle at 83% 85%, rgba(214,230,255, 0.7) 0 1.0px, transparent 1.45px),
-    radial-gradient(circle at 94% 90%, rgba(255,255,255, 0.55) 0 0.8px, transparent 1.25px),
-    radial-gradient(circle at 68% 94%, rgba(255,255,255, 0.7) 0 1.0px, transparent 1.45px),
-    radial-gradient(circle at 25% 38%, rgba(214,230,255, 0.5) 0 0.8px, transparent 1.25px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,255,255)'/%3E%3C/svg%3E") 11% 6% / 11px 11px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(214,230,255)'/%3E%3C/svg%3E") 46% 15% / 9px 9px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,233,168)'/%3E%3C/svg%3E") 81% 7% / 10px 10px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(255,255,255)'/%3E%3C/svg%3E") 23% 93% / 9px 9px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M4 0 L5 3 L8 4 L5 5 L4 8 L3 5 L0 4 L3 3 Z' fill='rgb(214,230,255)'/%3E%3C/svg%3E") 64% 90% / 11px 11px no-repeat,
+    radial-gradient(circle at 6% 4%, rgba(255,255,255, 0.85) 0 1.2px, transparent 1.65px),
+    radial-gradient(circle at 9% 9%, rgba(255,255,255, 0.7) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 13% 5%, rgba(214,230,255, 0.75) 0 1.0px, transparent 1.45px),
+    radial-gradient(circle at 7% 14%, rgba(255,255,255, 0.6) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 27% 8%, rgba(255,255,255, 0.8) 0 1.1px, transparent 1.55px),
+    radial-gradient(circle at 31% 13%, rgba(214,230,255, 0.65) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 24% 17%, rgba(255,233,168, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 52% 5%, rgba(255,255,255, 0.7) 0 1.0px, transparent 1.45px),
+    radial-gradient(circle at 57% 11%, rgba(214,230,255, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 49% 20%, rgba(255,255,255, 0.6) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 72% 4%, rgba(255,255,255, 0.75) 0 1.1px, transparent 1.55px),
+    radial-gradient(circle at 76% 10%, rgba(214,230,255, 0.65) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 69% 16%, rgba(255,255,255, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 90% 7%, rgba(255,255,255, 0.85) 0 1.2px, transparent 1.65px),
+    radial-gradient(circle at 94% 13%, rgba(255,233,168, 0.7) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 87% 19%, rgba(214,230,255, 0.6) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 8% 90%, rgba(255,255,255, 0.8) 0 1.1px, transparent 1.55px),
+    radial-gradient(circle at 12% 95%, rgba(214,230,255, 0.65) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 5% 96%, rgba(255,255,255, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 36% 92%, rgba(255,255,255, 0.7) 0 1.0px, transparent 1.45px),
+    radial-gradient(circle at 40% 96%, rgba(255,233,168, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 57% 94%, rgba(214,230,255, 0.75) 0 1.1px, transparent 1.55px),
+    radial-gradient(circle at 53% 89%, rgba(255,255,255, 0.55) 0 0.8px, transparent 1.25px),
+    radial-gradient(circle at 79% 91%, rgba(255,255,255, 0.8) 0 1.2px, transparent 1.65px),
+    radial-gradient(circle at 84% 96%, rgba(214,230,255, 0.65) 0 0.9px, transparent 1.35px),
+    radial-gradient(circle at 92% 93%, rgba(255,255,255, 0.7) 0 1.0px, transparent 1.45px),
     radial-gradient(ellipse 900px 500px at 15% -10%, rgba(41, 241, 255, 0.16) 0%, transparent 60%),
-    radial-gradient(ellipse 900px 600px at 90% 110%, rgba(255, 47, 176, 0.14) 0%, transparent 60%),
-    var(--bg);
+    radial-gradient(ellipse 900px 600px at 90% 110%, rgba(255, 47, 176, 0.14) 0%, transparent 60%);
   color: var(--text);
   font-family: var(--font-display);
   display: flex;
