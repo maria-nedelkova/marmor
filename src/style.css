@@ -2049,36 +2049,20 @@ body {
     flex-shrink: 0;
   }
 
-.topbar__next {
-  gap: 4px;
-}
-
-/* All four corner ornaments show here, same as on a desktop. Two of them
- * used to be hidden at this width because the panel was wedged into the
- * ~190px strip between the two mascots, where its internal gap was 8px and
- * an ornament 14px wide — there was nowhere for them that wasn't on top of
- * a key. The panel has its own full-width row along the bottom now, with
- * the desktop gap back, so the room is there. */
-
-  /* Sized for FOUR marbles, not three. The strip between the mascots is a
-   * fixed width, so the queue has to fit its longest case or the bar wraps
-   * to a second line and shoves the board down — which is what round 4
-   * (previewCount 4) did, and what the crystal ball does on rounds 5-8 when
-   * it reveals the hidden marble. min-width reserves the fourth slot even
-   * while it is empty, so revealing it doesn't shunt the Menu and Sound
-   * buttons sideways mid-turn. */
-  /* Bigger again: the bar is no longer squeezed into the strip between the
-   * mascots, so the queue does not have to give up width for it. */
-  .next-preview {
-    gap: 5px;
-    min-width: 103px; /* 4x22 + 3x5 */
-    justify-content: center;
-  }
-
-  .next-preview .marble {
-    width: 22px;
-    height: 22px;
-  }
+  /* The queue, the keys and the ornaments all keep their desktop sizes here
+   * — there is no longer anything at this width for them to be shrunk to
+   * fit. The panel used to be wedged into the ~190px strip between the two
+   * mascots, and every override in this block existed to buy width back
+   * from that: a smaller marble, a tighter gap, two of the four corner
+   * ornaments hidden outright because a 14px ornament had nowhere to sit
+   * that wasn't on top of a key. Since the mobile restack the panel has its
+   * own full-width row along the bottom, so it is simply the desktop panel.
+   *
+   * 320px is the case to watch, and it is tight rather than comfortable:
+   * the panel sits at 272px with the usual three-marble queue, and at 308px
+   * with a four-marble one — round 4, and the crystal ball on rounds 5-8
+   * when it reveals the hidden marble. That leaves 6px either side. It
+   * fits, but anything added to this row at desktop size will not. */
 
   /* Stretches to fill the column rather than being centred in it, so the
    * last row can hold the controls against the bottom of the screen. The
