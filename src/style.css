@@ -2053,14 +2053,12 @@ body {
   gap: 4px;
 }
 
-/* The corner ornaments go on a phone. The panel's internal gap is 8px here
- * and an ornament is 14px wide, so there is nowhere for them to sit that
- * isn't on top of a key — they are decoration, and the trinkets set into
- * the bottom edge carry that job on their own at this size. */
-.topbar__ornament--tl,
-.topbar__ornament--tr {
-  display: none;
-}
+/* All four corner ornaments show here, same as on a desktop. Two of them
+ * used to be hidden at this width because the panel was wedged into the
+ * ~190px strip between the two mascots, where its internal gap was 8px and
+ * an ornament 14px wide — there was nowhere for them that wasn't on top of
+ * a key. The panel has its own full-width row along the bottom now, with
+ * the desktop gap back, so the room is there. */
 
   /* Sized for FOUR marbles, not three. The strip between the mascots is a
    * fixed width, so the queue has to fit its longest case or the bar wraps
