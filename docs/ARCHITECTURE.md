@@ -60,7 +60,7 @@
   construction, rendered via `src/components/PixelArt.tsx`. The same
   row-building idea was reused by hand to produce `src/cursor-arrow.svg` and
   `src/favicon.svg` (crisp-edge pixel-grid SVGs).
-- **`src/style.css`** — the whole visual theme in one file: dark arcade
+- **`src/style.css`** — the whole look in one file: dark arcade
   backdrop, pixel-art-coherent marbles and chrome, screen shake, pop/spawn/
   glide animations, the reachable-dot blink.
 

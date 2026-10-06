@@ -110,48 +110,18 @@ Neither fakes its end state — they drive the same functions real play does.
 Keyboard shortcuts need the page focused, so click the page once after a
 reload; the buttons always work.
 
-## Themes
+## Look
 
-A way to try a new look without throwing the old one away. Switch with the
-buttons in the dev panel, or with `?theme=<id>` in the URL — handy for
-opening a theme on a real phone without disturbing your own saved choice.
+One skin, and it lives entirely in `src/style.css`: neon on black, wide on a
+desktop and one column on a phone. There is no theme system and no
+`data-theme` attribute — the stylesheet is the design.
 
-| Theme | What it is |
-| --- | --- |
-| `classic` | Neon on black. Wide on desktop, one column on a phone. The default. |
-| `pixelart` | A pixel-art hall and drawn character portraits, under a flat, mostly-transparent UI. Runs in a 430px portrait strip at every width. |
-
-A theme is an id on `document.documentElement.dataset.theme` plus a
-stylesheet of `[data-theme="<id>"]` rules. **The base styles in `style.css`
-carry no theme selector at all** — they *are* `classic` — so adding a theme
-cannot change how classic looks, and deleting a theme's stylesheet plus its
-entry in `src/themes/themes.ts` removes it completely.
-
-Two structural choices live on the theme rather than in CSS, because each
-one changes what React renders and no media query can set a prop:
-
-- `vertical` — force the one-column layout at every width instead of only on
-  a phone. `App.tsx` combines the viewport and the theme into
-  `data-layout="vertical" | "wide"` on the root, and both the stylesheet and
-  the mascots' `compact` prop read that single decision.
-- `portraits` — draw the duellists as portrait cards instead of the
-  hand-authored sprites on pedestals.
-
-Everything else a theme wants is CSS.
-
-Theme rules are scoped `[data-theme="x"][data-layout="vertical"]`, not on the
-theme alone. The vertical layout styles many of the same elements at exactly
-the same specificity, so with one attribute the two files won or lost on
-stylesheet order — which silently cost the pixelart theme its column width
-and its card sizes. Two attributes make the theme genuinely more specific,
-and cost nothing while every theme that restyles layout is also vertical.
-
-`src/assets/` holds the pixelart theme's art. The character portraits were
-cut out of the generated source images by a throwaway script (crop, then
-flood-fill the flat backdrop to transparent from the border inwards); the
-King keys cleanly, the Pretender's backdrop is a dark room rather than a flat
-colour, so that one keeps its own dark surround and the card supplies the
-same dark behind both.
+The root does still carry `data-layout="vertical" | "wide"`, written by
+`App.tsx` from the viewport width. That is not a leftover: the mascots take a
+`compact` prop, so the layout decision has to exist in JS anyway, and
+publishing it as an attribute is what keeps the stylesheet and the prop from
+disagreeing. Match that attribute in CSS rather than re-declaring the media
+query.
 
 ## Architecture
 
@@ -166,7 +136,7 @@ same dark behind both.
   ScorePanel, GameOverOverlay).
 - `src/audio/sound.ts` — procedurally synthesized SFX (oscillators + noise
   bursts shaped with envelopes), no audio files.
-- `src/style.css` — the visual theme: dark arcade backdrop, saturated neon
+- `src/style.css` — the whole look in one file: dark arcade backdrop, saturated neon
   marbles with bloom-style glow, screen shake and burst-ring pop on clears.
 
 ## Docs

@@ -18,27 +18,22 @@ import { KING_SCORE } from "./game/constants";
 import { getLevel } from "./game/levels";
 import type { RunEntry } from "./game/score";
 import { getPlayerId, localLeaderboard } from "./leaderboard/store";
-import kingPortrait from "./assets/king-portrait.png";
-import pretenderPortrait from "./assets/pretender-portrait.png";
 import { KING_PALETTE, KING_ROWS } from "./game/sprites/king";
 import { PRETENDER_PALETTE, PRETENDER_ROWS } from "./game/sprites/pretender";
 import { useGame } from "./hooks/useGame";
 import { useIsMobile } from "./hooks/useIsMobile";
-import { useTheme } from "./hooks/useTheme";
 
 export function App() {
   const boardRef = useRef<BoardHandle>(null);
   const game = useGame(boardRef);
   const [muted, setMutedState] = useState(false);
   const boardWrapRef = useRef<HTMLElement>(null);
-  const isPhone = useIsMobile();
-  const { theme, setTheme } = useTheme();
-
-  // The single place that decides whether the game is in its one-column
-  // layout: a phone viewport, or a theme built around a portrait stage. CSS
-  // reads it off the root (see data-layout in style.css) and the mascots read
-  // it as a prop, so the two halves cannot disagree.
-  const isVertical = isPhone || theme.vertical;
+  // The one-column layout, published twice over: as an attribute CSS reads
+  // off the root (see data-layout in style.css) and as a prop the mascots
+  // read, so the two halves cannot disagree about which layout is on screen.
+  // That is also why it is JS rather than a media query — `compact` is a
+  // React prop, and no media query can set one.
+  const isVertical = useIsMobile();
 
   // useLayoutEffect, not useEffect: this attribute selects the whole layout,
   // so landing it after the browser has painted means one frame of the wide
@@ -151,7 +146,6 @@ export function App() {
           heightRatio={1}
           falling={game.cleared}
           compact={isVertical}
-          portrait={theme.portraits ? kingPortrait : undefined}
         />
 
         {/* Tools above the board on desktop. On mobile the rack goes below
@@ -237,7 +231,6 @@ export function App() {
           heightRatio={game.score / KING_SCORE}
           falling={game.gameOver}
           compact={isVertical}
-          portrait={theme.portraits ? pretenderPortrait : undefined}
         />
       </main>
 
@@ -274,11 +267,9 @@ export function App() {
       {isDevMode() && (
         <DevPanel
           levelIndex={game.levelIndex}
-          themeId={theme.id}
           onJump={game.devJumpToLevel}
           onWinRound={game.devWinRound}
           onFillBoard={game.devFillBoard}
-          onSetTheme={setTheme}
         />
       )}
     </div>

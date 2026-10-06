@@ -2,11 +2,10 @@ import { useEffect, useState } from "react";
 
 const QUERY = "(max-width: 640px)";
 
-/** Whether the VIEWPORT is phone-sized. Not the same question as "is the
- * game in its one-column layout" — a theme can ask for that column at any
- * width (see themes/themes.ts), so App combines this with the theme and
- * publishes the answer as data-layout. Use that attribute in CSS; this hook
- * is only one of its two inputs. */
+/** Whether the viewport is phone-sized, which is what puts the game in its
+ * one-column layout. App publishes the answer as `data-layout` on the root;
+ * match that attribute in CSS rather than re-declaring the media query, so
+ * the stylesheet and the mascots' `compact` prop can never disagree. */
 export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => window.matchMedia(QUERY).matches);
 

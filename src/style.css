@@ -1,7 +1,6 @@
 :root {
   --bg: #05060f;
   --table: #080a20;
-  --grid-line: #8a4ff5;
   /* The neon edge-and-glow pair every panel in this look shares. */
   /* The border pair, deliberately softer than the accents they are drawn
    * from. --mr-accent and --accent2 are signal colours — the reachable dots,
@@ -683,7 +682,7 @@ body {
    * `circle` rather than the default ellipse: the board is square, so they
    * agree here, but an ellipse would stretch with it if the board ever
    * stopped being square, and the falloff should stay concentric.
-   * --grid-line remains the flat fallback the pixelart theme overrides. */
+   */
   background: radial-gradient(circle, #ec6fc0 0%, #ab63d4 42%, #7268cf 100%);
   /* 3px, matching the gap. .board's background is what paints the grid
    * lines, so this padding is a band of the same violet around the outside
@@ -1883,14 +1882,9 @@ body {
   font-size: 8px;
 }
 
-.devpanel__actions,
-.devpanel__themes {
+.devpanel__actions {
   display: flex;
   gap: 4px;
-}
-
-.devpanel__themes {
-  margin-top: 4px;
 }
 
 .devpanel__action.is-active {
@@ -1931,13 +1925,11 @@ body {
 /* The vertical layout — one column, mascots flanking a progress bar, board
  * below, controls between them.
  *
- * Scoped to an attribute rather than `@media (max-width: 640px)` because it
- * is no longer only a phone layout: a theme can ask for it at any width (see
- * themes/themes.ts), and the throne theme does, running the game in a narrow
- * strip down the middle of a desktop screen. App.tsx owns the one place that
- * decides — viewport OR theme — and writes it here, which also keeps it in
- * step with the `compact` prop the mascots read, something a media query
- * could never do on its own.
+ * Scoped to an attribute rather than `@media (max-width: 640px)` so that it
+ * stays in step with the `compact` prop the mascots read: App.tsx decides
+ * once and writes both. A media query could not do that on its own, because
+ * it cannot set a React prop — the stylesheet and the component would each
+ * be deciding the layout separately, and could disagree.
  *
  * Written with CSS nesting so the diff from the old media query is one line;
  * a bare selector inside a style rule is a descendant selector, so every rule

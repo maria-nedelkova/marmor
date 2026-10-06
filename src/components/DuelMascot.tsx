@@ -30,10 +30,6 @@ interface DuelMascotProps {
    * constants), not a CSS transform, so the score badge's text stays crisp
    * and legible instead of shrinking past readable size. */
   compact?: boolean;
-  /** A drawn portrait to show instead of the pixel sprite. Themes that have
-   * their own character art set this (see themes.ts `portraits`); when it's
-   * absent nothing about the sprite path changes. */
-  portrait?: string;
 }
 
 // Both sprites happen to transition from head to neck/collar at the same
@@ -63,7 +59,6 @@ export function DuelMascot({
   heightRatio,
   falling,
   compact,
-  portrait,
 }: DuelMascotProps) {
   const displayRows = compact ? rows.slice(0, HEAD_ROWS).map(stripWeaponColumns) : rows;
   const capHeight = compact ? PEDESTAL_CAP_HEIGHT_COMPACT : PEDESTAL_CAP_HEIGHT;
@@ -79,9 +74,7 @@ export function DuelMascot({
 
   return (
     <div
-      className={`duel-mascot duel-mascot--${side}${compact ? " duel-mascot--compact" : ""}${
-        portrait ? " duel-mascot--portrait" : ""
-      }`}
+      className={`duel-mascot duel-mascot--${side}${compact ? " duel-mascot--compact" : ""}`}
       /* The accent as a custom property, set on the root so it inherits to
        * everything below. It cannot ride on the Badge: that component puts
        * `className` on its outer element but `style` on an inner span, so a
@@ -121,11 +114,7 @@ export function DuelMascot({
           >
             {score}
           </Badge>
-          {portrait ? (
-            <img className="duel-mascot__portrait" src={portrait} alt={name} draggable={false} />
-          ) : (
-            <PixelArt rows={displayRows} palette={palette} pixelSize={compact ? 4 : 6} label={name} />
-          )}
+          <PixelArt rows={displayRows} palette={palette} pixelSize={compact ? 4 : 6} label={name} />
         </div>
         <Pedestal accent={accent} shaftHeight={shaftHeight} height={pedestalHeight} compact={compact} />
       </div>
